@@ -1,0 +1,25 @@
+[general]
+name=NextGIS Toolbox Plugin
+qgisMinimumVersion=3.0
+description=NextGIS Toolbox provider for QGIS
+about=NextGIS Toolbox provider for QGIS. Sends tasks to NextGIS Toolbox server and recieve results. More: https://toolbox.nextgis.com/
+tags=nextgis, web, tool, analysis, processing, webservice
+
+author=NextGIS
+email=info@nextgis.com
+
+homepage=https://gitlab.com/nextgis_private/toolbox/infrastructure/qgis_avral
+tracker=https://gitlab.com/nextgis_private/toolbox/infrastructure/qgis_avral/-/issues
+repository=https://gitlab.com/nextgis_private/toolbox/infrastructure/qgis_avral
+
+icon=icon.png
+experimental=False
+deprecated=False
+category=Web
+
+version=0.1.0
+changelog=
+	0.1.0
+		* Init
+		* Fix detached processes: await for results and autorefresh
+        * Wrap plugin in dock widget

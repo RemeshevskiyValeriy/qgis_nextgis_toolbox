@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QMessageBox, QDockWidget
 
 
 from .resources import *
@@ -186,18 +186,30 @@ class NgToolbox:
         if self.dockWidget:
             self.dockWidget.close()
 
+    def set_unchecked(self):
+        self.showAction.setChecked(False)
+
     def run(self):
         """Run method that performs all the real work"""
 
-        if self.first_start == True:
+        if self.first_start == True and self.showAction.isChecked():
             self.first_start = False
-            self.dockWidget = ToolboxDockWidget(self.iface, self.iface.mainWindow())
+            try:
+                self.dockWidget = ToolboxDockWidget(self.iface, self.iface.mainWindow())
+                self.dockWidget.window_closed.connect(self.set_unchecked)
+            except Exception:
+                QMessageBox.about(None, None, self.tr("Error loading NextGIS Toolbox plugin!"))
+                self.showAction.setChecked(False)
+                self.first_start = True
+                return
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockWidget)
-            # self.iface.tabifyDockWidget()
-            # self.dockWidget.setFloating(True)
-            # self.dockWidget.resize(True)
-            # self.dockWidget.move(PluginSettings.dock_pos())
-            # self.dockWidget.setVisible(False)
+            self.iface.mainWindow().tabifyDockWidget(
+                [dock for dock in self.iface.mainWindow().findChildren(QDockWidget)
+                 if self.iface.mainWindow().dockWidgetArea(dock) == Qt.LeftDockWidgetArea][0],
+                self.dockWidget
+            )
+        elif not self.dockWidget:
+            return
         if self.showAction.isChecked():
             self.dockWidget.setVisible(True)
         else:

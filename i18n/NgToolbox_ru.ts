@@ -2,6 +2,14 @@
 <!DOCTYPE TS>
 <TS version="2.0" language="ru" sourcelanguage="en">
 <context>
+    <name>NgToolbox</name>
+    <message>
+        <location filename="NgToolboxPlugin.py"/>
+        <source>Error loading NextGIS Toolbox plugin!</source>
+        <translation>Ошибка загрузки плагина NextGIS Toolbox!</translation>
+    </message>
+</context>
+<context>
     <name>InputLayerFileWidget</name>
     <message>
         <location filename="InputsDialog.py"/>
@@ -27,6 +35,11 @@
         <location filename="InputsDialog.py"/>
         <source>Description: </source>
         <translation>Описание: </translation>
+    </message>
+    <message>
+        <location filename="InputsDialog.py"/>
+        <source>Connection error!</source>
+        <translation>Ошибка подключения!</translation>
     </message>
 </context>
 <context>
@@ -142,6 +155,11 @@
         <source>Order error: </source>
         <translation>Ошибка: </translation>
     </message>
+    <message>
+        <location filename="NgToolboxWindow.py"/>
+        <source>Connection error!</source>
+        <translation>Ошибка подключения!</translation>
+    </message>
 </context>
 <context>
     <name>NgToolboxDialogBase</name>
@@ -247,6 +265,11 @@
         <location filename="ResultsDialog.py"/>
         <source>Error downloading result file.</source>
         <translation>Ошибка загрузки файла</translation>
+    </message>
+    <message>
+        <location filename="ResultsDialog.py"/>
+        <source>Connection error!</source>
+        <translation>Ошибка подключения!</translation>
     </message>
 </context>
 <context>

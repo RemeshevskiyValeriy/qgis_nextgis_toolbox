@@ -53,7 +53,7 @@ from qgis.PyQt.QtWidgets import (
     QLabel,
 )
 
-from .NgToolbox import NgInputFilename, Input
+from .NgToolbox import NgInputFilename, Input, NgToolgboxConnError
 
 
 TEMP_FOLDER = QgsProcessingUtils.tempFolder()
@@ -300,6 +300,11 @@ class InputsDialog(QDialog):
                     loaded_zip = self.toolbox.upload_file(
                         input_widget.fileLineEdit.text()
                     )
+                except NgToolgboxConnError:
+                    self.iface.messageBar().pushMessage(
+                        "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
+                    )
+                    return False
                 except Exception:
                     err = traceback.format_exc()
                     QMessageBox.about(self, None, self.tr("Error uploading file"))
@@ -336,7 +341,12 @@ class InputsDialog(QDialog):
                         self.wait_res = True
                         self.task_id = resp["task_id"]
                     self.accept()
-            except:
+            except NgToolgboxConnError:
+                self.iface.messageBar().pushMessage(
+                    "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
+                )
+                return False
+            except Exception:
                 err = traceback.format_exc()
                 QMessageBox.about(
                     self,

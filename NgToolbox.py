@@ -41,6 +41,10 @@ def is_valid_uuid(value):
         return False
 
 
+class NgToolgboxConnError(requests.exceptions.ConnectionError):
+    '''Any connection exception'''
+
+
 class NgInputFilename(str):
     def __new__(cls, string):
         if not string[:8] == "storage/" or not is_valid_uuid(string[8:]):
@@ -209,6 +213,16 @@ class NgToolboxOrdersManager:
         self.token = NgToolboxToken(token)
         self.orders = self.get_orders()
 
+    def check_conn(f):
+        def deco(*args, **kwargs):
+            try:
+                requests.head(API_URL)
+                return f(*args, **kwargs)
+            except requests.ConnectionError as e:
+                raise NgToolgboxConnError(e)
+        return deco
+
+    @check_conn
     def get_orders(self):
         url = f"{self.api_url}/orders/"
         response = requests.get(url, headers=self.token.get_header())
@@ -219,6 +233,7 @@ class NgToolboxOrdersManager:
     def update_orders(self):
         self.orders = self.get_orders()
 
+    @check_conn
     def get_status(self, order_id):
         url = f"{self.api_url}/json/status/{order_id}/"
         response = requests.get(url, headers=self.token.get_header())
@@ -250,6 +265,7 @@ class NgToolboxOrdersManager:
                 id += 1
         return new_name + ext
 
+    @check_conn
     def download_file(self, url, directory):
         filename = url.split("/")[-1]
         with requests.get(url, headers=self.token.get_header(), stream=True) as r:
@@ -290,10 +306,20 @@ class NgToolbox:
         self.tags = self.get_tags()
         self.token = None
 
+    def check_conn(f):
+        def deco(*args, **kwargs):
+            try:
+                requests.head(API_URL)
+                return f(*args, **kwargs)
+            except requests.ConnectionError as e:
+                raise NgToolgboxConnError(e)
+        return deco
+
     def set_current_user(self, token):
         self.token = NgToolboxToken(token)
         self.orders_man = NgToolboxOrdersManager(token)
 
+    @check_conn
     def unset_current_user(self):
         self.token = None
         self.orders_man = None
@@ -304,6 +330,7 @@ class NgToolbox:
         else:
             self.locale = "en"
 
+    @check_conn
     def get_tools(self) -> List:
         url = f"{self.api_url}/{self.locale}/tools/"
         response = requests.get(url)
@@ -311,6 +338,7 @@ class NgToolbox:
         tools = response.json()
         return tools["data"]
 
+    @check_conn
     def get_tags(self) -> List:
         url = f"{self.api_url}/{self.locale}/tags/"
         response = requests.get(url)
@@ -318,6 +346,7 @@ class NgToolbox:
         tags = response.json()
         return tags["data"]
 
+    @check_conn
     def get_tool_inputs(self, tool_id) -> Dict:
         url = f"{self.api_url}/operation/{tool_id}/inputs"
         response = requests.get(url, headers=self.token.get_header())
@@ -327,6 +356,7 @@ class NgToolbox:
     def refresh_orders(self):
         self.orders_man.update_orders()
 
+    @check_conn
     def upload_file(self, filepath):
         url = f"{self.api_url}/upload/"
         with open(filepath, "rb") as f:
@@ -334,6 +364,7 @@ class NgToolbox:
         response.raise_for_status()
         return response.text
 
+    @check_conn
     def create_order(self, tool_id, inputs: Inputs):
         json_request = {"operation": tool_id, "inputs": inputs.get_values_for_request()}
         url = f"{self.api_url}/json/execute/"

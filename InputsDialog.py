@@ -225,6 +225,38 @@ class InputLineWidget(QWidget):
             self.inputLine.setStyleSheet("background: red;")
             self.valid = False
 
+class InputCheckboxWidget(QWidget):
+    valid = True
+    def __init__(self, tool_input: Input, parent=None):
+        self.parent = parent
+        QWidget.__init__(self)
+
+        self.tool_input = tool_input
+
+        self.vLayout = QVBoxLayout()
+        self.vLayout.setSpacing(5)
+        # TODO: it's not working now because Toolbox api send wrong "required"
+        # optional_str = self.tr(" (Optinonal)") if not self.tool_input.required else ""
+        # self.inputName = QLabel(f'{tool_input.title}{optional_str}:')
+        self.inputName = QLabel(f"{tool_input.title}:")
+        self.inputCheckBox = QCheckBox(self)
+        self.vLayout.addWidget(self.inputName)
+        self.vLayout.addWidget(self.inputCheckBox)
+        if tool_input.description:
+            self.inputDesc = QLabel(
+                "<i>" + self.tr('Description: ') + tool_input.description + "</i>"
+            )
+            self.inputDesc.setWordWrap(True)
+            self.vLayout.addWidget(self.inputDesc)
+        self.setLayout(self.vLayout)
+
+        self.inputCheckBox.stateChanged.connect(self.set_input)
+        self.tool_input.value = ''
+
+
+    def set_input(self, state):
+        self.tool_input.value = self.tool_input.type_(state)
+
 
 class InputsDialog(QDialog):
     def __init__(self, tool_id, tool_name, inputs, toolbox):

@@ -22,6 +22,7 @@
 """
 
 import os
+import logging
 import uuid
 import re
 from datetime import datetime
@@ -33,6 +34,10 @@ import requests
 API_URL = "https://toolbox.nextgis.com/api"
 
 
+logger = logging.getLogger("NgToolbox")
+logging.basicConfig(level=logging.DEBUG)
+
+
 def is_valid_uuid(value):
     try:
         uuid.UUID(str(value))
@@ -41,11 +46,11 @@ def is_valid_uuid(value):
         return False
 
 
-class NgToolgboxConnError(requests.exceptions.ConnectionError):
+class ToolboxConnError(requests.exceptions.ConnectionError):
     '''Any connection exception'''
 
 
-class NgInputFilename(str):
+class ToolboxIOFilename(str):
     def __new__(cls, string):
         if not string[:8] == "storage/" or not is_valid_uuid(string[8:]):
             raise ValueError(
@@ -55,7 +60,7 @@ class NgInputFilename(str):
         return instance
 
 
-class Input:
+class ToolboxIO:
     name: str
     title: str
     description: str
@@ -63,24 +68,26 @@ class Input:
     widget: str
     required: bool
     validators: List
+    extension: str
 
-    _input_types = {
+    _io_types = {
         "float": float,
         "int": int,
         "string": str,
         "boolean": bool,
-        "file": NgInputFilename,
+        "file": ToolboxIOFilename,
     }
     value = None
 
-    def __init__(self, input_dict):
-        self.name = input_dict["name"]
-        self.title = input_dict["title"]
-        self.description = input_dict["description"]
-        self.type_ = self._input_types[input_dict["type"]]
-        self.widget = input_dict["widget"]
-        self.required = input_dict["required"]
-        self.validators = input_dict["validators"]
+    def __init__(self, feature_attrs):
+        self.name = feature_attrs["name"]
+        self.title = feature_attrs["title"]
+        self.description = feature_attrs["description"]
+        self.type_ = self._io_types[feature_attrs["type"]]
+        self.widget = feature_attrs["widget"]
+        self.required = feature_attrs["required"]
+        self.validators = feature_attrs["validators"]
+        self.extension = feature_attrs.get("extension")
 
     def __repr__(self) -> str:
         return str(self.__dict__)
@@ -89,28 +96,34 @@ class Input:
         self.value = self.type_(value)
 
 
-class Inputs:
-    inputs: List[Input]
+class ToolboxIOs:
+    features: List[ToolboxIO]
 
-    def __init__(self, inp_list):
-        self.inputs = []
-        for inp in inp_list:
-            self.inputs.append(Input(inp))
+    def __init__(self, feat_list):
+        self.features = []
+        for feature in feat_list:
+            self.features.append(ToolboxIO(feature))
 
     def __iter__(self):
-        for inp in self.inputs:
-            yield inp
+        for feature in self.features:
+            yield feature
 
     def __repr__(self) -> str:
-        return str(self.inputs)
+        return str(self.features)
 
     def set_value(self, name, value):
-        for inp in self.inputs:
-            if inp.name == name:
-                inp.set_value(value)
+        for feature in self.features:
+            if feature.name == name:
+                feature.set_value(value)
 
     def get_values_for_request(self):
-        return {inp.name: inp.value for inp in self}
+        return {feature.name: feature.value for feature in self}
+
+
+class Inputs(ToolboxIOs): ...
+
+
+class Outputs(ToolboxIOs): ...
 
 
 class Result:
@@ -143,7 +156,7 @@ class Results:
         return str(self.results)
 
 
-class NgToolboxToken:
+class ToolboxToken:
     token: uuid.UUID
 
     def __init__(self, token) -> None:
@@ -159,7 +172,7 @@ class NgToolboxToken:
         return {"Authorization": f"Token {self.token}"}
 
 
-class NgToolboxOrderInputs:
+class ToolboxOrderInputs:
     def __init__(self, inputs) -> None:
         for key in inputs:
             setattr(self, key, inputs[key])
@@ -168,49 +181,47 @@ class NgToolboxOrderInputs:
         return str(self.__dict__)
 
 
-class NgToolboxOrderParameters:
+class ToolboxOrderParameters:
     operation_name: str
-    inputs: NgToolboxOrderInputs
+    inputs: ToolboxOrderInputs
 
     def __init__(self, params) -> None:
         self.operation_name = params["operation_name"]
-        self.inputs = NgToolboxOrderInputs(params["inputs"])
+        self.inputs = ToolboxOrderInputs(params["inputs"])
 
     def __repr__(self) -> str:
         return str(self.__dict__)
 
 
-class NgToolboxOrder:
+class ToolboxOrder:
     id: int
     guid: uuid.UUID
     created_at: datetime
-    parameters: NgToolboxOrderParameters
+    parameters: ToolboxOrderParameters
     status: str
     priority: int
-    tasks: List
-    output: List[Input]
+    output: List[ToolboxIO]
     error: str
 
     def __init__(self, order) -> None:
         self.id = order["id"]
         self.guid = order["guid"]
         self.created_at = order["created_at"]
-        self.parameters = NgToolboxOrderParameters(order["parameters"])
+        self.parameters = ToolboxOrderParameters(order["parameters"])
         self.status = order["status"]
         self.priority = order["priority"]
-        self.tasks = order["tasks"]
 
     def __repr__(self) -> str:
         return str(self.__dict__)
 
 
-class NgToolboxOrdersManager:
+class ToolboxOrdersManager:
     api_url: str = API_URL
-    token: NgToolboxToken
-    orders: List[NgToolboxOrder]
+    token: ToolboxToken
+    orders: List[ToolboxOrder]
 
     def __init__(self, token) -> None:
-        self.token = NgToolboxToken(token)
+        self.token = ToolboxToken(token)
         self.orders = self.get_orders()
 
     def check_conn(f):
@@ -219,16 +230,17 @@ class NgToolboxOrdersManager:
                 requests.head(API_URL)
                 return f(*args, **kwargs)
             except requests.ConnectionError as e:
-                raise NgToolgboxConnError(e)
+                raise ToolboxConnError(e)
         return deco
 
     @check_conn
     def get_orders(self):
         url = f"{self.api_url}/orders/"
-        response = requests.get(url, headers=self.token.get_header())
+        header = self.token.get_header()
+        header["Accept"] = "application/json"
+        response = requests.get(url, headers=header)
         response.raise_for_status()
-
-        return [NgToolboxOrder(order) for order in response.json()["data"]]
+        return [ToolboxOrder(order) for order in response.json()["data"]]
 
     def update_orders(self):
         self.orders = self.get_orders()
@@ -293,8 +305,8 @@ class NgToolbox:
     api_url: str = API_URL
     tools: List
     tags: List
-    orders_man: NgToolboxOrdersManager
-    token: NgToolboxToken
+    orders_man: ToolboxOrdersManager
+    token: ToolboxToken
 
     def __init__(self, locale="en") -> None:
         if locale == "ru":
@@ -312,12 +324,12 @@ class NgToolbox:
                 requests.head(API_URL)
                 return f(*args, **kwargs)
             except requests.ConnectionError as e:
-                raise NgToolgboxConnError(e)
+                raise ToolboxConnError(e)
         return deco
 
     def set_current_user(self, token):
-        self.token = NgToolboxToken(token)
-        self.orders_man = NgToolboxOrdersManager(token)
+        self.token = ToolboxToken(token)
+        self.orders_man = ToolboxOrdersManager(token)
 
     @check_conn
     def unset_current_user(self):
@@ -347,11 +359,36 @@ class NgToolbox:
         return tags["data"]
 
     @check_conn
-    def get_tool_inputs(self, tool_id) -> Dict:
+    def get_tool_inputs(self, tool_id) -> Inputs:
         url = f"{self.api_url}/operation/{tool_id}/inputs"
         response = requests.get(url, headers=self.token.get_header())
         response.raise_for_status()
         return Inputs(response.json())
+
+    @check_conn
+    def get_tool_outputs(self, tool_id) -> Outputs:
+        url = f"{self.api_url}/operations/{tool_id}/outputs"
+        response = requests.get(url, headers=self.token.get_header())
+        response.raise_for_status()
+        return Outputs(response.json())
+
+    @check_conn
+    def get_all_tools_io(self) -> Dict:
+        url = f"{self.api_url}/operations/interface"
+        response = requests.get(url, headers=self.token.get_header())
+        response.raise_for_status()
+        res = {}
+        for tool, io in response.json().items():
+            try:
+                res[tool] = {}
+                res[tool]["inputs"] = Inputs(io["inputs"])
+                res[tool]["outputs"] = Outputs(io["outputs"])
+            except Exception:
+                logger.warning(f"ERROR! tool: {tool} Exception:")
+                # traceback.print_exc()
+                if tool in res:
+                    del res[tool]
+        return res
 
     def refresh_orders(self):
         self.orders_man.update_orders()
@@ -365,9 +402,11 @@ class NgToolbox:
         return response.text
 
     @check_conn
-    def create_order(self, tool_id, inputs: Inputs):
+    def create_order(self, tool_id, inputs: ToolboxIOs):
         json_request = {"operation": tool_id, "inputs": inputs.get_values_for_request()}
         url = f"{self.api_url}/json/execute/"
+        print(json_request)
+        logger.debug(json_request)
         response = requests.post(
             url, json=json_request, headers=self.token.get_header()
         )

@@ -40,7 +40,7 @@ from qgis.PyQt.QtWidgets import (
     QTableWidgetSelectionRange,
 )
 
-from .NgToolbox import NgToolbox, Results, NgToolgboxConnError
+from .NgToolbox import NgToolbox, Results, ToolboxConnError
 from .ResultsDialog import ResultsDialog
 from .InputsDialog import InputsDialog
 
@@ -98,7 +98,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         self.iface = iface
         try:
             self.toolbox = NgToolbox(QgsApplication.instance().locale())
-        except NgToolgboxConnError:
+        except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )
@@ -189,7 +189,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
                 QMessageBox.about(
                     self, None, self.tr("The token is correct. User changed.")
                 )
-        except NgToolgboxConnError:
+        except ToolboxConnError:
             self.toolbox.unset_current_user()
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
@@ -256,7 +256,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             return
         try:
             self.toolbox.refresh_orders()
-        except NgToolgboxConnError:
+        except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )
@@ -330,7 +330,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             while not task.isCanceled():
                 try:
                     resp = self.toolbox.orders_man.get_status(task_id)
-                except NgToolgboxConnError:
+                except ToolboxConnError:
                     self.iface.messageBar().pushMessage(
                         "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
                     )
@@ -360,7 +360,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         tool_name = item.text(column)
         try:
             tool_inputs = self.toolbox.get_tool_inputs(tool_id=tool_id)
-        except NgToolgboxConnError:
+        except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )
@@ -396,7 +396,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         order_id = self.tableWidget.item(row, 3).text()
         try:
             status = self.toolbox.orders_man.get_status(order_id)
-        except NgToolgboxConnError:
+        except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )
@@ -424,7 +424,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         order_id = self.tableWidget.item(row, 3).text()
         try:
             status = self.toolbox.orders_man.get_status(order_id)
-        except NgToolgboxConnError:
+        except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )

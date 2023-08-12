@@ -39,7 +39,7 @@ from qgis.PyQt.QtWidgets import (
     QApplication,
 )
 
-from .NgToolbox import NgToolbox, Results, NgToolgboxConnError, API_URL
+from .NgToolbox import NgToolbox, Results, ToolboxConnError, API_URL
 
 
 PLUGIN_DIR = os.path.dirname(__file__)
@@ -89,7 +89,7 @@ class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
             result = self.toolbox.orders_man.download_file(link, res_dir)
             # QDesktopServices.openUrl(QUrl.fromLocalFile(result))
             QDesktopServices.openUrl(QUrl.fromLocalFile(res_dir))
-        except NgToolgboxConnError:
+        except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )

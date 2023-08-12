@@ -53,14 +53,14 @@ from qgis.PyQt.QtWidgets import (
     QLabel,
 )
 
-from .NgToolbox import NgInputFilename, Input, NgToolgboxConnError
+from .NgToolbox import ToolboxIOFilename, ToolboxIO, ToolboxConnError
 
 
 TEMP_FOLDER = QgsProcessingUtils.tempFolder()
 
 
 class InputLayerFileWidget(QWidget):
-    def __init__(self, tool_input: Input, parent=None):
+    def __init__(self, tool_input: ToolboxIO, parent=None):
         self.parent = parent
         QWidget.__init__(self)
         self.tool_input = tool_input
@@ -104,7 +104,7 @@ class InputLayerFileWidget(QWidget):
         self.vLayout.addWidget(self.fileBrowserWidget)
         if tool_input.description:
             self.inputDesc = QLabel(
-                self.tr('Description: ') + tool_input.description
+                "<i>" + self.tr('Description: ') + tool_input.description + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
@@ -169,15 +169,14 @@ class InputLayerFileWidget(QWidget):
 
 
 class InputLineWidget(QWidget):
-    def __init__(self, tool_input: Input, parent=None):
+    def __init__(self, tool_input: ToolboxIO, parent=None):
         self.parent = parent
         QWidget.__init__(self)
 
         types_names = {
             str: self.tr("String"),
             float: self.tr("Float"),
-            int: self.tr("Integer"),
-            bool: self.tr("Boolean"),
+            int: self.tr("Integer")
         }
 
         self.tool_input = tool_input
@@ -189,7 +188,6 @@ class InputLineWidget(QWidget):
 
         self.vLayout = QVBoxLayout()
         self.vLayout.setSpacing(5)
-        foo = foo if "foo" in locals() else "default"
         # TODO: it's not working now because Toolbox api send wrong "required"
         # optional_str = self.tr(" (Optinonal)") if not self.tool_input.required else ""
         # self.inputName = QLabel(f'{tool_input.title}{optional_str}:')
@@ -200,7 +198,7 @@ class InputLineWidget(QWidget):
         self.vLayout.addWidget(self.inputLine)
         if tool_input.description:
             self.inputDesc = QLabel(
-                self.tr('Description: ') + tool_input.description
+                "<i>" + self.tr('Description: ') + tool_input.description + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
@@ -225,9 +223,10 @@ class InputLineWidget(QWidget):
             self.inputLine.setStyleSheet("background: red;")
             self.valid = False
 
+
 class InputCheckboxWidget(QWidget):
     valid = True
-    def __init__(self, tool_input: Input, parent=None):
+    def __init__(self, tool_input: ToolboxIO, parent=None):
         self.parent = parent
         QWidget.__init__(self)
 
@@ -283,11 +282,11 @@ class InputsDialog(QDialog):
         self.input_widgets = []
         for input in inputs:
             input_widget_class = {
-                NgInputFilename: InputLayerFileWidget,
+                ToolboxIOFilename: InputLayerFileWidget,
                 int: InputLineWidget,
                 float: InputLineWidget,
                 str: InputLineWidget,
-                bool: InputLineWidget,
+                bool: InputCheckboxWidget,
             }[input.type_]
             input_widget = input_widget_class(input, parent=self)
             self.scrollLayout.addWidget(input_widget)
@@ -332,7 +331,7 @@ class InputsDialog(QDialog):
                     loaded_zip = self.toolbox.upload_file(
                         input_widget.fileLineEdit.text()
                     )
-                except NgToolgboxConnError:
+                except ToolboxConnError:
                     self.iface.messageBar().pushMessage(
                         "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
                     )
@@ -373,7 +372,7 @@ class InputsDialog(QDialog):
                         self.wait_res = True
                         self.task_id = resp["task_id"]
                     self.accept()
-            except NgToolgboxConnError:
+            except ToolboxConnError:
                 self.iface.messageBar().pushMessage(
                     "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
                 )

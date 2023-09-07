@@ -21,28 +21,30 @@
  ***************************************************************************/
 """
 
-import os
 import json
+import os
 import traceback
 from time import sleep
 
-from qgis.core import Qgis, QgsMessageLog, QgsApplication, QgsTask
-
+from qgis.core import Qgis, QgsApplication, QgsMessageLog, QgsTask
+from qgis.PyQt.QtCore import QObject, Qt, QThread, pyqtSignal
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtCore import Qt, QObject, QThread, pyqtSignal
-from qgis.PyQt.uic import loadUiType
 from qgis.PyQt.QtWidgets import (
-    QMainWindow,
+    QApplication,
     QDockWidget,
-    QTreeWidgetItem,
+    QMainWindow,
     QMessageBox,
+    QProgressBar,
     QTableWidgetItem,
     QTableWidgetSelectionRange,
+    QTreeWidgetItem,
 )
+from qgis.PyQt.uic import loadUiType
 
-from .NgToolbox import NgToolbox, Results, ToolboxConnError
-from .ResultsDialog import ResultsDialog
 from .InputsDialog import InputsDialog
+from .NgPluginProviger import NgPluginProvider
+from .NgToolbox import Results, Toolbox, ToolboxConnError
+from .ResultsDialog import ResultsDialog
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
@@ -52,6 +54,7 @@ USER_DATA_JSON = os.path.join(PLUGIN_DIR, "user_data.json")
 if not os.path.exists(USER_DATA_JSON):
     with open(USER_DATA_JSON, "w+") as f:
         f.write('{"token": null, "history": [], "refresh": 0}')
+
 
 class AutorefreshTasks(QObject):
     need_update = pyqtSignal()
@@ -88,21 +91,37 @@ class ToolboxDockWidget(QDockWidget):
     def closeEvent(self, event):
         self.window_closed.emit()
 
+    def unload_proc(self):
+        self.inner_control.remove_processing()
+
 
 class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
     waited_tasks = {}
+    provider = None
 
     def __init__(self, iface, parent=None):
         super(NgToolboxWindow, self).__init__(parent)
         self.setupUi(self)
         self.iface = iface
+
+        progressMessageBar = iface.messageBar().createMessage(
+            self.tr("Loading Toolbox...")
+        )
+        progress = QProgressBar()
+        progress.setMaximum(0)
+        progress.setMinimum(0)
+        progress.setValue(0)
+        progressMessageBar.layout().addWidget(progress)
+        iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
+        QApplication.processEvents()
         try:
-            self.toolbox = NgToolbox(QgsApplication.instance().locale())
+            self.toolbox = Toolbox(QgsApplication.instance().locale())
         except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )
             raise
+        iface.messageBar().clearWidgets()
 
         with open(USER_DATA_JSON) as f:
             self.user_data = json.load(f)
@@ -171,7 +190,9 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             else:
                 self.treeWidget.addTopLevelItem(item)
 
-        add_item(self.tr("All"), [tool["id"] for tool in self.toolbox.tools], "!!")  # here it is !!
+        add_item(
+            self.tr("All"), [tool["id"] for tool in self.toolbox.tools], "!!"
+        )  # here it is !!
         if self.user_data["history"]:
             add_item(self.tr("Favorites"), self.user_data["history"], "!")  # and here !
 
@@ -180,9 +201,30 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         if filter:
             self.treeWidget.expandAll()
 
+    def init_processing(self):
+        progressMessageBar = self.iface.messageBar().createMessage(
+            self.tr("Loading processing algorithms...")
+        )
+        progress = QProgressBar()
+        progress.setMaximum(0)
+        progress.setMinimum(0)
+        progress.setValue(0)
+        progressMessageBar.layout().addWidget(progress)
+        self.iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
+        QApplication.processEvents()
+        self.provider = NgPluginProvider(self.toolbox)
+        QgsApplication.processingRegistry().addProvider(self.provider)
+        self.iface.messageBar().clearWidgets()
+
+    def remove_processing(self):
+        if self.provider:
+            QgsApplication.processingRegistry().removeProvider(self.provider)
+        self.provider = None
+
     def set_token(self, first_run=False):
         token = self.tokenEdit.text()
         try:
+            self.remove_processing()
             self.toolbox.set_current_user(token)
             self.tokenEdit.setStyleSheet("background: transparent;")
             if not first_run:
@@ -207,6 +249,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         else:
             self.build_orders_table()
             self.refreshButton.setEnabled(True)
+            self.init_processing()
         finally:
             self.save_user_data(self.saveTokenCheckBox.isChecked())
 
@@ -332,7 +375,9 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
                     resp = self.toolbox.orders_man.get_status(task_id)
                 except ToolboxConnError:
                     self.iface.messageBar().pushMessage(
-                        "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
+                        "NextGis Toolbox",
+                        self.tr("Connection error!"),
+                        level=Qgis.Critical,
                     )
                     raise
                 status = resp["state"]
@@ -384,7 +429,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
                 for tool in self.toolbox.tools
                 if tool["operation_id"] == tool_id
             ][0]
-            if not tool_inx in self.user_data["history"]:
+            if tool_inx not in self.user_data["history"]:
                 self.user_data["history"].append(tool_inx)
                 while len(self.user_data["history"]) > 10:
                     del self.user_data["history"][0]
@@ -429,4 +474,4 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )
             return
-        QMessageBox.about(self, None, self.tr("Order error: ")+status['error'])
+        QMessageBox.about(self, None, self.tr("Order error: ") + str(status["error"]))

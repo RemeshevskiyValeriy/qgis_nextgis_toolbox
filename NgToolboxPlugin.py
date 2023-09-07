@@ -21,14 +21,14 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMessageBox, QDockWidget
-
-
-from .resources import *
-from .NgToolboxWindow import ToolboxDockWidget
 import os.path
+
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMessageBox
+
+from .NgToolboxWindow import ToolboxDockWidget
+from .resources import *  # noqa: F401, F403
 
 
 class NgToolbox:
@@ -184,6 +184,7 @@ class NgToolbox:
             self.iface.removePluginMenu(self.tr("&NextGIS Toolbox plugin"), action)
             self.iface.removeToolBarIcon(action)
         if self.dockWidget:
+            self.dockWidget.unload_proc()
             self.dockWidget.close()
 
     def set_unchecked(self):
@@ -192,21 +193,27 @@ class NgToolbox:
     def run(self):
         """Run method that performs all the real work"""
 
-        if self.first_start == True and self.showAction.isChecked():
+        if self.first_start and self.showAction.isChecked():
             self.first_start = False
             try:
                 self.dockWidget = ToolboxDockWidget(self.iface, self.iface.mainWindow())
                 self.dockWidget.window_closed.connect(self.set_unchecked)
             except Exception:
-                QMessageBox.about(None, None, self.tr("Error loading NextGIS Toolbox plugin!"))
+                QMessageBox.about(
+                    None, None, self.tr("Error loading NextGIS Toolbox plugin!")
+                )
                 self.showAction.setChecked(False)
                 self.first_start = True
                 return
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockWidget)
             self.iface.mainWindow().tabifyDockWidget(
-                [dock for dock in self.iface.mainWindow().findChildren(QDockWidget)
-                 if self.iface.mainWindow().dockWidgetArea(dock) == Qt.LeftDockWidgetArea][0],
-                self.dockWidget
+                [
+                    dock
+                    for dock in self.iface.mainWindow().findChildren(QDockWidget)
+                    if self.iface.mainWindow().dockWidgetArea(dock)
+                    == Qt.LeftDockWidgetArea
+                ][0],
+                self.dockWidget,
             )
         elif not self.dockWidget:
             return

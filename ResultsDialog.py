@@ -25,22 +25,20 @@ import os
 import traceback
 
 from qgis.core import Qgis, QgsMessageLog
-
-from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtCore import Qt, QUrl
-from qgis.PyQt.uic import loadUiType
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtWidgets import (
+    QApplication,
     QDialog,
-    QPushButton,
     QFileDialog,
     QMessageBox,
-    QTableWidgetItem,
     QProgressDialog,
-    QApplication,
+    QPushButton,
+    QTableWidgetItem,
 )
+from qgis.PyQt.uic import loadUiType
 
-from .NgToolbox import NgToolbox, Results, ToolboxConnError, API_URL
-
+from .NgToolbox import API_URL, Results, Toolbox, ToolboxConnError
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
@@ -48,7 +46,7 @@ RESULTS_FORM_CLASS, _ = loadUiType(os.path.join(PLUGIN_DIR, "ResultsDialog.ui"))
 
 
 class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
-    def __init__(self, results: Results, toolbox: NgToolbox, parent=None):
+    def __init__(self, results: Results, toolbox: Toolbox, parent=None):
         super(ResultsDialog, self).__init__(parent)
         self.setupUi(self)
 
@@ -86,7 +84,7 @@ class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
         progress.setValue(0)
         QApplication.processEvents()
         try:
-            result = self.toolbox.orders_man.download_file(link, res_dir)
+            _ = self.toolbox.orders_man.download_file(link, res_dir)
             # QDesktopServices.openUrl(QUrl.fromLocalFile(result))
             QDesktopServices.openUrl(QUrl.fromLocalFile(res_dir))
         except ToolboxConnError:

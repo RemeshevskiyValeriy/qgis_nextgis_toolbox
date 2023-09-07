@@ -22,39 +22,37 @@
 """
 
 import os
-import uuid
 import traceback
+import uuid
 from zipfile import ZipFile
 
 from qgis.core import (
     Qgis,
-    QgsMessageLog,
-    QgsVectorFileWriter,
     QgsMapLayerProxyModel,
+    QgsMessageLog,
     QgsProcessingUtils,
+    QgsVectorFileWriter,
 )
 from qgis.gui import QgsMapLayerComboBox
-
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
-    QDialog,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QFileDialog,
-    QLineEdit,
-    QScrollArea,
-    QDialogButtonBox,
-    QProgressDialog,
     QApplication,
-    QMessageBox,
     QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QFileDialog,
+    QHBoxLayout,
     QLabel,
+    QLineEdit,
+    QMessageBox,
+    QProgressDialog,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
 
-from .NgToolbox import ToolboxIOFilename, ToolboxIO, ToolboxConnError
-
+from .NgToolbox import ToolboxConnError, ToolboxIO, ToolboxIOFilename
 
 TEMP_FOLDER = QgsProcessingUtils.tempFolder()
 
@@ -104,7 +102,7 @@ class InputLayerFileWidget(QWidget):
         self.vLayout.addWidget(self.fileBrowserWidget)
         if tool_input.description:
             self.inputDesc = QLabel(
-                "<i>" + self.tr('Description: ') + tool_input.description + "</i>"
+                "<i>" + self.tr("Description: ") + tool_input.description + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
@@ -176,7 +174,7 @@ class InputLineWidget(QWidget):
         types_names = {
             str: self.tr("String"),
             float: self.tr("Float"),
-            int: self.tr("Integer")
+            int: self.tr("Integer"),
         }
 
         self.tool_input = tool_input
@@ -198,7 +196,7 @@ class InputLineWidget(QWidget):
         self.vLayout.addWidget(self.inputLine)
         if tool_input.description:
             self.inputDesc = QLabel(
-                "<i>" + self.tr('Description: ') + tool_input.description + "</i>"
+                "<i>" + self.tr("Description: ") + tool_input.description + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
@@ -226,6 +224,7 @@ class InputLineWidget(QWidget):
 
 class InputCheckboxWidget(QWidget):
     valid = True
+
     def __init__(self, tool_input: ToolboxIO, parent=None):
         self.parent = parent
         QWidget.__init__(self)
@@ -243,15 +242,14 @@ class InputCheckboxWidget(QWidget):
         self.vLayout.addWidget(self.inputCheckBox)
         if tool_input.description:
             self.inputDesc = QLabel(
-                "<i>" + self.tr('Description: ') + tool_input.description + "</i>"
+                "<i>" + self.tr("Description: ") + tool_input.description + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
         self.setLayout(self.vLayout)
 
         self.inputCheckBox.stateChanged.connect(self.set_input)
-        self.tool_input.value = ''
-
+        self.tool_input.value = ""
 
     def set_input(self, state):
         self.tool_input.value = self.tool_input.type_(state)
@@ -275,7 +273,7 @@ class InputsDialog(QDialog):
         self.scrollAreaContent.setLayout(self.scrollLayout)
 
         self.scrollArea = QScrollArea()
-        self.scrollArea.setHorizontalScrollBarPolicy(1)  #  1 - always off
+        self.scrollArea.setHorizontalScrollBarPolicy(1)  # 1 - always off
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setWidget(self.scrollAreaContent)
 
@@ -314,7 +312,8 @@ class InputsDialog(QDialog):
             return False
         for input_widget in self.input_widgets:
             # TODO: it's not working now because Toolbox api send wrong "required"
-            # if not input_widget.tool_input.value and not input_widget.tool_input.required:
+            # if (not input_widget.tool_input.value
+            #   and not input_widget.tool_input.required):
             if (
                 isinstance(input_widget, InputLineWidget)
                 and not input_widget.tool_input.value
@@ -333,7 +332,9 @@ class InputsDialog(QDialog):
                     )
                 except ToolboxConnError:
                     self.iface.messageBar().pushMessage(
-                        "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
+                        "NextGis Toolbox",
+                        self.tr("Connection error!"),
+                        level=Qgis.Critical,
                     )
                     return False
                 except Exception:

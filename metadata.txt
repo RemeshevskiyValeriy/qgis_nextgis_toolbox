@@ -1,6 +1,6 @@
 [general]
 name=NextGIS Toolbox Plugin
-qgisMinimumVersion=3.0
+qgisMinimumVersion=3.8
 description=NextGIS Toolbox provider for QGIS
 about=NextGIS Toolbox provider for QGIS. Sends tasks to NextGIS Toolbox server and recieve results. More: https://toolbox.nextgis.com/
 tags=nextgis, web, tool, analysis, processing, webservice
@@ -17,8 +17,12 @@ experimental=False
 deprecated=False
 category=Web
 
-version=0.1.1
+version=0.2.0
 changelog=
+
+	1.0.0
+		* Integrated into Processing
+		* Min QGIS version now - 3.8
 	0.1.2
 		* Update api requests
         * Fix bool input

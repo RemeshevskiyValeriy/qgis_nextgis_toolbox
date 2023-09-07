@@ -160,6 +160,16 @@
         <source>Connection error!</source>
         <translation>Ошибка подключения!</translation>
     </message>
+    <message>
+        <location filename="NgToolboxWindow.py"/>
+        <source>Loading Toolbox...</source>
+        <translation>Загрузка плагина...</translation>
+    </message>
+    <message>
+        <location filename="NgToolboxWindow.py"/>
+        <source>Loading processing algorithms...</source>
+        <translation>Добавление инструментов анализа...</translation>
+    </message>
 </context>
 <context>
     <name>NgToolboxDialogBase</name>
@@ -288,6 +298,67 @@
         <location filename="ResultsDialog.ui"/>
         <source>value</source>
         <translation>Значение</translation>
+    </message>
+</context>
+<context>
+    <name>TestPluginAlgorithm</name>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Error uploading file! Layer: </source>
+        <translation>Ошибка загрузки файла! Слой:</translation>
+    </message>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Connection error!</source>
+        <translation>Ошибка соединения!</translation>
+    </message>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Error executing task:</source>
+        <translation>Ошибка выполнения задания:</translation>
+    </message>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Waiting for results...</source>
+        <translation>Ожидание результатов...</translation>
+    </message>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Waiting for results is canceled! But task still working on NextGIS Toolbox server.</source>
+        <translation>Ожидание результатов остановлено! Задача продолжит выполнение на сервере NextGIS Toolbox.</translation>
+    </message>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Download result: </source>
+        <translation>Загрузка результата: </translation>
+    </message>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Result file destination: </source>
+        <translation>Путь к файлу результата: </translation>
+    </message>
+    <message>
+        <location filename="AlgorithmFactory.py"/>
+        <source>Error loading output layer! File: </source>
+        <translation>Ошибка загрузки слоя результата! Файл: </translation>
+    </message>
+</context>
+<context>
+    <name>NgPluginProvider</name>
+    <message>
+        <location filename="NgPluginProviger.py"/>
+        <source>Error uploading some tools! Check log for details</source>
+        <translation>Ошибка загрузки некоторых инструментов! Подробно об ошибке см. в логах</translation>
+    </message>
+    <message>
+        <location filename="NgPluginProviger.py"/>
+        <source>Other</source>
+        <translation>Другое</translation>
+    </message>
+    <message>
+        <location filename="NgPluginProviger.py"/>
+        <source>Error adding NGToolbox to QGIS processing! Check log for details</source>
+        <translation>Ошибка добавления NGToolbox в инструменты анализа. Подробно об ошибке см. в логах</translation>
     </message>
 </context>
 </TS>

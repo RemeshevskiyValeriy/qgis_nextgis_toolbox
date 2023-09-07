@@ -33,4 +33,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
     from .NgToolboxPlugin import NgToolbox
+
     return NgToolbox(iface)

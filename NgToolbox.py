@@ -22,20 +22,15 @@
 """
 
 import os
-import logging
-import uuid
 import re
+import traceback
+import uuid
 from datetime import datetime
-from typing import List, Dict
+from typing import Dict, List
 
 import requests
 
-
 API_URL = "https://toolbox.nextgis.com/api"
-
-
-logger = logging.getLogger("NgToolbox")
-logging.basicConfig(level=logging.DEBUG)
 
 
 def is_valid_uuid(value):
@@ -47,14 +42,14 @@ def is_valid_uuid(value):
 
 
 class ToolboxConnError(requests.exceptions.ConnectionError):
-    '''Any connection exception'''
+    """Any connection exception"""
 
 
 class ToolboxIOFilename(str):
     def __new__(cls, string):
         if not string[:8] == "storage/" or not is_valid_uuid(string[8:]):
             raise ValueError(
-                "Filename must have format like 'storage/ffd294a7-d1d8-45ff-83d7-472e5e0db91e'"
+                "Filename must have format like 'storage/ffd294a7-d1d8-45ff-83d7-472e5e0db91e'"  # noqa E501
             )
         instance = super().__new__(cls, string.lower())
         return instance
@@ -99,7 +94,7 @@ class ToolboxIO:
 class ToolboxIOs:
     features: List[ToolboxIO]
 
-    def __init__(self, feat_list):
+    def __init__(self, feat_list: List):
         self.features = []
         for feature in feat_list:
             self.features.append(ToolboxIO(feature))
@@ -111,7 +106,7 @@ class ToolboxIOs:
     def __repr__(self) -> str:
         return str(self.features)
 
-    def set_value(self, name, value):
+    def set_value(self, name: str, value):
         for feature in self.features:
             if feature.name == name:
                 feature.set_value(value)
@@ -120,10 +115,12 @@ class ToolboxIOs:
         return {feature.name: feature.value for feature in self}
 
 
-class Inputs(ToolboxIOs): ...
+class Inputs(ToolboxIOs):
+    ...
 
 
-class Outputs(ToolboxIOs): ...
+class Outputs(ToolboxIOs):
+    ...
 
 
 class Result:
@@ -131,7 +128,7 @@ class Result:
     title: str
     value: str
 
-    def __init__(self, res_dict):
+    def __init__(self, res_dict: Dict):
         self.name = res_dict["name"]
         self.title = res_dict["title"]
         self.value = res_dict["value"]
@@ -143,7 +140,7 @@ class Result:
 class Results:
     results: List[Result]
 
-    def __init__(self, res_list):
+    def __init__(self, res_list: List):
         self.results = []
         for res in res_list:
             self.results.append(Result(res))
@@ -159,7 +156,7 @@ class Results:
 class ToolboxToken:
     token: uuid.UUID
 
-    def __init__(self, token) -> None:
+    def __init__(self, token: str):
         self.token = uuid.UUID(token)
 
     def __str__(self):
@@ -173,7 +170,7 @@ class ToolboxToken:
 
 
 class ToolboxOrderInputs:
-    def __init__(self, inputs) -> None:
+    def __init__(self, inputs: Dict):
         for key in inputs:
             setattr(self, key, inputs[key])
 
@@ -185,7 +182,7 @@ class ToolboxOrderParameters:
     operation_name: str
     inputs: ToolboxOrderInputs
 
-    def __init__(self, params) -> None:
+    def __init__(self, params: Dict):
         self.operation_name = params["operation_name"]
         self.inputs = ToolboxOrderInputs(params["inputs"])
 
@@ -203,7 +200,7 @@ class ToolboxOrder:
     output: List[ToolboxIO]
     error: str
 
-    def __init__(self, order) -> None:
+    def __init__(self, order):
         self.id = order["id"]
         self.guid = order["guid"]
         self.created_at = order["created_at"]
@@ -220,7 +217,7 @@ class ToolboxOrdersManager:
     token: ToolboxToken
     orders: List[ToolboxOrder]
 
-    def __init__(self, token) -> None:
+    def __init__(self, token: str):
         self.token = ToolboxToken(token)
         self.orders = self.get_orders()
 
@@ -231,6 +228,7 @@ class ToolboxOrdersManager:
                 return f(*args, **kwargs)
             except requests.ConnectionError as e:
                 raise ToolboxConnError(e)
+
         return deco
 
     @check_conn
@@ -246,19 +244,19 @@ class ToolboxOrdersManager:
         self.orders = self.get_orders()
 
     @check_conn
-    def get_status(self, order_id):
+    def get_status(self, order_id: str):
         url = f"{self.api_url}/json/status/{order_id}/"
         response = requests.get(url, headers=self.token.get_header())
         return response.json()
 
-    def awfull_filename_search(self, header):
+    def awfull_filename_search(self, header: str):
         return [
             i.replace("filename=", "").split("/")[-1]
             for i in header.split(";")
             if "filename=" in i
         ][0].replace('"', "")
 
-    def generate_unique_name(self, name, directory):
+    def generate_unique_name(self, name: str, directory: str):
         clear_name, ext = os.path.splitext(name)
         files = [
             os.path.splitext(fname)[0]
@@ -266,7 +264,7 @@ class ToolboxOrdersManager:
             if os.path.isfile(os.path.join(directory, fname))
             and os.path.splitext(fname)[1] == ext
         ]
-        if re.search("\(\d\)$", clear_name):
+        if re.search(r"\(\d\)$", clear_name):
             clear_name = clear_name[:-3]
 
         new_name = clear_name
@@ -278,13 +276,16 @@ class ToolboxOrdersManager:
         return new_name + ext
 
     @check_conn
-    def download_file(self, url, directory):
-        filename = url.split("/")[-1]
+    def download_file(self, url, directory, filename=None):
         with requests.get(url, headers=self.token.get_header(), stream=True) as r:
             r.raise_for_status()
-            if "Content-Disposition" in r.headers:
-                filename = self.awfull_filename_search(r.headers["Content-Disposition"])
-            filename = self.generate_unique_name(filename, directory)
+            if not filename:
+                directory = url.split("/")[-1]
+                if "Content-Disposition" in r.headers:
+                    filename = self.awfull_filename_search(
+                        r.headers["Content-Disposition"]
+                    )
+                filename = self.generate_unique_name(filename, directory)
             file_path = os.path.join(directory, filename)
 
             with open(file_path, "wb") as f:
@@ -301,14 +302,14 @@ class ToolboxOrdersManager:
             self.download_file(res.value, directory)
 
 
-class NgToolbox:
+class Toolbox:
     api_url: str = API_URL
     tools: List
     tags: List
     orders_man: ToolboxOrdersManager
     token: ToolboxToken
 
-    def __init__(self, locale="en") -> None:
+    def __init__(self, locale="en"):
         if locale == "ru":
             self.locale = locale
         else:
@@ -325,6 +326,7 @@ class NgToolbox:
                 return f(*args, **kwargs)
             except requests.ConnectionError as e:
                 raise ToolboxConnError(e)
+
         return deco
 
     def set_current_user(self, token):
@@ -336,7 +338,7 @@ class NgToolbox:
         self.token = None
         self.orders_man = None
 
-    def set_locale(self, locale):
+    def set_locale(self, locale: str):
         if locale == "ru":
             self.locale = locale
         else:
@@ -359,42 +361,44 @@ class NgToolbox:
         return tags["data"]
 
     @check_conn
-    def get_tool_inputs(self, tool_id) -> Inputs:
+    def get_tool_inputs(self, tool_id: str) -> Inputs:
         url = f"{self.api_url}/operation/{tool_id}/inputs"
         response = requests.get(url, headers=self.token.get_header())
         response.raise_for_status()
         return Inputs(response.json())
 
     @check_conn
-    def get_tool_outputs(self, tool_id) -> Outputs:
+    def get_tool_outputs(self, tool_id: str) -> Outputs:
         url = f"{self.api_url}/operations/{tool_id}/outputs"
         response = requests.get(url, headers=self.token.get_header())
         response.raise_for_status()
         return Outputs(response.json())
 
     @check_conn
-    def get_all_tools_io(self) -> Dict:
+    def get_toolbox_interface(self) -> Dict:
         url = f"{self.api_url}/operations/interface"
         response = requests.get(url, headers=self.token.get_header())
         response.raise_for_status()
         res = {}
+
+        errors = {}
+
         for tool, io in response.json().items():
             try:
                 res[tool] = {}
                 res[tool]["inputs"] = Inputs(io["inputs"])
                 res[tool]["outputs"] = Outputs(io["outputs"])
             except Exception:
-                logger.warning(f"ERROR! tool: {tool} Exception:")
-                # traceback.print_exc()
+                errors[tool] = traceback.format_exc()
                 if tool in res:
                     del res[tool]
-        return res
+        return res, errors
 
     def refresh_orders(self):
         self.orders_man.update_orders()
 
     @check_conn
-    def upload_file(self, filepath):
+    def upload_file(self, filepath: str):
         url = f"{self.api_url}/upload/"
         with open(filepath, "rb") as f:
             response = requests.post(url, data=f, headers=self.token.get_header())
@@ -402,17 +406,15 @@ class NgToolbox:
         return response.text
 
     @check_conn
-    def create_order(self, tool_id, inputs: ToolboxIOs):
+    def create_order(self, tool_id: str, inputs: ToolboxIOs):
         json_request = {"operation": tool_id, "inputs": inputs.get_values_for_request()}
         url = f"{self.api_url}/json/execute/"
-        print(json_request)
-        logger.debug(json_request)
         response = requests.post(
             url, json=json_request, headers=self.token.get_header()
         )
         response.raise_for_status()
         return response.json()
 
-    def save_results(self, order_id, res_dir):
+    def save_results(self, order_id: str, res_dir: str):
         status = self.orders_man.get_status(order_id)
         self.orders_man.get_results(Results(status["output"]), res_dir)

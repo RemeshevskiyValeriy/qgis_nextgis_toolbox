@@ -1,4 +1,10 @@
 __pycache__
 .vscode
-user_data.json
 .venv
+
+resources.py
+*.qm
+
+qgis_avral.zip
+
+user_data.json

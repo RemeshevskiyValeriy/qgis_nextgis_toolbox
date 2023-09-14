@@ -393,6 +393,30 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             QgsMessageLog.logMessage(err, "NgToolbox", level=Qgis.Warning)
         del self.waited_tasks[task_id]
 
+    def _send_task(self):
+        print("accepted!")
+        if self.inputs_dialog.wait_res:
+            task = QgsTask.fromFunction(
+                f"NextGis Toolbox: {self.inputs_dialog.task_id}",
+                self.waiting_detached,
+                on_finished=self.show_results_,
+                task_id=self.inputs_dialog.task_id,
+            )
+            QgsApplication.taskManager().addTask(task)
+            self.waited_tasks[self.inputs_dialog.task_id] = task
+        self.refresh_orders_table()
+        tool_inx = [
+            tool["id"]
+            for tool in self.toolbox.tools
+            if tool["operation_id"] == self.current_tool_id
+        ][0]
+        if tool_inx not in self.user_data["history"]:
+            self.user_data["history"].append(tool_inx)
+            while len(self.user_data["history"]) > 10:
+                del self.user_data["history"][0]
+            self.create_tree(filter=self.treeFilter.text())
+            self.save_user_data(self.saveTokenCheckBox.isChecked())
+
     def send_task(self, item, column):
         if not self.toolbox.token:
             QMessageBox.about(self, None, self.tr("Please, set the token first."))
@@ -401,40 +425,22 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         if item.childCount() > 0:
             return
 
-        tool_id = item.data(column, 100)
+        self.current_tool_id = item.data(column, 100)
         tool_name = item.text(column)
         try:
-            tool_inputs = self.toolbox.get_tool_inputs(tool_id=tool_id)
+            tool_inputs = self.toolbox.get_tool_inputs(tool_id=self.current_tool_id)
         except ToolboxConnError:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
             )
             return
 
-        inputs_dialog = InputsDialog(tool_id, tool_name, tool_inputs, self.toolbox)
-        accept = inputs_dialog.exec()
-        if accept:
-            if inputs_dialog.wait_res:
-                task = QgsTask.fromFunction(
-                    f"NextGis Toolbox: {inputs_dialog.task_id}",
-                    self.waiting_detached,
-                    on_finished=self.show_results_,
-                    task_id=inputs_dialog.task_id,
-                )
-                QgsApplication.taskManager().addTask(task)
-                self.waited_tasks[inputs_dialog.task_id] = task
-            self.refresh_orders_table()
-            tool_inx = [
-                tool["id"]
-                for tool in self.toolbox.tools
-                if tool["operation_id"] == tool_id
-            ][0]
-            if tool_inx not in self.user_data["history"]:
-                self.user_data["history"].append(tool_inx)
-                while len(self.user_data["history"]) > 10:
-                    del self.user_data["history"][0]
-                self.create_tree(filter=self.treeFilter.text())
-                self.save_user_data(self.saveTokenCheckBox.isChecked())
+        self.inputs_dialog = InputsDialog(
+            self.current_tool_id, tool_name, tool_inputs, self.toolbox
+        )
+        self.inputs_dialog.accepted.connect(self._send_task)
+        # accept = inputs_dialog.exec()
+        self.inputs_dialog.show()
 
     def show_results(self):
         row = self.tableWidget.currentRow()

@@ -214,7 +214,7 @@ class InputLineWidget(QWidget):
             return
         try:
             self.tool_input.value = self.tool_input.type_(text)
-            self.inputLine.setText(self.tool_input.value)
+            self.inputLine.setText(text)
             self.inputLine.setStyleSheet("background: transparent;")
             self.valid = True
         except ValueError:

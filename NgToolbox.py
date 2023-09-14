@@ -280,7 +280,7 @@ class ToolboxOrdersManager:
         with requests.get(url, headers=self.token.get_header(), stream=True) as r:
             r.raise_for_status()
             if not filename:
-                directory = url.split("/")[-1]
+                filename = url.split("/")[-1]
                 if "Content-Disposition" in r.headers:
                     filename = self.awfull_filename_search(
                         r.headers["Content-Disposition"]

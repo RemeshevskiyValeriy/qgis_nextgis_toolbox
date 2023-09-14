@@ -1,8 +1,9 @@
 [general]
 name=NextGIS Toolbox Plugin
 qgisMinimumVersion=3.8
-description=NextGIS Toolbox provider for QGIS
+description[ru]=NextGIS Toolbox провайдер для QGIS
 about=NextGIS Toolbox provider for QGIS. Sends tasks to NextGIS Toolbox server and recieve results. More: https://toolbox.nextgis.com/
+about[ru]=NextGIS Toolbox провайдер для QGIS. Отправляет задачи в NextGIS Toolbox и обрабатывает результаты. Описание: https://toolbox.nextgis.com/
 tags=nextgis, web, tool, analysis, processing, webservice
 
 author=NextGIS
@@ -19,13 +20,34 @@ category=Web
 
 version=0.2.0
 changelog=
-
+	1.0.1
+		* Fix bugs with inputs and result file saving
+		* Made task form window non modal
 	1.0.0
 		* Integrated into Processing
 		* Min QGIS version now - 3.8
 	0.1.2
 		* Update api requests
         * Fix bool input
+	0.1.1
+		* Fix bug with unknown tools when building orders table
+        * Fix main window appearance - window area align, checked/unchecked plugin button when closed with x button
+		* Catch connection errors
+	0.1.0
+		* Init
+		* Fix detached processes: await for results and autorefresh
+        * Wrap plugin in dock widget
+
+changelog[ru]=
+	1.0.1
+		* Исправлены ошибки ввода численных входных параметров и сохранения резульатов
+		* Окно ввода входных параметров больше не блокириует интерфейс
+	1.0.0
+		* Интеграция в Инструменты анализа
+		* Минимальная версия QGIS теперь - 3.8
+	0.1.2
+		* Обновлены запросы к api
+        * Исправлены булевы входные значения
 	0.1.1
 		* Fix bug with unknown tools when building orders table
         * Fix main window appearance - window area align, checked/unchecked plugin button when closed with x button

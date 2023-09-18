@@ -18,7 +18,7 @@ experimental=False
 deprecated=False
 category=Web
 
-version=0.2.0
+version=1.0.1
 changelog=
 	1.0.1
 		* Fix bugs with inputs and result file saving

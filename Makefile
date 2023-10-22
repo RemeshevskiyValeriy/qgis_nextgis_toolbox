@@ -8,11 +8,13 @@ PY_FILES = \
 	NgToolbox.py \
 	NgToolboxPlugin.py \
 	NgToolboxWindow.py \
-	ResultsDialog.py
+	ResultsDialog.py \
+	about_dialog.py
 
 UI_FILES = \
 	NgToolboxWindow.ui \
-	ResultsDialog.ui
+	ResultsDialog.ui \
+	about_dialog_base.ui
 
 EXTRAS = metadata.txt icon.png LICENSE
 
@@ -37,6 +39,8 @@ zip: compile
 	cd .temp && zip -r ../$(PLUGINNAME).zip $(PLUGINNAME)/*
 	rm -rf .temp
 
+clean_qm:
+	rm i18n/*.qm
 
 # upload: zip
 # 	@echo

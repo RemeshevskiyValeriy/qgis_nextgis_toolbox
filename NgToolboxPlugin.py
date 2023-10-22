@@ -29,6 +29,7 @@ from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMessageBox
 
 from .NgToolboxWindow import ToolboxDockWidget
 from .resources import *  # noqa: F401, F403
+from .about_dialog import AboutDialog
 
 
 class NgToolbox:
@@ -133,10 +134,11 @@ class NgToolbox:
             added to self.actions list.
         :rtype: QAction
         """
-
-        icon = QIcon(icon_path)
-        action = QAction(icon, text, parent)
-        action.triggered.connect(callback)
+        if icon_path:
+            icon = QIcon(icon_path)
+            action = QAction(icon, text, parent)
+        else:
+            action = QAction(text, parent)
         action.setEnabled(enabled_flag)
         action.setCheckable(checkable)
         if checkable:
@@ -175,6 +177,15 @@ class NgToolbox:
             callback=self.run,
             parent=self.iface.mainWindow(),
         )
+        self.actionAbout = self.add_action(
+            icon_path=None,
+            text=self.tr("About"),
+            add_to_toolbar=False,
+            checkable=False,
+            is_checked=False,
+            callback=self.about,
+            parent=self.iface.mainWindow(),
+        )
 
         self.first_start = True
 
@@ -183,12 +194,17 @@ class NgToolbox:
         for action in self.actions:
             self.iface.removePluginMenu(self.tr("&NextGIS Toolbox plugin"), action)
             self.iface.removeToolBarIcon(action)
+            action.deleteLater()
         if self.dockWidget:
             self.dockWidget.unload_proc()
             self.dockWidget.close()
 
     def set_unchecked(self):
         self.showAction.setChecked(False)
+
+    def about(self):
+        dialog = AboutDialog(os.path.basename(self.plugin_dir))
+        dialog.exec_()
 
     def run(self):
         """Run method that performs all the real work"""

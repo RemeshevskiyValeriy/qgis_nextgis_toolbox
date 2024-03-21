@@ -233,7 +233,7 @@ class ToolboxOrdersManager:
 
     @check_conn
     def get_orders(self):
-        url = f"{self.api_url}/orders/"
+        url = f"{self.api_url}/orders"
         header = self.token.get_header()
         header["Accept"] = "application/json"
         response = requests.get(url, headers=header)

@@ -1,6 +1,7 @@
 [general]
 name=NextGIS Toolbox Plugin
 qgisMinimumVersion=3.8
+description=NextGIS Toolbox provider for QGIS
 description[ru]=NextGIS Toolbox провайдер для QGIS
 about=NextGIS Toolbox provider for QGIS. Sends tasks to NextGIS Toolbox server and recieve results. More: https://toolbox.nextgis.com/
 about[ru]=NextGIS Toolbox провайдер для QGIS. Отправляет задачи в NextGIS Toolbox и обрабатывает результаты. Описание: https://toolbox.nextgis.com/
@@ -12,6 +13,8 @@ email=info@nextgis.com
 homepage=https://gitlab.com/nextgis_private/toolbox/infrastructure/qgis_avral
 tracker=https://gitlab.com/nextgis_private/toolbox/infrastructure/qgis_avral/-/issues
 repository=https://gitlab.com/nextgis_private/toolbox/infrastructure/qgis_avral
+video=Not yet
+video[ru]=Пока нет
 
 icon=icon.png
 experimental=False

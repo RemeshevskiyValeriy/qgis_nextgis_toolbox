@@ -29,7 +29,7 @@ from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMessageBox
 
 from .NgToolboxWindow import ToolboxDockWidget
 from .resources import *  # noqa: F401, F403
-from .about_dialog import AboutDialog
+from .AboutDialog import AboutDialog
 
 
 class NgToolbox:

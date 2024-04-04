@@ -9,12 +9,12 @@ PY_FILES = \
 	NgToolboxPlugin.py \
 	NgToolboxWindow.py \
 	ResultsDialog.py \
-	about_dialog.py
+	AboutDialog.py
 
 UI_FILES = \
 	NgToolboxWindow.ui \
 	ResultsDialog.ui \
-	about_dialog_base.ui
+	AboutDialogBase.ui
 
 EXTRAS = metadata.txt icon.png LICENSE
 

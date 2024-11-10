@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/plugins/NextGIS Toolbox plugin" >
-        <file>icon.png</file>
+    <qresource prefix="plugins/nextgis_toolbox">
+        <file>icons/icon.png</file>
     </qresource>
 </RCC>

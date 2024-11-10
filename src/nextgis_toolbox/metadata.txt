@@ -16,7 +16,7 @@ repository=https://gitlab.com/nextgis_private/toolbox/infrastructure/qgis_avral
 video=Not yet
 video[ru]=Пока нет
 
-icon=icon.png
+icon=icons/icon.png
 experimental=False
 deprecated=False
 category=Web

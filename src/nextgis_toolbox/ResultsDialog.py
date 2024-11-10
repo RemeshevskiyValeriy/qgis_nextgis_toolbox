@@ -42,7 +42,7 @@ from .NgToolbox import API_URL, Results, Toolbox, ToolboxConnError
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
-RESULTS_FORM_CLASS, _ = loadUiType(os.path.join(PLUGIN_DIR, "ResultsDialog.ui"))
+RESULTS_FORM_CLASS, _ = loadUiType(os.path.join(PLUGIN_DIR, "ui/ResultsDialog.ui"))
 
 
 class ResultsDialog(QDialog, RESULTS_FORM_CLASS):

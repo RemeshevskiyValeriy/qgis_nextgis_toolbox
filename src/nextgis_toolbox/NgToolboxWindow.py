@@ -48,7 +48,7 @@ from .ResultsDialog import ResultsDialog
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
-MAIN_FORM_CLASS, _ = loadUiType(os.path.join(PLUGIN_DIR, "NgToolboxWindow.ui"))
+MAIN_FORM_CLASS, _ = loadUiType(os.path.join(PLUGIN_DIR, "ui/NgToolboxWindow.ui"))
 
 USER_DATA_JSON = os.path.join(PLUGIN_DIR, "user_data.json")
 if not os.path.exists(USER_DATA_JSON):

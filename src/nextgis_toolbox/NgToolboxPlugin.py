@@ -168,7 +168,7 @@ class NgToolbox:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ":/plugins/NextGIS Toolbox plugin/icon.png"
+        icon_path = ":/plugins/nextgis_toolbox/icons/icon.png"
         self.showAction = self.add_action(
             icon_path,
             text=self.tr("NextGIS Toolbox"),

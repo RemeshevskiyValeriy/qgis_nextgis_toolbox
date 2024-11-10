@@ -42,7 +42,9 @@ from .NgToolbox import API_URL, Results, Toolbox, ToolboxConnError
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
-RESULTS_FORM_CLASS, _ = loadUiType(os.path.join(PLUGIN_DIR, "ui/ResultsDialog.ui"))
+RESULTS_FORM_CLASS, _ = loadUiType(
+    os.path.join(PLUGIN_DIR, "ui/ResultsDialog.ui")
+)
 
 
 class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
@@ -78,7 +80,9 @@ class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
         if not res_dir:
             return
 
-        progress = QProgressDialog(self.tr("Downloading results..."), None, 0, 0, self)
+        progress = QProgressDialog(
+            self.tr("Downloading results..."), None, 0, 0, self
+        )
         progress.setWindowModality(Qt.WindowModal)
         progress.show()
         progress.setValue(0)
@@ -89,11 +93,15 @@ class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
             QDesktopServices.openUrl(QUrl.fromLocalFile(res_dir))
         except ToolboxConnError:
             self.iface.messageBar().pushMessage(
-                "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
+                "NextGis Toolbox",
+                self.tr("Connection error!"),
+                level=Qgis.Critical,
             )
         except Exception:
             err = traceback.format_exc()
-            QMessageBox.about(self, None, self.tr("Error downloading result file."))
+            QMessageBox.about(
+                self, None, self.tr("Error downloading result file.")
+            )
             QgsMessageLog.logMessage(err, "NgToolbox", level=Qgis.Warning)
         finally:
             progress.cancel()

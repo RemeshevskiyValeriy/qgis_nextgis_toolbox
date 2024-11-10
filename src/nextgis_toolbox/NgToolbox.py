@@ -115,12 +115,10 @@ class ToolboxIOs:
         return {feature.name: feature.value for feature in self}
 
 
-class Inputs(ToolboxIOs):
-    ...
+class Inputs(ToolboxIOs): ...
 
 
-class Outputs(ToolboxIOs):
-    ...
+class Outputs(ToolboxIOs): ...
 
 
 class Result:
@@ -277,7 +275,9 @@ class ToolboxOrdersManager:
 
     @check_conn
     def download_file(self, url, directory, filename=None):
-        with requests.get(url, headers=self.token.get_header(), stream=True) as r:
+        with requests.get(
+            url, headers=self.token.get_header(), stream=True
+        ) as r:
             r.raise_for_status()
             if not filename:
                 filename = url.split("/")[-1]
@@ -401,13 +401,18 @@ class Toolbox:
     def upload_file(self, filepath: str):
         url = f"{self.api_url}/upload/"
         with open(filepath, "rb") as f:
-            response = requests.post(url, data=f, headers=self.token.get_header())
+            response = requests.post(
+                url, data=f, headers=self.token.get_header()
+            )
         response.raise_for_status()
         return response.text
 
     @check_conn
     def create_order(self, tool_id: str, inputs: ToolboxIOs):
-        json_request = {"operation": tool_id, "inputs": inputs.get_values_for_request()}
+        json_request = {
+            "operation": tool_id,
+            "inputs": inputs.get_values_for_request(),
+        }
         url = f"{self.api_url}/json/execute/"
         response = requests.post(
             url, json=json_request, headers=self.token.get_header()

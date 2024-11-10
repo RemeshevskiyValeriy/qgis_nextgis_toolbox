@@ -77,28 +77,28 @@ def inp_selector(
                 name,
                 description,
                 [QgsProcessing.TypeVectorAnyGeometry],
-                optional=True
+                optional=True,
                 # optional=not required
             )
         elif extension in RASTER_EXT:
             return QgsProcessingParameterRasterLayer(
                 name,
                 description,
-                optional=True
+                optional=True,
                 # optional=not required
             )
         else:
             return QgsProcessingParameterFile(
                 name,
                 description,
-                optional=True
+                optional=True,
                 # optional=not required
             )
     elif type_ == bool:
         return QgsProcessingParameterBoolean(
             name,
             description,
-            optional=True
+            optional=True,
             # optional=not required
         )
     elif type_ == int:
@@ -106,7 +106,7 @@ def inp_selector(
             name,
             description,
             type=0,
-            optional=True
+            optional=True,
             # optional=not required
         )
     elif type_ == float:
@@ -114,14 +114,14 @@ def inp_selector(
             name,
             description,
             type=1,
-            optional=True
+            optional=True,
             # optional=not required
         )
     elif type_ == str:
         return QgsProcessingParameterString(
             name,
             description,
-            optional=True
+            optional=True,
             # optional=not required
         )
 
@@ -187,7 +187,8 @@ def algorithm_class_factory(
             except Exception:
                 e = traceback.format_exc()
                 iface.messageBar().pushMessage(
-                    self.tr("Error uploading file! Layer: "), level=Qgis.Critical
+                    self.tr("Error uploading file! Layer: "),
+                    level=Qgis.Critical,
                 )
                 QgsMessageLog.logMessage(
                     f"Error uploading file! Exception: {e}",
@@ -212,10 +213,14 @@ def algorithm_class_factory(
                 }[inp.type_](parameters, inp.name, context)
             else:
                 if inp.extension in VECTOR_EXT:
-                    lyr = self.parameterAsVectorLayer(parameters, inp.name, context)
+                    lyr = self.parameterAsVectorLayer(
+                        parameters, inp.name, context
+                    )
                     parameter = self.uploadToToolbox(lyr, inp.extension)
                 elif inp.extension in RASTER_EXT:
-                    lyr = self.parameterAsRasterLayer(parameters, inp.name, context)
+                    lyr = self.parameterAsRasterLayer(
+                        parameters, inp.name, context
+                    )
                     parameter = self.uploadToToolbox(lyr, inp.extension)
                 else:
                     src = self.parameterAsFile(parameters, inp.name, context)
@@ -256,11 +261,16 @@ def algorithm_class_factory(
                                 out.name, desc, optional=True
                             )
                         )
-                        self.addOutput(QgsProcessingOutputRasterLayer(out.name, desc))
+                        self.addOutput(
+                            QgsProcessingOutputRasterLayer(out.name, desc)
+                        )
                     else:
                         self.addParameter(
                             QgsProcessingParameterFileDestination(
-                                out.name, desc, f"(*.{out.extension})", optional=True
+                                out.name,
+                                desc,
+                                f"(*.{out.extension})",
+                                optional=True,
                             )
                         )
                         self.addOutput(QgsProcessingOutputFile(out.name, desc))
@@ -274,7 +284,10 @@ def algorithm_class_factory(
             out_files = {}
             for out in self.outs:
                 if out.type_ == ToolboxIOFilename:
-                    if out.extension and out.extension in VECTOR_EXT + RASTER_EXT:
+                    if (
+                        out.extension
+                        and out.extension in VECTOR_EXT + RASTER_EXT
+                    ):
                         out_files[out.name] = self.parameterAsOutputLayer(
                             parameters, out.name, context
                         )
@@ -322,9 +335,14 @@ def algorithm_class_factory(
                 results[res["name"]] = res["value"]
                 if res["name"] in out_files:
                     d, f = os.path.split(out_files[res["name"]])
-                    feedback.pushInfo(self.tr("Download result: " + res["name"]))
                     feedback.pushInfo(
-                        self.tr("Result file destination: " + out_files[res["name"]])
+                        self.tr("Download result: " + res["name"])
+                    )
+                    feedback.pushInfo(
+                        self.tr(
+                            "Result file destination: "
+                            + out_files[res["name"]]
+                        )
                     )
 
                     results[res["name"]] = self.tb.orders_man.download_file(

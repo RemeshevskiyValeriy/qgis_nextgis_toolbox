@@ -21,6 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+
 import os.path
 
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
@@ -192,7 +193,9 @@ class NgToolbox:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr("&NextGIS Toolbox plugin"), action)
+            self.iface.removePluginMenu(
+                self.tr("&NextGIS Toolbox plugin"), action
+            )
             self.iface.removeToolBarIcon(action)
             action.deleteLater()
         if self.dockWidget:
@@ -212,11 +215,15 @@ class NgToolbox:
         if self.first_start and self.showAction.isChecked():
             self.first_start = False
             try:
-                self.dockWidget = ToolboxDockWidget(self.iface, self.iface.mainWindow())
+                self.dockWidget = ToolboxDockWidget(
+                    self.iface, self.iface.mainWindow()
+                )
                 self.dockWidget.window_closed.connect(self.set_unchecked)
             except Exception:
                 QMessageBox.about(
-                    None, None, self.tr("Error loading NextGIS Toolbox plugin!")
+                    None,
+                    None,
+                    self.tr("Error loading NextGIS Toolbox plugin!"),
                 )
                 self.showAction.setChecked(False)
                 self.first_start = True
@@ -225,7 +232,9 @@ class NgToolbox:
             self.iface.mainWindow().tabifyDockWidget(
                 [
                     dock
-                    for dock in self.iface.mainWindow().findChildren(QDockWidget)
+                    for dock in self.iface.mainWindow().findChildren(
+                        QDockWidget
+                    )
                     if self.iface.mainWindow().dockWidgetArea(dock)
                     == Qt.LeftDockWidgetArea
                 ][0],

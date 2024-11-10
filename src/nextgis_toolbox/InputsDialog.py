@@ -78,7 +78,9 @@ class InputLayerFileWidget(QWidget):
         self.fileLineEdit = QLineEdit(self.fileBrowserWidget)
         self.fileLineEdit.setPlaceholderText(self.tr("Select file"))
         self.fileBrowserHLayout.addWidget(self.fileLineEdit)
-        self.fileSelectionButton = QPushButton("\u2026", self.fileBrowserWidget)
+        self.fileSelectionButton = QPushButton(
+            "\u2026", self.fileBrowserWidget
+        )
         self.fileSelectionButton.setMaximumWidth(30)
         self.fileBrowserHLayout.addWidget(self.fileSelectionButton)
         self.fileBrowserHLayout.addWidget(QLabel(self.tr("Layer to zip:")))
@@ -88,7 +90,9 @@ class InputLayerFileWidget(QWidget):
         self.layerCombo.setCurrentIndex(0)
         self.layerCombo.setMinimumWidth(70)
         self.fileBrowserHLayout.addWidget(self.layerCombo)
-        self.layerSelectionButton = QPushButton(self.tr("Pack"), self.fileBrowserWidget)
+        self.layerSelectionButton = QPushButton(
+            self.tr("Pack"), self.fileBrowserWidget
+        )
         self.layerSelectionButton.setEnabled(False)
         # self.layerSelectionButton.setMaximumWidth(65)
         self.fileBrowserHLayout.addWidget(self.layerSelectionButton)
@@ -102,7 +106,10 @@ class InputLayerFileWidget(QWidget):
         self.vLayout.addWidget(self.fileBrowserWidget)
         if tool_input.description:
             self.inputDesc = QLabel(
-                "<i>" + self.tr("Description: ") + tool_input.description + "</i>"
+                "<i>"
+                + self.tr("Description: ")
+                + tool_input.description
+                + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
@@ -119,7 +126,9 @@ class InputLayerFileWidget(QWidget):
         os.rmdir(self.tmp_folder)
 
     def get_file(self):
-        filename, _ = QFileDialog.getOpenFileName(None, self.tr("Select file"), "")
+        filename, _ = QFileDialog.getOpenFileName(
+            None, self.tr("Select file"), ""
+        )
         if filename:
             self.layerCombo.setCurrentIndex(0)
             self.fileLineEdit.setText(filename)
@@ -196,7 +205,10 @@ class InputLineWidget(QWidget):
         self.vLayout.addWidget(self.inputLine)
         if tool_input.description:
             self.inputDesc = QLabel(
-                "<i>" + self.tr("Description: ") + tool_input.description + "</i>"
+                "<i>"
+                + self.tr("Description: ")
+                + tool_input.description
+                + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
@@ -242,7 +254,10 @@ class InputCheckboxWidget(QWidget):
         self.vLayout.addWidget(self.inputCheckBox)
         if tool_input.description:
             self.inputDesc = QLabel(
-                "<i>" + self.tr("Description: ") + tool_input.description + "</i>"
+                "<i>"
+                + self.tr("Description: ")
+                + tool_input.description
+                + "</i>"
             )
             self.inputDesc.setWordWrap(True)
             self.vLayout.addWidget(self.inputDesc)
@@ -339,8 +354,12 @@ class InputsDialog(QDialog):
                     return False
                 except Exception:
                     err = traceback.format_exc()
-                    QMessageBox.about(self, None, self.tr("Error uploading file"))
-                    QgsMessageLog.logMessage(err, "NgToolbox", level=Qgis.Warning)
+                    QMessageBox.about(
+                        self, None, self.tr("Error uploading file")
+                    )
+                    QgsMessageLog.logMessage(
+                        err, "NgToolbox", level=Qgis.Warning
+                    )
                     return False
                 else:
                     input_widget.tool_input.set_value(loaded_zip)
@@ -353,7 +372,9 @@ class InputsDialog(QDialog):
         return True
 
     def send(self):
-        progress = QProgressDialog(self.tr("Sending order..."), None, 0, 0, self)
+        progress = QProgressDialog(
+            self.tr("Sending order..."), None, 0, 0, self
+        )
         progress.setWindowModality(Qt.WindowModal)
         progress.show()
         progress.setValue(0)
@@ -375,7 +396,9 @@ class InputsDialog(QDialog):
                     self.accept()
             except ToolboxConnError:
                 self.iface.messageBar().pushMessage(
-                    "NextGis Toolbox", self.tr("Connection error!"), level=Qgis.Critical
+                    "NextGis Toolbox",
+                    self.tr("Connection error!"),
+                    level=Qgis.Critical,
                 )
                 return False
             except Exception:

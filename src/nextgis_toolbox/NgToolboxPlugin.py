@@ -207,7 +207,7 @@ class NgToolbox:
 
     def about(self):
         dialog = AboutDialog(os.path.basename(self.plugin_dir))
-        dialog.exec_()
+        dialog.exec()
 
     def run(self):
         """Run method that performs all the real work"""

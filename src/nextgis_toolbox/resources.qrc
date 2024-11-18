@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="plugins/nextgis_toolbox">
+        <file>icons/icon.png</file>
+    </qresource>
+</RCC>

@@ -21,7 +21,6 @@
  ***************************************************************************/
 """
 
-
 import traceback
 
 from qgis.core import Qgis, QgsMessageLog, QgsProcessingProvider

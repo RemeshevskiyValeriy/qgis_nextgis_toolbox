@@ -52,7 +52,11 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
-from .NgToolbox import ToolboxConnError, ToolboxIO, ToolboxIOFilename
+from nextgis_toolbox.nextgis_toolbox import (
+    ToolboxConnError,
+    ToolboxIO,
+    ToolboxIOFilename,
+)
 
 TEMP_FOLDER = QgsProcessingUtils.tempFolder()
 

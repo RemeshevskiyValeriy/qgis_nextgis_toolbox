@@ -38,12 +38,17 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.uic import loadUiType
 
-from .NgToolbox import API_URL, Results, Toolbox, ToolboxConnError
+from nextgis_toolbox.nextgis_toolbox import (
+    API_URL,
+    Results,
+    Toolbox,
+    ToolboxConnError,
+)
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
 RESULTS_FORM_CLASS, _ = loadUiType(
-    os.path.join(PLUGIN_DIR, "ui/ResultsDialog.ui")
+    os.path.join(PLUGIN_DIR, "ui/results_dialog.ui")
 )
 
 

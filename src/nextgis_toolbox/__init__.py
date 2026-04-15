@@ -32,6 +32,6 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .NgToolboxPlugin import NgToolbox
+    from nextgis_toolbox.nextgis_toolbox_plugin import NgToolbox
 
     return NgToolbox(iface)

@@ -41,15 +41,15 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.uic import loadUiType
 
-from .InputsDialog import InputsDialog
-from .NgPluginProviger import NgPluginProvider
-from .NgToolbox import Results, Toolbox, ToolboxConnError
-from .ResultsDialog import ResultsDialog
+from nextgis_toolbox.inputs_dialog import InputsDialog
+from nextgis_toolbox.nextgis_toolbox import Results, Toolbox, ToolboxConnError
+from nextgis_toolbox.nextgis_toolbox_plugin_provider import NgPluginProvider
+from nextgis_toolbox.results_dialog import ResultsDialog
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
 MAIN_FORM_CLASS, _ = loadUiType(
-    os.path.join(PLUGIN_DIR, "ui/NgToolboxWindow.ui")
+    os.path.join(PLUGIN_DIR, "ui/nextgis_toolbox_window.ui")
 )
 
 USER_DATA_JSON = os.path.join(PLUGIN_DIR, "user_data.json")

@@ -26,8 +26,8 @@ import traceback
 from qgis.core import Qgis, QgsMessageLog, QgsProcessingProvider
 from qgis.utils import iface
 
-from .AlgorithmFactory import algorithm_class_factory
-from .NgToolbox import Toolbox
+from nextgis_toolbox.algorithm_factory import algorithm_class_factory
+from nextgis_toolbox.nextgis_toolbox import Toolbox
 
 
 class NgPluginProvider(QgsProcessingProvider):

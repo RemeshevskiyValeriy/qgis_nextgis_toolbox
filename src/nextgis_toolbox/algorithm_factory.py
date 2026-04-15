@@ -36,7 +36,7 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.utils import iface
 
-from .NgToolbox import ToolboxConnError, ToolboxIOFilename
+from nextgis_toolbox.nextgis_toolbox import ToolboxConnError, ToolboxIOFilename
 
 TEMP_FOLDER = QgsProcessingUtils.tempFolder()
 

@@ -28,9 +28,10 @@ from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMessageBox
 
-from .NgToolboxWindow import ToolboxDockWidget
+from nextgis_toolbox.about_dialog import AboutDialog
+from nextgis_toolbox.nextgis_toolbox_window import ToolboxDockWidget
+
 from .resources import *  # noqa: F401, F403
-from .AboutDialog import AboutDialog
 
 
 class NgToolbox:
@@ -52,7 +53,7 @@ class NgToolbox:
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
-            self.plugin_dir, "i18n", "NgToolbox_{}.qm".format(locale)
+            self.plugin_dir, "i18n", f"nextgis_toolbox_{locale}.qm"
         )
 
         if os.path.exists(locale_path):

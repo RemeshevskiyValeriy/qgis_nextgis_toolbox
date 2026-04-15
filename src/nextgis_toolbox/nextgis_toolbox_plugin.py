@@ -31,8 +31,6 @@ from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMessageBox
 from nextgis_toolbox.about_dialog import AboutDialog
 from nextgis_toolbox.nextgis_toolbox_window import ToolboxDockWidget
 
-from .resources import *  # noqa: F401, F403
-
 
 class NgToolbox:
     """QGIS Plugin Implementation."""
@@ -170,7 +168,7 @@ class NgToolbox:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ":/plugins/nextgis_toolbox/icons/icon.png"
+        icon_path = os.path.join(self.plugin_dir, "icons", "icon.png")
         self.showAction = self.add_action(
             icon_path,
             text=self.tr("NextGIS Toolbox"),

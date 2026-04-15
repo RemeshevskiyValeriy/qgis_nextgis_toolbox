@@ -12,9 +12,6 @@ license = { file = "LICENSE" }
 ui-files = ["src/nextgis_toolbox/ui/*.ui"]
 compile = false
 
-[tool.qgspb.resources]
-qrc-files = ["src/nextgis_toolbox/resources.qrc"]
-
 [tool.qgspb.translations]
 ts-files = ["src/nextgis_toolbox/i18n/*.ts"]
 no-obsolete = true
@@ -75,7 +72,6 @@ select = [
     # "FIX",  # flake8-fixme
 ]
 ignore = ["ANN101", "ANN102", "TD003", "FBT003", "ISC001", "COM812", "E501"]
-exclude = ["resources.py"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]

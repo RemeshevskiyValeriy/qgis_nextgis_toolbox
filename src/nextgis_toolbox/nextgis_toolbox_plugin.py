@@ -24,15 +24,17 @@
 
 import os.path
 
-from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
+from qgis.PyQt.QtCore import QCoreApplication, Qt, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMessageBox
 
 from nextgis_toolbox.about_dialog import AboutDialog
+from nextgis_toolbox.core import utils
+from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
 from nextgis_toolbox.nextgis_toolbox_window import ToolboxDockWidget
 
 
-class NgToolbox:
+class NgToolboxPlugin:
     """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
@@ -49,9 +51,8 @@ class NgToolbox:
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
-        locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
-            self.plugin_dir, "i18n", f"nextgis_toolbox_{locale}.qm"
+            self.plugin_dir, "i18n", f"{PACKAGE_NAME}_{utils.locale()}.qm"
         )
 
         if os.path.exists(locale_path):
@@ -61,7 +62,6 @@ class NgToolbox:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr("&NextGIS Toolbox Plugin")
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -159,7 +159,7 @@ class NgToolbox:
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToMenu(self.menu, action)
+            self.iface.addPluginToMenu(PLUGIN_NAME, action)
 
         self.actions.append(action)
 
@@ -192,9 +192,7 @@ class NgToolbox:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr("&NextGIS Toolbox plugin"), action
-            )
+            self.iface.removePluginMenu(PLUGIN_NAME, action)
             self.iface.removeToolBarIcon(action)
             action.deleteLater()
         if self.dockWidget:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 /***************************************************************************
  NgToolbox
@@ -346,7 +345,7 @@ class Toolbox:
 
     @check_conn
     def get_tools(self) -> List:
-        url = f"{self.api_url}/{self.locale}/tools/"
+        url = f"{self.api_url}/tools/"
         response = requests.get(url)
         response.raise_for_status()
         tools = response.json()
@@ -354,7 +353,7 @@ class Toolbox:
 
     @check_conn
     def get_tags(self) -> List:
-        url = f"{self.api_url}/{self.locale}/tags/"
+        url = f"{self.api_url}/tags/"
         response = requests.get(url)
         response.raise_for_status()
         tags = response.json()

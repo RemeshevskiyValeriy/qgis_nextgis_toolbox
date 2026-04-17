@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 /***************************************************************************
  NgToolboxDialog
@@ -62,7 +61,7 @@ class AutorefreshTasks(QObject):
     need_update = pyqtSignal()
 
     def __init__(self, interval):
-        super(AutorefreshTasks, self).__init__()
+        super().__init__()
         self.interval = interval
         self.canceled = False
 
@@ -79,7 +78,7 @@ class ToolboxDockWidget(QDockWidget):
     window_closed = pyqtSignal()
 
     def __init__(self, iface, parent=None):
-        super(ToolboxDockWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.setWindowTitle(self.tr("NextGIS Toolbox"))
         self.inner_control = NgToolboxWindow(iface, self)
@@ -88,7 +87,7 @@ class ToolboxDockWidget(QDockWidget):
 
     def close(self):
         self.inner_control.close()
-        super(ToolboxDockWidget, self).close()
+        super().close()
 
     def closeEvent(self, event):
         self.window_closed.emit()
@@ -102,7 +101,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
     provider = None
 
     def __init__(self, iface, parent=None):
-        super(NgToolboxWindow, self).__init__(parent)
+        super().__init__(parent)
         self.setupUi(self)
         self.iface = iface
 
@@ -189,7 +188,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
                 toolItem = QTreeWidgetItem(item)
                 toolItem.setText(0, tool["name"])
                 toolItem.setText(1, tool["name"])
-                toolItem.setData(0, 100, tool["operation_id"])
+                toolItem.setData(0, 100, tool.get("operation_id", tool["id"]))
                 toolItem.setWhatsThis(0, tool["description"])
             if not item.childCount():
                 del item
@@ -205,7 +204,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             )  # and here !
 
         for tag in self.toolbox.tags:
-            add_item(tag["name"], tag["tools"])
+            add_item(tag["alias"], tag["tools"])
         if filter:
             self.treeWidget.expandAll()
 

@@ -33,9 +33,9 @@ target-version = "py37"
 
 [tool.ruff.lint]
 select = [
-    "A", # flake8-builtins
+    # "A", # flake8-builtins
     # "ARG",  # flake8-unused-arguments
-    "B", # flake8-bugbear
+    # "B", # flake8-bugbear
     # "C90",  # mccabe complexity
     # "COM",  # flake8-commas
     "E", # pycodestyle errors
@@ -64,7 +64,7 @@ select = [
     # "TD",  # flake8-todos
     # "TID", # flake8-tidy-imports
     # "TRY", # tryceratops
-    "UP", # pyupgrade
+    # "UP", # pyupgrade
     "W",  # pycodesytle warnings
     # "ANN",  # flake8-annotations
     # "CPY",  # flake8-copyright

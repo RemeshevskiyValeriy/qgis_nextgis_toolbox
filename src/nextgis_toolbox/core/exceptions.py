@@ -243,3 +243,22 @@ class NgToolboxPluginUiLoadError(NgToolboxPluginError):
             user_message=user_message,
             detail=detail,
         )
+
+
+class NgToolboxPluginProcessingRequiredWarning(NgToolboxPluginWarning):
+    """Warning shown when the Processing core plugin is disabled."""
+
+    def __init__(self) -> None:
+        """Initialize the warning."""
+        # fmt: off
+        super().__init__(
+            log_message="Processing plugin is disabled",
+            user_message=QgsApplication.translate(
+                "Exceptions",
+                "NextGIS Toolbox Plugin requires the QGIS core "
+                'plugin "Processing" to be enabled. '
+                "Please enable the Processing plugin in Plugin Manager "
+                "and restart QGIS."
+            ),
+        )
+        # fmt: on

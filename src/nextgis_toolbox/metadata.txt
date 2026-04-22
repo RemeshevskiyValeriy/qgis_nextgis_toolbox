@@ -1,6 +1,7 @@
 [general]
 name=NextGIS Toolbox Plugin
 qgisMinimumVersion=3.32
+qgisMaximumVersion=3.99
 description=NextGIS Toolbox provider for QGIS
 description[ru]=NextGIS Toolbox провайдер для QGIS
 about=NextGIS Toolbox provider for QGIS. Sends tasks to NextGIS Toolbox server and recieve results. Developed by NextGIS. Any feedback is welcome at https://nextgis.com/contact. See more on https://toolbox.nextgis.com/
@@ -18,6 +19,8 @@ icon=icons/icon.png
 experimental=False
 deprecated=False
 category=Web
+
+plugin_dependencies=Processing>=2.12.0
 
 version=1.0.2
 changelog=

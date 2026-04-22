@@ -1,3 +1,19 @@
+# NextGIS Toolbox Plugin
+# Copyright (C) 2026  NextGIS
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or any
+# later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, see <https://www.gnu.org/licenses/>.
+
 import os
 import traceback
 import typing
@@ -94,14 +110,14 @@ def inp_selector(
                 optional=True,
                 # optional=not required
             )
-    elif type_ == bool:
+    elif isinstance(type_, bool):
         return QgsProcessingParameterBoolean(
             name,
             description,
             optional=True,
             # optional=not required
         )
-    elif type_ == int:
+    elif isinstance(type_, int):
         return QgsProcessingParameterNumber(
             name,
             description,
@@ -109,7 +125,7 @@ def inp_selector(
             optional=True,
             # optional=not required
         )
-    elif type_ == float:
+    elif isinstance(type_, float):
         return QgsProcessingParameterNumber(
             name,
             description,
@@ -117,7 +133,7 @@ def inp_selector(
             optional=True,
             # optional=not required
         )
-    elif type_ == str:
+    elif isinstance(type_, str):
         return QgsProcessingParameterString(
             name,
             description,

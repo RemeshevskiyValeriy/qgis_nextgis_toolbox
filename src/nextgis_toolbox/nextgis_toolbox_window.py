@@ -1,25 +1,18 @@
-# -*- coding: utf-8 -*-
-"""
-/***************************************************************************
- NgToolboxDialog
-                                 A QGIS plugin
- NextGIS Toolbox provider for QGIS
-                             -------------------
-        begin                : 2023-02-13
-        git sha              : $Format:%H$
-        copyright            : (C) 2023 by NextGIS
-        email                : info@nextgis.com
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-"""
+# NextGIS Toolbox Plugin
+# Copyright (C) 2026  NextGIS
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or any
+# later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import json
 import os
@@ -41,15 +34,15 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.uic import loadUiType
 
-from .InputsDialog import InputsDialog
-from .NgPluginProviger import NgPluginProvider
-from .NgToolbox import Results, Toolbox, ToolboxConnError
-from .ResultsDialog import ResultsDialog
+from nextgis_toolbox.inputs_dialog import InputsDialog
+from nextgis_toolbox.nextgis_toolbox import Results, Toolbox, ToolboxConnError
+from nextgis_toolbox.nextgis_toolbox_plugin_provider import NgPluginProvider
+from nextgis_toolbox.results_dialog import ResultsDialog
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
 MAIN_FORM_CLASS, _ = loadUiType(
-    os.path.join(PLUGIN_DIR, "ui/NgToolboxWindow.ui")
+    os.path.join(PLUGIN_DIR, "ui/nextgis_toolbox_window.ui")
 )
 
 USER_DATA_JSON = os.path.join(PLUGIN_DIR, "user_data.json")
@@ -62,7 +55,7 @@ class AutorefreshTasks(QObject):
     need_update = pyqtSignal()
 
     def __init__(self, interval):
-        super(AutorefreshTasks, self).__init__()
+        super().__init__()
         self.interval = interval
         self.canceled = False
 
@@ -79,7 +72,7 @@ class ToolboxDockWidget(QDockWidget):
     window_closed = pyqtSignal()
 
     def __init__(self, iface, parent=None):
-        super(ToolboxDockWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.setWindowTitle(self.tr("NextGIS Toolbox"))
         self.inner_control = NgToolboxWindow(iface, self)
@@ -88,7 +81,7 @@ class ToolboxDockWidget(QDockWidget):
 
     def close(self):
         self.inner_control.close()
-        super(ToolboxDockWidget, self).close()
+        super().close()
 
     def closeEvent(self, event):
         self.window_closed.emit()
@@ -102,7 +95,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
     provider = None
 
     def __init__(self, iface, parent=None):
-        super(NgToolboxWindow, self).__init__(parent)
+        super().__init__(parent)
         self.setupUi(self)
         self.iface = iface
 
@@ -189,7 +182,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
                 toolItem = QTreeWidgetItem(item)
                 toolItem.setText(0, tool["name"])
                 toolItem.setText(1, tool["name"])
-                toolItem.setData(0, 100, tool["operation_id"])
+                toolItem.setData(0, 100, tool.get("operation_id", tool["id"]))
                 toolItem.setWhatsThis(0, tool["description"])
             if not item.childCount():
                 del item
@@ -205,7 +198,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             )  # and here !
 
         for tag in self.toolbox.tags:
-            add_item(tag["name"], tag["tools"])
+            add_item(tag["alias"], tag["tools"])
         if filter:
             self.treeWidget.expandAll()
 

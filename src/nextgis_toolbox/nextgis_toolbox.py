@@ -1,25 +1,18 @@
-# -*- coding: utf-8 -*-
-"""
-/***************************************************************************
- NgToolbox
-                                 A QGIS plugin
- NgToolbox API implementation
-                             -------------------
-        begin                : 2023-02-13
-        git sha              : $Format:%H$
-        copyright            : (C) 2023 by NextGIS
-        email                : info@nextgis.com
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-"""
+# NextGIS Toolbox Plugin
+# Copyright (C) 2026  NextGIS
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or any
+# later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import os
 import re
@@ -346,7 +339,7 @@ class Toolbox:
 
     @check_conn
     def get_tools(self) -> List:
-        url = f"{self.api_url}/{self.locale}/tools/"
+        url = f"{self.api_url}/tools/"
         response = requests.get(url)
         response.raise_for_status()
         tools = response.json()
@@ -354,7 +347,7 @@ class Toolbox:
 
     @check_conn
     def get_tags(self) -> List:
-        url = f"{self.api_url}/{self.locale}/tags/"
+        url = f"{self.api_url}/tags/"
         response = requests.get(url)
         response.raise_for_status()
         tags = response.json()

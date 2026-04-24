@@ -216,8 +216,8 @@ compile_commands.json
 
 *_qmlcache.qrc
 
-# PyQt
-resources.py
-
 # QGIS
 *.db
+
+# VS Code
+.vscode

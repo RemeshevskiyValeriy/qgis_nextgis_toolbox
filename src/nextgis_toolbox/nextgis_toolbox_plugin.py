@@ -42,6 +42,9 @@ from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
 )
 from nextgis_toolbox.nextgis_toolbox_window import ToolboxDockWidget
 from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
+from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings_page import (
+    NgToolboxPluginSettingsPageFactory,
+)
 
 if TYPE_CHECKING:
     from nextgis_toolbox.notifier.notifier_interface import (
@@ -107,6 +110,10 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         QTimer.singleShot(0, self._initialize_ui)
 
+        self._load_settings()
+
+        logger.debug("<b>End plugin initialization</b>")
+
     def _initialize_ui(self) -> None:
         """Create plugin UI after QGIS main window is fully initialized."""
         processing_menu = None
@@ -166,8 +173,6 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         assert plugin_help_menu is not None
         plugin_help_menu.addAction(self._show_help_action)
 
-        logger.debug("<b>End plugin initialization</b>")
-
     def _unload(self) -> None:
         """Cleanup plugin UI."""
         logger.debug("<b>Start plugin unloading</b>")
@@ -210,6 +215,11 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
             self._notifier = None
 
         logger.debug("<b>End plugin unloading</b>")
+
+    def _load_settings(self) -> None:
+        """Register the plugin settings page in the QGIS Options dialog."""
+        self._options_factory = NgToolboxPluginSettingsPageFactory()
+        iface.registerOptionsWidgetFactory(self._options_factory)
 
     @pyqtSlot(bool)
     def run(self, checked: bool) -> None:

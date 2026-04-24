@@ -18,9 +18,11 @@ from typing import TYPE_CHECKING
 
 from qgis.core import QgsRuntimeProfiler
 
-from nextgis_toolbox.core.settings import NgToolboxPluginSettings
 from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
     NgToolboxPluginInterface,
+)
+from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings import (
+    NgToolboxPluginSettings,
 )
 
 if TYPE_CHECKING:

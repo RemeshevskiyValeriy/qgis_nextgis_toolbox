@@ -25,7 +25,9 @@ from qgis.PyQt.QtWidgets import QPlainTextEdit, QTabWidget
 from qgis.utils import iface
 
 from nextgis_toolbox.core.constants import PLUGIN_NAME
-from nextgis_toolbox.core.settings import NgToolboxPluginSettings
+from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings import (
+    NgToolboxPluginSettings,
+)
 
 if TYPE_CHECKING:
     from qgis.gui import QgisInterface

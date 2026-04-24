@@ -15,7 +15,7 @@ homepage=https://nextgis.com/
 tracker=mailto:support@nextgis.com
 repository=support@nextgis.com
 
-icon=icons/icon.png
+icon=icons/nextgis_toolbox_plugin_logo.svg
 experimental=False
 deprecated=False
 category=Web

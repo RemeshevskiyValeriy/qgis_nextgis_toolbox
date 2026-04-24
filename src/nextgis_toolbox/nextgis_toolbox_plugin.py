@@ -27,7 +27,6 @@ from qgis.PyQt.QtCore import (
     QTimer,
     pyqtSlot,
 )
-from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMenu
 from qgis.utils import iface
 
@@ -45,6 +44,7 @@ from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
 from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings_page import (
     NgToolboxPluginSettingsPageFactory,
 )
+from nextgis_toolbox.ui.icon import plugin_icon
 
 if TYPE_CHECKING:
     from nextgis_toolbox.notifier.notifier_interface import (
@@ -134,14 +134,14 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
             )
             return
 
-        icon_path = self.path / "icons" / "icon.png"
+        icon = plugin_icon("nextgis_toolbox_plugin_logo.svg")
 
         self._plugin_menu = QMenu(self.iface.mainWindow())
         self._plugin_menu.setTitle("NextGIS Toolbox Plugin")
-        self._plugin_menu.setIcon(QIcon(str(icon_path)))
+        self._plugin_menu.setIcon(icon)
 
         self._show_action = QAction(
-            QIcon(str(icon_path)),
+            icon,
             "NextGIS Toolbox Plugin",
             self.iface.mainWindow(),
         )
@@ -165,7 +165,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
             attributes_toolbar.addAction(self._show_action)
 
         self._show_help_action = QAction(
-            QIcon(str(icon_path)),
+            icon,
             PLUGIN_NAME,
         )
         self._show_help_action.triggered.connect(self.open_about_dialog)

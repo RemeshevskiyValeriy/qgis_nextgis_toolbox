@@ -186,7 +186,10 @@ class NgToolboxPluginSettingsPageFactory(QgsOptionsWidgetFactory):
 
     def __init__(self) -> None:
         """Initialize the settings page factory."""
-        super().__init__("NextGIS Toolbox Plugin", plugin_icon())
+        super().__init__(
+            "NextGIS Toolbox Plugin",
+            plugin_icon("nextgis_toolbox_plugin_logo.svg"),
+        )
 
     def path(self) -> List[str]:
         """Return the settings page path in the options dialog.

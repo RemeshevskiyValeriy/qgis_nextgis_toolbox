@@ -23,6 +23,13 @@ from typing import Dict, List
 
 import requests
 
+from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
+    NgToolboxPluginInterface,
+)
+from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings import (
+    NgToolboxPluginSettings,
+)
+
 API_URL = "https://toolbox.nextgis.com/api"
 
 
@@ -300,7 +307,6 @@ class Toolbox:
     tools: List
     tags: List
     orders_man: ToolboxOrdersManager
-    token: ToolboxToken
 
     def __init__(self, locale="en"):
         if locale == "ru":
@@ -310,7 +316,12 @@ class Toolbox:
         self.set_locale(locale)
         self.tools = self.get_tools()
         self.tags = self.get_tags()
-        self.token = None
+
+        self.set_current_user()
+
+        NgToolboxPluginInterface.instance().settings_changed.connect(
+            self.set_current_user
+        )
 
     def check_conn(f):
         def deco(*args, **kwargs):
@@ -322,9 +333,14 @@ class Toolbox:
 
         return deco
 
-    def set_current_user(self, token):
+    def set_current_user(self):
+        settings = NgToolboxPluginSettings()
+
+        token = settings.nextgis_toolbox_token
+        # token = "654fdb45-18eb-486a-9805-b24ef55857ce"
+
         self.token = ToolboxToken(token)
-        self.orders_man = ToolboxOrdersManager(token)
+        # self.orders_man = ToolboxOrdersManager(token)
 
     @check_conn
     def unset_current_user(self):
@@ -369,7 +385,7 @@ class Toolbox:
 
     @check_conn
     def get_toolbox_interface(self) -> Dict:
-        url = f"{self.api_url}/operations/interface"
+        url = f"{self.api_url}/operations/interface/"
         response = requests.get(url, headers=self.token.get_header())
         response.raise_for_status()
         res = {}

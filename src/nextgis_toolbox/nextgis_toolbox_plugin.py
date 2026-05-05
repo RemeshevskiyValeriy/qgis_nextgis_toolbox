@@ -36,11 +36,15 @@ from nextgis_toolbox.core.exceptions import (
     NgToolboxPluginProcessingRequiredWarning,
 )
 from nextgis_toolbox.core.logging import logger
+from nextgis_toolbox.nextgis_toolbox.api.toolbox import Toolbox
 from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
     NgToolboxPluginInterface,
 )
 from nextgis_toolbox.nextgis_toolbox_window import ToolboxDockWidget
 from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
+from nextgis_toolbox.processing.nextgis_toolbox_plugin_provider import (
+    NgToolboxPluginProcessingProvider,
+)
 from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings_page import (
     NgToolboxPluginSettingsPageFactory,
 )
@@ -84,6 +88,8 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         self._first_start = True
 
+        self._processing_provider = None
+
         self._notifier = None
 
     @pyqtSlot()
@@ -110,9 +116,21 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         QTimer.singleShot(0, self._initialize_ui)
 
+        self.initProcessing()
         self._load_settings()
 
         logger.debug("<b>End plugin initialization</b>")
+
+    def initProcessing(self) -> None:
+        """
+        Initialize and register the Processing provider.
+        """
+        toolbox = Toolbox()
+
+        self._processing_provider = NgToolboxPluginProcessingProvider(toolbox)
+        QgsApplication.processingRegistry().addProvider(
+            self._processing_provider
+        )
 
     def _initialize_ui(self) -> None:
         """Create plugin UI after QGIS main window is fully initialized."""
@@ -213,6 +231,12 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         if self._notifier is not None:
             self._notifier.deleteLater()
             self._notifier = None
+
+        if self._processing_provider is not None:
+            QgsApplication.processingRegistry().removeProvider(
+                self._processing_provider
+            )
+            self._processing_provider = None
 
         logger.debug("<b>End plugin unloading</b>")
 

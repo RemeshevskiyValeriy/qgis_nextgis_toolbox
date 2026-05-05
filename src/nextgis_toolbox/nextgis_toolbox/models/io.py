@@ -14,65 +14,39 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Type
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 
-@dataclass
+@dataclass(frozen=True)
 class ToolboxParameter:
     """
-    Represents a NextGIS Toolbox operation input or output parameter.
+    Immutable descriptor of a single NextGIS Toolbox input or output.
+
+    All fields are populated directly from the API response; no runtime
+    mutation is intended or allowed (``frozen=True``).
     """
 
     name: str
-    title: str
-    description: str
-    widget: str
+    parameter_type: str
+    alias: Optional[str]
+    description: Optional[str]
     required: bool
-    validators: List[Any]
-    extension: Optional[str]
-    value_type: Type
-    value: Optional[Any] = field(default=None)
-
-    _TYPE_MAPPING = {
-        "float": float,
-        "int": int,
-        "string": str,
-        "boolean": bool,
-        "file": str,
-    }
+    choices: Optional[List[Dict[str, Any]]]
 
     @classmethod
-    def from_dict(
-        cls,
-        data: Dict[str, Any],
-    ) -> "ToolboxParameter":
+    def from_dict(cls, data: Dict[str, Any]) -> "ToolboxParameter":
         """
-        Create parameter instance from API response.
+        Construct a parameter descriptor from a raw API response dict.
 
-        :param data: Parameter definition from NextGIS Toolbox API.
-
-        :returns: NextGIS Toolbox parameter instance.
+        :param data: Single parameter definition from NextGIS Toolbox API.
+        :returns: Populated :class:`ToolboxParameter` instance.
         """
-
-        parameter_type = data["type"]
-
         return cls(
             name=data["name"],
-            title=data["title"],
-            description=data["description"],
-            widget=data["widget"],
+            parameter_type=data["type"],
+            alias=data.get("alias"),
+            description=data.get("description"),
             required=data["required"],
-            validators=data["validators"],
-            extension=data.get("extension"),
-            value_type=cls._TYPE_MAPPING[parameter_type],
+            choices=data.get("choices"),
         )
-
-    def set_value(self, value: Any) -> None:
-        """
-        Set parameter value with type conversion.
-
-        :param value: Input value.
-        """
-
-        self.value = self.value_type(value)

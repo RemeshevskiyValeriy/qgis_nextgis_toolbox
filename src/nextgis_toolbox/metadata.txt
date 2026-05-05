@@ -20,6 +20,8 @@ experimental=False
 deprecated=False
 category=Web
 
+hasProcessingProvider=yes
+
 plugin_dependencies=Processing>=2.12.0
 
 version=1.0.2

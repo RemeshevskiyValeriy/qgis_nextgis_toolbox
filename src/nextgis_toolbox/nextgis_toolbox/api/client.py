@@ -24,6 +24,7 @@ from qgis.PyQt.QtNetwork import (
     QNetworkRequest,
 )
 
+from nextgis_toolbox.core import utils
 from nextgis_toolbox.core.qt_network_error import (
     QtNetworkError,
 )
@@ -179,9 +180,10 @@ class ToolboxApiClient:
 
         request = QNetworkRequest(qurl)
 
+        request.setRawHeader(b"Content-Type", b"application/json")
         request.setRawHeader(
-            b"Content-Type",
-            b"application/json",
+            b"Accept-Language",
+            utils.qgis_locale().encode(),
         )
 
         if use_auth and self._authentication is not None:

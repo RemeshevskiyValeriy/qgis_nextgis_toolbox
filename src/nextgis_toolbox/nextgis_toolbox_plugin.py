@@ -15,9 +15,10 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import sys
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from osgeo import gdal
+from processing import execAlgorithmDialog
 from qgis.core import Qgis, QgsApplication
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import (
@@ -27,6 +28,7 @@ from qgis.PyQt.QtCore import (
     QTimer,
     pyqtSlot,
 )
+from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMenu
 from qgis.utils import iface
 
@@ -48,7 +50,7 @@ from nextgis_toolbox.processing.nextgis_toolbox_plugin_provider import (
 from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings_page import (
     NgToolboxPluginSettingsPageFactory,
 )
-from nextgis_toolbox.ui.icon import plugin_icon
+from nextgis_toolbox.ui.icon import material_icon, plugin_icon, qgis_icon
 
 if TYPE_CHECKING:
     from nextgis_toolbox.notifier.notifier_interface import (
@@ -57,11 +59,39 @@ if TYPE_CHECKING:
 
 assert isinstance(iface, QgisInterface)
 
+_QGIS_ICON = "qgis"
+_PLUGIN_ICON = "plugin"
+_MATERIAL_ICON = "material"
+
+# Mapping: tag_id (stable, language-independent) → (icon_source, icon_name)
+# Tag IDs do not change when the API returns responses in different languages.
+
+# fmt: off
+_CATEGORY_ICON_MAP: Dict[int, Tuple[str, str]] = {
+    1: (_MATERIAL_ICON, "forest"),                             # Forest
+    2: (_QGIS_ICON, "mIconVector.svg"),                        # Vector
+    3: (_QGIS_ICON, "mIconRaster.svg"),                        # Raster
+    6: (_QGIS_ICON, "sync_views.svg"),                         # Conversion
+    7: (_QGIS_ICON, "mLayoutItem3DMap.svg"),                   # Elevation
+    9: (_QGIS_ICON, "mActionIdentify.svg"),                    # Cadastre
+    10: (_PLUGIN_ICON, "nextgis_logo.svg"),                    # Web GIS
+    11: (_QGIS_ICON, "mActionAddImage.svg"),                   # Photo
+    15: (_PLUGIN_ICON, "osm_logo.svg"),                        # OpenStreetMap
+    16: (_PLUGIN_ICON, "nextgis_toolbox_plugin_logo.svg"),     # Test
+    17: (_QGIS_ICON, "mSensor.svg"),                           # Remote sensing
+    18: (_QGIS_ICON, "mActionFindReplace.svg"),                # Address
+    19: (_QGIS_ICON, "mIconQgsProjectFile.svg"),               # QGIS
+    20: (_QGIS_ICON, "mActionHistory.svg"),                    # Versioning
+    21: (_QGIS_ICON, "mIconGps.svg"),                          # GPS tracks
+}
+# fmt: on
+
 
 class NgToolboxPlugin(NgToolboxPluginInterface):
     """NextGIS Toolbox Plugin"""
 
     _notifier: Optional[MessageBarNotifier]
+    _toolbox: Optional[Toolbox]
 
     def __init__(self) -> None:
         super().__init__()
@@ -91,6 +121,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         self._processing_provider = None
 
         self._notifier = None
+        self._toolbox = None
 
     @pyqtSlot()
     def open_about_dialog(self) -> None:
@@ -113,6 +144,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         logger.debug("<b>Start plugin initialization</b>")
 
         self._notifier = MessageBarNotifier(self)
+        self._toolbox = Toolbox()
 
         QTimer.singleShot(0, self._initialize_ui)
 
@@ -125,9 +157,10 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Initialize and register the Processing provider.
         """
-        toolbox = Toolbox()
-
-        self._processing_provider = NgToolboxPluginProcessingProvider(toolbox)
+        assert self._toolbox is not None
+        self._processing_provider = NgToolboxPluginProcessingProvider(
+            self._toolbox
+        )
         QgsApplication.processingRegistry().addProvider(
             self._processing_provider
         )
@@ -158,13 +191,18 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         self._plugin_menu.setTitle("NextGIS Toolbox Plugin")
         self._plugin_menu.setIcon(icon)
 
-        self._show_action = QAction(
-            icon,
-            "NextGIS Toolbox Plugin",
-            self.iface.mainWindow(),
+        self._tools_menu = QMenu(
+            self.tr("NextGIS Toolbox Tools"),
+            self._plugin_menu,
         )
-        self._show_action.setCheckable(True)
-        self._show_action.toggled.connect(self.run)
+        self._tools_menu.setIcon(icon)
+
+        self._build_toolbox_menu(
+            parent_menu=self._tools_menu,
+            tools=self._toolbox.tools,
+            tags=self._toolbox.tags,
+            provider_id=self._processing_provider.id(),
+        )
 
         self._about_action = QAction(
             QgsApplication.getThemeIcon("mActionPropertiesWidget.svg"),
@@ -173,8 +211,16 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         )
         self._about_action.triggered.connect(self.open_about_dialog)
 
-        self._plugin_menu.addAction(self._show_action)
+        self._plugin_menu.addMenu(self._tools_menu)
         self._plugin_menu.addAction(self._about_action)
+
+        self._show_action = QAction(
+            icon,
+            "NextGIS Toolbox Plugin",
+            self.iface.mainWindow(),
+        )
+        self._show_action.setCheckable(True)
+        self._show_action.toggled.connect(self.run)
 
         processing_menu.addMenu(self._plugin_menu)
 
@@ -298,3 +344,109 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """Handle dock widget close event."""
         if self._show_action:
             self._show_action.setChecked(False)
+
+    def _build_toolbox_menu(
+        self,
+        parent_menu: QMenu,
+        tools: List[Dict[str, Any]],
+        tags: List[Dict[str, Any]],
+        provider_id: str,
+    ) -> None:
+        """
+        Populate plugin menu with a two-level tag → tool hierarchy.
+
+        The first level contains one submenu per tag (category).  Each
+        submenu contains one :class:`QAction` per tool assigned to that tag.
+        Tools that belong to multiple tags appear in every matching submenu.
+
+        :param parent_menu: The menu to populate (e.g. the plugin root menu).
+        :param tools: Raw tool list from ``Toolbox.tools``.
+        :param tags: Raw tag list from ``Toolbox.tags``.
+        :param provider_id: Processing provider ID used to look up algorithms
+            (e.g. ``"ngtoolbox"``).
+        """
+        tool_by_name: Dict[str, Dict[str, Any]] = {
+            tool["name"]: tool
+            for tool in tools
+            if not tool.get("is_dev", False)
+        }
+
+        tools_by_tag: Dict[int, List[str]] = {}
+        for tool in tools:
+            if tool.get("is_dev", False):
+                continue
+            for tag_id in tool.get("tags", []):
+                tools_by_tag.setdefault(tag_id, []).append(tool["name"])
+
+        registry = QgsApplication.processingRegistry()
+
+        for tag in sorted(tags, key=lambda tag: tag["alias"]):
+            tag_id = tag["id"]
+            tag_alias = tag["alias"]
+
+            tool_names = tools_by_tag.get(tag_id, [])
+            if not tool_names:
+                continue
+
+            category_menu = QMenu(tag_alias, parent_menu)
+            category_menu.setIcon(self._category_icon(tag_id))
+            category_menu.setToolTipsVisible(True)
+
+            for tool_name in tool_names:
+                tool = tool_by_name.get(tool_name)
+                if tool is None:
+                    continue
+
+                algorithm_id = f"{provider_id}:{tool_name}"
+
+                if registry.algorithmById(algorithm_id) is None:
+                    logger.warning(
+                        f"Algorithm '{algorithm_id}' not found in registry; "
+                        "skipping menu entry."
+                    )
+                    continue
+
+                action = QAction(
+                    QgsApplication.getThemeIcon("processingAlgorithm.svg"),
+                    tool["alias"],
+                    parent_menu,
+                )
+                action.setToolTip(tool.get("description", ""))
+                action.setStatusTip(tool.get("description", ""))
+
+                def _on_triggered(
+                    _checked: bool = False,
+                    _algorithm_id: str = algorithm_id,
+                ) -> None:
+                    execAlgorithmDialog(_algorithm_id)
+
+                action.triggered.connect(_on_triggered)
+                category_menu.addAction(action)
+
+            if not category_menu.isEmpty():
+                parent_menu.addMenu(category_menu)
+
+    def _category_icon(self, tag_id: int) -> QIcon:
+        """
+        Return a themed icon for a tag category by its stable API identifier.
+
+        :param tag_id: Numeric tag identifier from the NextGIS Toolbox API.
+
+        :returns: Resolved icon.
+        """
+        icon_source, icon_name = _CATEGORY_ICON_MAP.get(
+            tag_id,
+            (_QGIS_ICON, "processingModel.svg"),
+        )
+
+        if icon_source == _PLUGIN_ICON:
+            icon = plugin_icon(icon_name)
+        elif icon_source == _MATERIAL_ICON:
+            icon = material_icon(icon_name, size=64)
+        else:
+            icon = qgis_icon(icon_name)
+
+        if icon.isNull():
+            return qgis_icon("processingModel.svg")
+
+        return icon

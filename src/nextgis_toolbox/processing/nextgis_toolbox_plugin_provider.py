@@ -16,7 +16,7 @@
 
 from typing import TYPE_CHECKING, Dict
 
-from qgis.core import Qgis, QgsProcessingProvider
+from qgis.core import Qgis, QgsProcessingProvider, QgsRuntimeProfiler
 from qgis.PyQt.QtGui import QIcon
 
 from nextgis_toolbox.core.constants import PLUGIN_NAME
@@ -56,40 +56,46 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
         """
         Fetch tool I/O definitions from the API and register algorithms.
         """
-        load_errors: Dict[str, str] = {}
+        with QgsRuntimeProfiler.profile(
+            f"load algs: {len(self._toolbox.tools)}"
+        ):  # type: ignore PylancereportAttributeAccessIssue
+            load_errors: Dict[str, str] = {}
 
-        for tool in self._toolbox.tools:
-            if tool["is_dev"]:
-                continue
+            for tool in self._toolbox.tools:
+                if tool.is_dev:
+                    continue
 
-            tool_name = tool["name"]
+                tool_name = tool.name
 
-            try:
-                inputs, outputs = self._toolbox.fetch_tool_io(tool_name)
-                algorithm = NextgisToolboxAlgorithm(
-                    tool_id=tool_name,
-                    display_name=tool["alias"],
-                    description=tool["description"],
-                    inputs=inputs,
-                    outputs=outputs,
-                    toolbox=self._toolbox,
-                )
-                self.addAlgorithm(algorithm)
+                try:
+                    inputs, outputs = self._toolbox.fetch_tool_io_parameters(
+                        tool_name
+                    )
 
-            except Exception as error:
-                load_errors[tool_name] = str(error)
+                    algorithm = NextgisToolboxAlgorithm(
+                        tool_id=tool_name,
+                        display_name=tool.alias,
+                        description=tool.description,
+                        inputs=inputs,
+                        outputs=outputs,
+                    )
 
-        if not load_errors:
-            return
+                    self.addAlgorithm(algorithm)
 
-        self._notifier.display_message(
-            self.tr(
-                "Some tools could not be loaded. See plugin logs for details."
-            ),
-            level=Qgis.MessageLevel.Warning,
-        )
-        for tool_name, message in load_errors.items():
-            logger.warning(f"Failed to load tool '{tool_name}': {message}")
+                except Exception as error:
+                    load_errors[tool_name] = str(error)
+
+            if not load_errors:
+                return
+
+            self._notifier.display_message(
+                self.tr(
+                    "Some tools could not be loaded. See plugin logs for details."
+                ),
+                level=Qgis.MessageLevel.Warning,
+            )
+            for tool_name, message in load_errors.items():
+                logger.warning(f"Failed to load tool '{tool_name}': {message}")
 
     def id(self) -> str:
         """

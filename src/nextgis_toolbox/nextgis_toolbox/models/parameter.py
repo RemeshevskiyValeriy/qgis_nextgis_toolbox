@@ -21,10 +21,7 @@ from typing import Any, Dict, List, Optional
 @dataclass(frozen=True)
 class ToolboxParameter:
     """
-    Immutable descriptor of a single NextGIS Toolbox input or output.
-
-    All fields are populated directly from the API response; no runtime
-    mutation is intended or allowed (``frozen=True``).
+    Immutable descriptor of a single NextGIS Toolbox input or output parameter.
     """
 
     name: str
@@ -33,20 +30,3 @@ class ToolboxParameter:
     description: Optional[str]
     required: bool
     choices: Optional[List[Dict[str, Any]]]
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ToolboxParameter":
-        """
-        Construct a parameter descriptor from a raw API response dict.
-
-        :param data: Single parameter definition from NextGIS Toolbox API.
-        :returns: Populated :class:`ToolboxParameter` instance.
-        """
-        return cls(
-            name=data["name"],
-            parameter_type=data["type"],
-            alias=data.get("alias"),
-            description=data.get("description"),
-            required=data["required"],
-            choices=data.get("choices"),
-        )

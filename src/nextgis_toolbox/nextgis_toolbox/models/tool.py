@@ -15,14 +15,34 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
-class ToolboxResult:
+class ToolboxTag:
     """
-    Descriptor of a single NextGIS Toolbox task result.
+    Descriptor of a NextGIS Toolbox tag (category).
     """
 
+    id: int
+    alias: str
+    icon: str
+    tool_ids: List[int]
+
+
+@dataclass
+class ToolboxTool:
+    """
+    Descriptor of a NextGIS Toolbox tool.
+    """
+
+    id: int
     name: str
-    result_type: str
-    value: str
+    alias: str
+    description: str
+    is_dev: bool
+    is_free: bool
+    is_new: bool
+    is_featured: bool
+    can_run: bool
+    tag_ids: List[int]

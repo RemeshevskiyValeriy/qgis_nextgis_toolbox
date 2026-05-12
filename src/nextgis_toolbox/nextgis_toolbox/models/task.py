@@ -15,14 +15,23 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
+from typing import List, Optional
+
+from nextgis_toolbox.nextgis_toolbox.models.result import (
+    ToolboxResult,
+)
 
 
 @dataclass
-class ToolboxResult:
+class ToolboxTask:
     """
-    Descriptor of a single NextGIS Toolbox task result.
+    Descriptor of a NextGIS Toolbox task.
     """
 
-    name: str
-    result_type: str
-    value: str
+    tool: str
+    status: str
+    progress: float
+    error: Optional[str]
+    results: List[ToolboxResult]
+    operation: str
+    state: str

@@ -36,7 +36,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 from nextgis_toolbox.core.compat import (
     ProcessingNumberParameterType,
 )
-from nextgis_toolbox.nextgis_toolbox.models.io import (
+from nextgis_toolbox.nextgis_toolbox.models.parameter import (
     ToolboxParameter,
 )
 

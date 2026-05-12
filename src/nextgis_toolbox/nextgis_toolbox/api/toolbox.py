@@ -14,15 +14,25 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
-from nextgis_toolbox.nextgis_toolbox.api.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.api.orders_manager import (
-    ToolboxOrdersManager,
+from nextgis_toolbox.nextgis_toolbox.api.client import (
+    ToolboxApiClient,
 )
-from nextgis_toolbox.nextgis_toolbox.models.io import ToolboxParameter
-from nextgis_toolbox.nextgis_toolbox.models.result import ToolboxResult
+from nextgis_toolbox.nextgis_toolbox.models.parameter import (
+    ToolboxParameter,
+)
+from nextgis_toolbox.nextgis_toolbox.models.tool import (
+    ToolboxTag,
+    ToolboxTool,
+)
+from nextgis_toolbox.nextgis_toolbox.serializers.parameter_serializer import (
+    ToolboxParameterSerializer,
+)
+from nextgis_toolbox.nextgis_toolbox.serializers.tool_serializer import (
+    ToolboxTagSerializer,
+    ToolboxToolSerializer,
+)
 
 
 class Toolbox:
@@ -34,96 +44,70 @@ class Toolbox:
         """
         Initialize NextGIS Toolbox API facade.
         """
+
         self.client = ToolboxApiClient()
-        self.orders_manager = ToolboxOrdersManager(client=self.client)
 
-        self.tools: List[Dict[str, Any]] = self._fetch_tools()
-        self.tags: List[Dict[str, Any]] = self._fetch_tags()
+        self.tools: List[ToolboxTool] = []
+        self.tags: List[ToolboxTag] = []
 
-    def _fetch_tools(self) -> List[Dict[str, Any]]:
+    def load_tools(self) -> None:
         """
-        Fetch the list of available tools from the API.
+        Load available toolbox tools.
 
-        :returns: Raw tool descriptors from the API response.
+        :returns: List of toolbox tool models.
         """
-        return self.client.get("tools/")["data"]
 
-    def _fetch_tags(self) -> List[Dict[str, Any]]:
+        response_data = self.client.get(
+            sub_url="tools/",
+        )
+
+        self.tools = [
+            ToolboxToolSerializer.from_dict(tool_data)
+            for tool_data in response_data["data"]
+        ]
+
+    def load_tags(self) -> None:
         """
-        Fetch the list of available tags from the API.
-
-        :returns: Raw tag descriptors from the API response.
+        Load available toolbox tags.
         """
-        return self.client.get("tags/")["data"]
 
-    def fetch_tool_io(
+        response_data = self.client.get(
+            sub_url="tags/",
+        )
+
+        self.tags = [
+            ToolboxTagSerializer.from_dict(tag_data)
+            for tag_data in response_data["data"]
+        ]
+
+    def fetch_tool_io_parameters(
         self,
         tool_name: str,
-    ) -> Tuple[List[ToolboxParameter], List[ToolboxParameter]]:
+    ) -> Tuple[
+        List[ToolboxParameter],
+        List[ToolboxParameter],
+    ]:
         """
-        Fetch input and output parameter definitions for a single tool.
+        Fetch input and output parameter definitions for a tool.
 
-        :param tool_name: Tool identifier as returned by the API.
+        :param tool_name: Toolbox tool identifier.
 
-        :returns: Tuple of ``(inputs, outputs)`` parameter lists.
+        :returns: Tuple containing input and output parameter lists.
         """
-        data = self.client.get(f"tools/{tool_name}", use_auth=True)
-        inputs = [ToolboxParameter.from_dict(item) for item in data["inputs"]]
-        outputs = [
-            ToolboxParameter.from_dict(item) for item in data["outputs"]
-        ]
-        return inputs, outputs
 
-    def create_order(
-        self,
-        tool_id: str,
-        inputs: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """
-        Submit a tool execution order to the API.
-
-        :param tool_id: Tool identifier.
-        :param inputs: Resolved parameter values keyed by parameter name.
-        :returns: API response payload containing at least ``task_id``.
-        """
-        payload = {
-            "operation": tool_id,
-            "inputs": inputs,
-        }
-        return self.client.post(
-            "json/execute/",
-            payload=payload,
+        response_data = self.client.get(
+            sub_url=f"tools/{tool_name}",
             use_auth=True,
         )
 
-    def refresh_orders(self) -> None:
-        """Refresh the local orders cache."""
-        self.orders_manager.update_orders()
-
-    def save_results(
-        self,
-        order_id: str,
-        result_directory: Path,
-    ) -> None:
-        """
-        Download result files for a completed order.
-
-        :param order_id: Order identifier.
-        :param result_directory: Local directory to write result files into.
-        """
-        status_data = self.orders_manager.get_status(order_id)
-        results = [
-            ToolboxResult.from_dict(item) for item in status_data["output"]
+        inputs = [
+            ToolboxParameterSerializer.from_dict(parameter_data)
+            for parameter_data in response_data["inputs"]
         ]
-        self.orders_manager.get_results(results, result_directory)
 
-    def upload_file(self) -> str:
-        """
-        Upload a file to NextGIS Toolbox storage.
+        outputs = [
+            ToolboxParameterSerializer.from_dict(parameter_data)
+            for parameter_data in response_data["outputs"]
+        ]
 
-        :returns: Uploaded file identifier.
-        """
-        return self.client.get_content(
-            "upload/",
-            use_auth=True,
-        ).decode("utf-8")
+        return inputs, outputs

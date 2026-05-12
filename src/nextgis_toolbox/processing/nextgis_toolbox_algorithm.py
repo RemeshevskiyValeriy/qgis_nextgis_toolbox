@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from time import sleep
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from qgis.core import (
     QgsProcessingAlgorithm,
@@ -24,7 +24,10 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication
 
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.models.io import ToolboxParameter
+from nextgis_toolbox.nextgis_toolbox.models.parameter import ToolboxParameter
+from nextgis_toolbox.nextgis_toolbox.tasks.tasks_manager import (
+    ToolboxTasksManager,
+)
 from nextgis_toolbox.processing.parameter_mapping import (
     create_input_parameter,
     create_ngw_connection_parameters,
@@ -32,14 +35,13 @@ from nextgis_toolbox.processing.parameter_mapping import (
     resolve_parameter_value,
 )
 
-if TYPE_CHECKING:
-    from nextgis_toolbox.nextgis_toolbox.api.toolbox import Toolbox
-
 
 class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
     """
     Processing algorithm for a single NextGIS Toolbox tool.
     """
+
+    _tasks_manager: "ToolboxTasksManager"
 
     def __init__(
         self,
@@ -48,7 +50,6 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         description: str,
         inputs: List[ToolboxParameter],
         outputs: List[ToolboxParameter],
-        toolbox: "Toolbox",
     ) -> None:
         """
         Initialize processing algorithm.
@@ -58,7 +59,6 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         :param description: Tool description.
         :param inputs: Tool input parameters.
         :param outputs: Tool output parameters.
-        :param toolbox: NextGIS Toolbox API facade.
         """
         super().__init__()
 
@@ -67,7 +67,8 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         self._description = description
         self._inputs = inputs
         self._outputs = outputs
-        self._toolbox = toolbox
+
+        self._tasks_manager = ToolboxTasksManager()
 
     def initAlgorithm(
         self,
@@ -115,28 +116,24 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
             for input_parameter in self._inputs
         }
 
-        order_data = self._toolbox.create_order(
+        task_id = self._tasks_manager.submit_task(
             self._tool_id,
             resolved_parameters,
         )
-
-        task_id = order_data["task_id"]
 
         feedback.setProgress(1)
 
         while not feedback.isCanceled():
             try:
-                status_data = self._toolbox.orders_manager.get_status(
-                    task_id,
-                )
+                task = self._tasks_manager.retrieve_task(task_id)
             except Exception as error:
                 logger.exception(
-                    (f"Failed to get status for task '{task_id}'"),
+                    (f"Failed to retrieve task '{task_id}' status"),
                     exc_info=error,
                 )
                 raise
 
-            state = status_data.get("state")
+            state = task.state
 
             if state == "SUCCESS":
                 logger.info((f"Tool '{self._tool_id}' finished successfully"))
@@ -145,12 +142,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
                 return {}
 
             if state == "FAILED":
-                error_message = str(
-                    status_data.get(
-                        "error",
-                        "Execution failed",
-                    )
-                )
+                error_message = task.error
 
                 logger.warning(
                     (f"Tool '{self._tool_id}' failed. Error: {error_message}")
@@ -160,14 +152,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
 
             feedback.pushInfo(self.tr("Waiting for processing results..."))
 
-            feedback.setProgress(
-                int(
-                    status_data.get(
-                        "progress",
-                        0,
-                    )
-                )
-            )
+            feedback.setProgress(int(task.progress))
 
             sleep(3)
 
@@ -220,7 +205,6 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
             description=self._description,
             inputs=self._inputs,
             outputs=self._outputs,
-            toolbox=self._toolbox,
         )
 
     def tr(self, text: str) -> str:

@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import sys
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, cast
 
 from osgeo import gdal
 from processing import execAlgorithmDialog
@@ -39,6 +39,7 @@ from nextgis_toolbox.core.exceptions import (
 )
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox.api.toolbox import Toolbox
+from nextgis_toolbox.nextgis_toolbox.models.tool import ToolboxTag, ToolboxTool
 from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
     NgToolboxPluginInterface,
 )
@@ -144,7 +145,10 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         logger.debug("<b>Start plugin initialization</b>")
 
         self._notifier = MessageBarNotifier(self)
+
         self._toolbox = Toolbox()
+        self._toolbox.load_tools()
+        self._toolbox.load_tags()
 
         QTimer.singleShot(0, self._initialize_ui)
 
@@ -348,56 +352,55 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
     def _build_toolbox_menu(
         self,
         parent_menu: QMenu,
-        tools: List[Dict[str, Any]],
-        tags: List[Dict[str, Any]],
+        tools: List[ToolboxTool],
+        tags: List[ToolboxTag],
         provider_id: str,
     ) -> None:
         """
         Populate plugin menu with a two-level tag → tool hierarchy.
 
-        The first level contains one submenu per tag (category).  Each
-        submenu contains one :class:`QAction` per tool assigned to that tag.
-        Tools that belong to multiple tags appear in every matching submenu.
+        The first level contains one submenu per toolbox tag. Each submenu
+        contains actions for all tools assigned to that tag.
 
-        :param parent_menu: The menu to populate (e.g. the plugin root menu).
-        :param tools: Raw tool list from ``Toolbox.tools``.
-        :param tags: Raw tag list from ``Toolbox.tags``.
-        :param provider_id: Processing provider ID used to look up algorithms
-            (e.g. ``"ngtoolbox"``).
+        :param parent_menu: Root menu to populate.
+        :param tools: Loaded toolbox tools.
+        :param tags: Loaded toolbox tags.
+        :param provider_id: QGIS Processing provider identifier.
         """
-        tool_by_name: Dict[str, Dict[str, Any]] = {
-            tool["name"]: tool
-            for tool in tools
-            if not tool.get("is_dev", False)
+
+        tool_by_name: Dict[str, ToolboxTool] = {
+            tool.name: tool for tool in tools if not tool.is_dev
         }
 
         tools_by_tag: Dict[int, List[str]] = {}
+
         for tool in tools:
-            if tool.get("is_dev", False):
+            if tool.is_dev:
                 continue
-            for tag_id in tool.get("tags", []):
-                tools_by_tag.setdefault(tag_id, []).append(tool["name"])
+
+            for tag_id in tool.tag_ids:
+                tools_by_tag.setdefault(tag_id, []).append(tool.name)
 
         registry = QgsApplication.processingRegistry()
 
-        for tag in sorted(tags, key=lambda tag: tag["alias"]):
-            tag_id = tag["id"]
-            tag_alias = tag["alias"]
+        for tag in sorted(tags, key=lambda item: item.alias):
+            tool_names = tools_by_tag.get(tag.id, [])
 
-            tool_names = tools_by_tag.get(tag_id, [])
             if not tool_names:
                 continue
 
-            category_menu = QMenu(tag_alias, parent_menu)
-            category_menu.setIcon(self._category_icon(tag_id))
+            category_menu = QMenu(tag.alias, parent_menu)
+
+            category_menu.setIcon(self._category_icon(tag.id))
             category_menu.setToolTipsVisible(True)
 
             for tool_name in tool_names:
                 tool = tool_by_name.get(tool_name)
+
                 if tool is None:
                     continue
 
-                algorithm_id = f"{provider_id}:{tool_name}"
+                algorithm_id = f"{provider_id}:{tool.name}"
 
                 if registry.algorithmById(algorithm_id) is None:
                     logger.warning(
@@ -408,19 +411,16 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
                 action = QAction(
                     QgsApplication.getThemeIcon("processingAlgorithm.svg"),
-                    tool["alias"],
+                    tool.alias,
                     parent_menu,
                 )
-                action.setToolTip(tool.get("description", ""))
-                action.setStatusTip(tool.get("description", ""))
 
-                def _on_triggered(
-                    _checked: bool = False,
-                    _algorithm_id: str = algorithm_id,
-                ) -> None:
-                    execAlgorithmDialog(_algorithm_id)
+                action.setToolTip(tool.description or "")
+                action.setStatusTip(tool.description or "")
+                action.setData(algorithm_id)
 
-                action.triggered.connect(_on_triggered)
+                action.triggered.connect(self._start_tool)
+
                 category_menu.addAction(action)
 
             if not category_menu.isEmpty():
@@ -450,3 +450,15 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
             return qgis_icon("processingModel.svg")
 
         return icon
+
+    @pyqtSlot(bool)
+    def _start_tool(self, _checked: bool) -> None:
+        """
+        Open QGIS Processing execution dialog for selected toolbox algorithm.
+
+        :param _checked: QAction checked state (unused).
+        """
+        action = cast(QAction, self.sender())
+        algorithm_id = action.data()
+
+        execAlgorithmDialog(algorithm_id)

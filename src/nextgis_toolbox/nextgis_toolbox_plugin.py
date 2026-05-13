@@ -58,8 +58,6 @@ if TYPE_CHECKING:
         NotifierInterface,
     )
 
-assert isinstance(iface, QgisInterface)
-
 _QGIS_ICON = "qgis"
 _PLUGIN_ICON = "plugin"
 _MATERIAL_ICON = "material"
@@ -94,8 +92,8 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
     _notifier: Optional[MessageBarNotifier]
     _toolbox: Optional[Toolbox]
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, iface: QgisInterface) -> None:
+        super().__init__(iface)
 
         logger.debug("<b>✓ Plugin created</b>")
         logger.debug(f"<b>ⓘ OS:</b> {QSysInfo().prettyProductName()}")
@@ -140,34 +138,35 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         assert self._notifier is not None, "Notifier is not initialized"
         return self._notifier
 
-    def _load(self) -> None:
+    def _load_ui(self) -> bool:
         """Initialize GUI elements."""
         logger.debug("<b>Start plugin initialization</b>")
 
         self._notifier = MessageBarNotifier(self)
 
-        self._toolbox = Toolbox()
-        self._toolbox.load_tools()
-        self._toolbox.load_tags()
-
         QTimer.singleShot(0, self._initialize_ui)
 
-        self.initProcessing()
         self._load_settings()
 
         logger.debug("<b>End plugin initialization</b>")
 
-    def initProcessing(self) -> None:
+        return True
+
+    def _load_processing(self) -> bool:
         """
         Initialize and register the Processing provider.
         """
-        assert self._toolbox is not None
+        self._toolbox = Toolbox()
+        self._toolbox.load_tools()
+        self._toolbox.load_tags()
+
         self._processing_provider = NgToolboxPluginProcessingProvider(
             self._toolbox
         )
         QgsApplication.processingRegistry().addProvider(
             self._processing_provider
         )
+        return True
 
     def _initialize_ui(self) -> None:
         """
@@ -195,7 +194,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         :returns: Processing menu or None.
         """
-        for menu in self.iface.mainWindow().findChildren(QMenu):
+        for menu in self.qgis_iface.mainWindow().findChildren(QMenu):
             if menu.objectName() == "processing":
                 return menu
 
@@ -220,7 +219,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         icon = plugin_icon("nextgis_toolbox_plugin_logo.svg")
 
-        self._plugin_menu = QMenu(self.iface.mainWindow())
+        self._plugin_menu = QMenu(self.qgis_iface.mainWindow())
 
         self._plugin_menu.setTitle("NextGIS Toolbox Plugin")
         self._plugin_menu.setIcon(icon)
@@ -260,7 +259,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         self._about_action = QAction(
             QgsApplication.getThemeIcon("mActionPropertiesWidget.svg"),
             self.tr("About plugin…"),
-            self.iface.mainWindow(),
+            self.qgis_iface.mainWindow(),
         )
 
         self._about_action.triggered.connect(self.open_about_dialog)
@@ -276,7 +275,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         self._show_action = QAction(
             icon,
             "NextGIS Toolbox Plugin",
-            self.iface.mainWindow(),
+            self.qgis_iface.mainWindow(),
         )
 
         self._show_action.setCheckable(True)
@@ -312,7 +311,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Register plugin toolbar action.
         """
-        attributes_toolbar = self.iface.attributesToolBar()
+        attributes_toolbar = self.qgis_iface.attributesToolBar()
 
         if attributes_toolbar is not None:
             attributes_toolbar.addAction(self._show_action)
@@ -321,11 +320,11 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Register plugin action in Help menu.
         """
-        plugin_help_menu = self.iface.pluginHelpMenu()
+        plugin_help_menu = self.qgis_iface.pluginHelpMenu()
         assert plugin_help_menu is not None
         plugin_help_menu.addAction(self._show_help_action)
 
-    def _unload(self) -> None:
+    def _unload_ui(self) -> None:
         """
         Cleanup plugin UI.
         """
@@ -347,7 +346,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Remove plugin action from QGIS toolbar.
         """
-        attributes_toolbar = self.iface.attributesToolBar()
+        attributes_toolbar = self.qgis_iface.attributesToolBar()
 
         if attributes_toolbar is not None:
             attributes_toolbar.removeAction(self._show_action)
@@ -359,7 +358,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         if self._plugin_menu is None:
             return
 
-        for menu in self.iface.mainWindow().findChildren(QMenu):
+        for menu in self.qgis_iface.mainWindow().findChildren(QMenu):
             if menu.objectName() == "processing":
                 menu.removeAction(self._plugin_menu.menuAction())
                 break
@@ -371,7 +370,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         if self._show_help_action is None:
             return
 
-        plugin_help_menu = self.iface.pluginHelpMenu()
+        plugin_help_menu = self.qgis_iface.pluginHelpMenu()
         assert plugin_help_menu is not None
         plugin_help_menu.removeAction(self._show_help_action)
 
@@ -449,8 +448,8 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
             try:
                 self._dock_widget = ToolboxDockWidget(
-                    self.iface,
-                    self.iface.mainWindow(),
+                    self.qgis_iface,
+                    self.qgis_iface.mainWindow(),
                 )
                 self._dock_widget.window_closed.connect(self._on_dock_closed)
             except Exception:
@@ -463,20 +462,22 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
                 self._first_start = True
                 return
 
-            self.iface.addDockWidget(
+            self.qgis_iface.addDockWidget(
                 Qt.DockWidgetArea.RightDockWidgetArea,
                 self._dock_widget,
             )
 
             right_docks = [
                 dock
-                for dock in self.iface.mainWindow().findChildren(QDockWidget)
-                if self.iface.mainWindow().dockWidgetArea(dock)
+                for dock in self.qgis_iface.mainWindow().findChildren(
+                    QDockWidget
+                )
+                if self.qgis_iface.mainWindow().dockWidgetArea(dock)
                 == Qt.DockWidgetArea.RightDockWidgetArea
             ]
 
             if right_docks:
-                self.iface.mainWindow().tabifyDockWidget(
+                self.qgis_iface.mainWindow().tabifyDockWidget(
                     right_docks[0],
                     self._dock_widget,
                 )

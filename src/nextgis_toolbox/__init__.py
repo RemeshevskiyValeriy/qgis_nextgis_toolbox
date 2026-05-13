@@ -29,10 +29,10 @@ if TYPE_CHECKING:
     from qgis.gui import QgisInterface
 
 
-def classFactory(_iface: "QgisInterface") -> NgToolboxPluginInterface:
+def classFactory(iface: "QgisInterface") -> NgToolboxPluginInterface:
     """Create and return an instance of the NextGIS Toolbox Plugin.
 
-    :param _iface: QGIS interface instance passed by QGIS at plugin load.
+    :param iface: QGIS interface instance passed by QGIS at plugin load.
 
     :returns: An instance of NgToolboxPluginInterface (plugin or stub).
     """
@@ -42,7 +42,7 @@ def classFactory(_iface: "QgisInterface") -> NgToolboxPluginInterface:
         with QgsRuntimeProfiler.profile("Import plugin"):  # type: ignore PylancereportAttributeAccessIssue
             from nextgis_toolbox.nextgis_toolbox_plugin import NgToolboxPlugin
 
-        plugin = NgToolboxPlugin()
+        plugin = NgToolboxPlugin(iface)
         settings.did_last_launch_fail = False
 
     except Exception as error:
@@ -68,7 +68,7 @@ def classFactory(_iface: "QgisInterface") -> NgToolboxPluginInterface:
 
         settings.did_last_launch_fail = True
 
-        plugin = NgToolboxPluginStub()
+        plugin = NgToolboxPluginStub(iface)
 
         def display_exception() -> None:
             plugin.notifier.display_exception(exception)

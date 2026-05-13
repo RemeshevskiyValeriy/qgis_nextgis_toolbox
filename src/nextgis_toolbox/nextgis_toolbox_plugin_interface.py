@@ -17,10 +17,11 @@
 import configparser
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from qgis import utils
 from qgis.core import QgsApplication
+from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QObject, QTranslator, pyqtSignal, pyqtSlot
 
 from nextgis_toolbox.core.constants import PACKAGE_NAME
@@ -45,6 +46,11 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
 
     settings_changed = pyqtSignal()
 
+    def __init__(self, iface: QgisInterface) -> None:
+        super().__init__(iface)
+        self._is_gui_loaded = False
+        self._is_processing_loaded = False
+
     @classmethod
     def instance(cls) -> "NgToolboxPluginInterface":
         """Return the singleton instance of the NextGIS Toolbox Plugin.
@@ -56,6 +62,14 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
         plugin = utils.plugins.get(PACKAGE_NAME)
         assert plugin is not None, "Using a plugin before it was created"
         return plugin
+
+    @property
+    def qgis_iface(self) -> QgisInterface:
+        """Return the QGIS interface instance.
+
+        :returns: QGIS interface instance.
+        """
+        return cast(QgisInterface, self.parent())
 
     @property
     def metadata(self) -> configparser.ConfigParser:
@@ -102,24 +116,37 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
         """Initialize the GUI components and load necessary resources."""
         self._translators = list()
 
+        if self.metadata.get("general", "hasProcessingProvider"):
+            self.initProcessing()
+
         try:
             self._load_translations()
-            self._load()
+            self._is_gui_loaded = self._load_ui()
         except Exception:
             logger.exception("An error occurred while plugin loading")
+
+    def initProcessing(self) -> None:
+        """Initialize the processing provider and algorithms."""
+        try:
+            self._is_processing_loaded = self._load_processing()
+        except Exception:
+            logger.exception("An error occurred while initializing processing")
 
     def unload(self) -> None:
         """Unload the plugin and perform cleanup operations."""
         try:
-            self._unload()
+            if self._is_gui_loaded:
+                self._unload_ui()
+                self._unload_translations()
+            if self._is_processing_loaded:
+                self._unload_processing()
         except Exception:
             logger.exception("An error occurred while plugin unloading")
 
-        self._unload_translations()
         unload_logger()
 
     @abstractmethod
-    def _load(self) -> None:
+    def _load_ui(self) -> bool:
         """Load the plugin resources and initialize components.
 
         This method must be implemented by subclasses.
@@ -127,12 +154,26 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
         ...
 
     @abstractmethod
-    def _unload(self) -> None:
+    def _unload_ui(self) -> None:
         """Unload the plugin resources and clean up components.
 
         This method must be implemented by subclasses.
         """
         ...
+
+    def _load_processing(self) -> bool:
+        """Load the processing provider and algorithms.
+
+        This method must be implemented by subclasses.
+        """
+        return False
+
+    def _unload_processing(self) -> None:
+        """Unload the processing provider and algorithms.
+
+        This method must be implemented by subclasses.
+        """
+        pass
 
     def _add_translator(self, translator_path: Path) -> None:
         """Add a translator for the plugin.

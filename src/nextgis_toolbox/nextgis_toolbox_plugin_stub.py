@@ -40,9 +40,9 @@ assert isinstance(iface, QgisInterface)
 class NgToolboxPluginStub(NgToolboxPluginInterface):
     """Stub implementation of plugin interface used to notify the user when the plugin failed to start."""
 
-    def __init__(self) -> None:
+    def __init__(self, iface: QgisInterface) -> None:
         """Initialize the plugin stub."""
-        super().__init__()
+        super().__init__(iface)
 
         logger.debug("<b>✓ Plugin stub created</b>")
         logger.debug(f"<b>ⓘ OS:</b> {QSysInfo().prettyProductName()}")
@@ -71,7 +71,7 @@ class NgToolboxPluginStub(NgToolboxPluginInterface):
         assert self._notifier is not None, "Notifier is not initialized"
         return self._notifier
 
-    def _load(self) -> None:
+    def _load_ui(self) -> bool:
         """Load the plugin resources and initialize components."""
         logger.debug("<b>Start stub initialization</b>")
 
@@ -79,7 +79,9 @@ class NgToolboxPluginStub(NgToolboxPluginInterface):
 
         logger.debug("<b>End stub initialization</b>")
 
-    def _unload(self) -> None:
+        return True
+
+    def _unload_ui(self) -> None:
         """Unload the plugin resources and clean up components."""
         self._notifier.deleteLater()
         self._notifier = None

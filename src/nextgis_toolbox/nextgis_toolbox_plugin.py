@@ -72,7 +72,7 @@ _CATEGORY_ICON_MAP: Dict[int, Tuple[str, str]] = {
     1: (_MATERIAL_ICON, "forest"),                             # Forest
     2: (_QGIS_ICON, "mIconVector.svg"),                        # Vector
     3: (_QGIS_ICON, "mIconRaster.svg"),                        # Raster
-    6: (_QGIS_ICON, "sync_views.svg"),                         # Conversion
+    6: (_MATERIAL_ICON, "conversion"),                         # Conversion
     7: (_QGIS_ICON, "mLayoutItem3DMap.svg"),                   # Elevation
     9: (_QGIS_ICON, "mActionIdentify.svg"),                    # Cadastre
     10: (_PLUGIN_ICON, "nextgis_logo.svg"),                    # Web GIS
@@ -80,7 +80,7 @@ _CATEGORY_ICON_MAP: Dict[int, Tuple[str, str]] = {
     15: (_PLUGIN_ICON, "osm_logo.svg"),                        # OpenStreetMap
     16: (_PLUGIN_ICON, "nextgis_toolbox_plugin_logo.svg"),     # Test
     17: (_QGIS_ICON, "mSensor.svg"),                           # Remote sensing
-    18: (_QGIS_ICON, "mActionFindReplace.svg"),                # Address
+    18: (_MATERIAL_ICON, "address"),                           # Address
     19: (_QGIS_ICON, "mIconQgsProjectFile.svg"),               # QGIS
     20: (_QGIS_ICON, "mActionHistory.svg"),                    # Versioning
     21: (_QGIS_ICON, "mIconGps.svg"),                          # GPS tracks

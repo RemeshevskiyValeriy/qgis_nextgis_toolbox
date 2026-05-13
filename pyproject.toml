@@ -6,7 +6,9 @@ license = { file = "LICENSE" }
 
 
 [tool.qgspb.package-data]
-"nextgis_toolbox.icons" = ["*.svg"]
+"nextgis_toolbox.resources" = ["components.json"]
+"nextgis_toolbox.resources.icons" = ["*.svg"]
+"nextgis_toolbox.resources.icons.material" = ["*.svg"]
 
 [tool.qgspb.forms]
 ui-files = ["src/nextgis_toolbox/ui/*.ui"]

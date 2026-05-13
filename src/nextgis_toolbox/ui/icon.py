@@ -68,7 +68,7 @@ def plugin_icon(
 
     :returns: QIcon instance for the plugin icon.
     """
-    icons_path = _plugin_path / "icons"
+    icons_path = _plugin_path / "resources" / "icons"
     if icon_path is None:
         icon_path = f"{PACKAGE_NAME}_logo.svg"
 
@@ -110,7 +110,7 @@ def material_icon(
     :raises FileNotFoundError: If the SVG file is not found.
     :raises ValueError: If the SVG cannot be loaded.
     """
-    material_icons_path = _plugin_path / "icons" / "material"
+    material_icons_path = _plugin_path / "resources" / "icons" / "material"
 
     svg_path = None
     for path in material_icons_path.glob(f"{name}*"):

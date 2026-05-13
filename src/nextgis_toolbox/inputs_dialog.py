@@ -45,17 +45,13 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
-from nextgis_toolbox.nextgis_toolbox import (
-    ToolboxConnError,
-    ToolboxIO,
-    ToolboxIOFilename,
-)
+from nextgis_toolbox.nextgis_toolbox.models.parameter import ToolboxParameter
 
 TEMP_FOLDER = QgsProcessingUtils.tempFolder()
 
 
 class InputLayerFileWidget(QWidget):
-    def __init__(self, tool_input: ToolboxIO, parent=None):
+    def __init__(self, tool_input, parent=None):
         self.parent = parent
         QWidget.__init__(self)
         self.tool_input = tool_input
@@ -173,7 +169,7 @@ class InputLayerFileWidget(QWidget):
 
 
 class InputLineWidget(QWidget):
-    def __init__(self, tool_input: ToolboxIO, parent=None):
+    def __init__(self, tool_input, parent=None):
         self.parent = parent
         QWidget.__init__(self)
 
@@ -234,7 +230,7 @@ class InputLineWidget(QWidget):
 class InputCheckboxWidget(QWidget):
     valid = True
 
-    def __init__(self, tool_input: ToolboxIO, parent=None):
+    def __init__(self, tool_input, parent=None):
         self.parent = parent
         QWidget.__init__(self)
 
@@ -292,7 +288,7 @@ class InputsDialog(QDialog):
         self.input_widgets = []
         for input in inputs:
             input_widget_class = {
-                ToolboxIOFilename: InputLayerFileWidget,
+                ToolboxParameter: InputLayerFileWidget,
                 int: InputLineWidget,
                 float: InputLineWidget,
                 str: InputLineWidget,
@@ -342,7 +338,7 @@ class InputsDialog(QDialog):
                     loaded_zip = self.toolbox.upload_file(
                         input_widget.fileLineEdit.text()
                     )
-                except ToolboxConnError:
+                except Exception:
                     self.iface.messageBar().pushMessage(
                         "NextGis Toolbox",
                         self.tr("Connection error!"),
@@ -391,7 +387,7 @@ class InputsDialog(QDialog):
                         self.wait_res = True
                         self.task_id = resp["task_id"]
                     self.accept()
-            except ToolboxConnError:
+            except Exception:
                 self.iface.messageBar().pushMessage(
                     "NextGis Toolbox",
                     self.tr("Connection error!"),

@@ -33,6 +33,9 @@ from qgis.PyQt.QtWidgets import (
 from nextgis_toolbox.core.constants import COMPANY_NAME
 from nextgis_toolbox.core.exceptions import NgToolboxPluginUiLoadError
 from nextgis_toolbox.core.logging import logger, update_logging_level
+from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
+    NgToolboxPluginInterface,
+)
 from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings import (
     NgToolboxPluginSettings,
 )
@@ -80,6 +83,9 @@ class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
             debug_state = "enabled" if new_debug_enabled else "disabled"
             update_logging_level()
             logger.warning(f"Debug messages were {debug_state}")
+
+        plugin = NgToolboxPluginInterface.instance()
+        plugin.settings_changed.emit()
 
     def cancel(self) -> None:
         """Cancel changes made in the settings page."""

@@ -31,12 +31,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.uic import loadUiType
 
-from nextgis_toolbox.nextgis_toolbox import (
-    API_URL,
-    Results,
-    Toolbox,
-    ToolboxConnError,
-)
+from nextgis_toolbox.nextgis_toolbox.api.client import API_BASE_ENDPOINT
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
@@ -46,7 +41,7 @@ RESULTS_FORM_CLASS, _ = loadUiType(
 
 
 class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
-    def __init__(self, results: Results, toolbox: Toolbox, parent=None):
+    def __init__(self, results, toolbox, parent=None):
         super(ResultsDialog, self).__init__(parent)
         self.setupUi(self)
 
@@ -63,7 +58,7 @@ class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
             valueItem = QTableWidgetItem(result.value)
             self.tableWidget.setItem(row, 1, valueItem)
 
-            if API_URL in result.value:
+            if API_BASE_ENDPOINT in result.value:
                 getButton = QPushButton(self.tr("Get"))
                 getButton.clicked.connect(self.get_result)
                 self.tableWidget.setCellWidget(row, 1, getButton)
@@ -89,7 +84,7 @@ class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
             _ = self.toolbox.orders_man.download_file(link, res_dir)
             # QDesktopServices.openUrl(QUrl.fromLocalFile(result))
             QDesktopServices.openUrl(QUrl.fromLocalFile(res_dir))
-        except ToolboxConnError:
+        except Exception:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox",
                 self.tr("Connection error!"),

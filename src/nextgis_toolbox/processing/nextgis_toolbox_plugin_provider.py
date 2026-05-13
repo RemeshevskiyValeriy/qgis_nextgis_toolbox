@@ -29,6 +29,7 @@ from nextgis_toolbox.ui.icon import plugin_icon
 
 if TYPE_CHECKING:
     from nextgis_toolbox.nextgis_toolbox.api.toolbox import Toolbox
+    from nextgis_toolbox.nextgis_toolbox.models.tool import ToolboxTool
 
 
 class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
@@ -56,46 +57,16 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
         """
         Fetch tool I/O definitions from the API and register algorithms.
         """
+
         with QgsRuntimeProfiler.profile(
             f"load algs: {len(self._toolbox.tools)}"
         ):  # type: ignore PylancereportAttributeAccessIssue
-            load_errors: Dict[str, str] = {}
-
-            for tool in self._toolbox.tools:
-                if tool.is_dev:
-                    continue
-
-                tool_name = tool.name
-
-                try:
-                    inputs, outputs = self._toolbox.fetch_tool_io_parameters(
-                        tool_name
-                    )
-
-                    algorithm = NextgisToolboxAlgorithm(
-                        tool_id=tool_name,
-                        display_name=tool.alias,
-                        description=tool.description,
-                        inputs=inputs,
-                        outputs=outputs,
-                    )
-
-                    self.addAlgorithm(algorithm)
-
-                except Exception as error:
-                    load_errors[tool_name] = str(error)
+            load_errors = self._load_tool_algorithms()
 
             if not load_errors:
                 return
 
-            self._notifier.display_message(
-                self.tr(
-                    "Some tools could not be loaded. See plugin logs for details."
-                ),
-                level=Qgis.MessageLevel.Warning,
-            )
-            for tool_name, message in load_errors.items():
-                logger.warning(f"Failed to load tool '{tool_name}': {message}")
+            self._notify_load_errors(load_errors)
 
     def id(self) -> str:
         """
@@ -123,3 +94,63 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
         :returns: Full provider name.
         """
         return self.name()
+
+    def _load_tool_algorithms(self) -> Dict[str, str]:
+        """
+        Load and register toolbox Processing algorithms.
+
+        :returns: Mapping of tool name to error message.
+        """
+        load_errors: Dict[str, str] = {}
+
+        for tool in self._toolbox.tools:
+            if tool.is_dev:
+                continue
+
+            try:
+                self._add_tool_algorithm(tool)
+
+            except Exception as error:
+                load_errors[tool.name] = str(error)
+
+        return load_errors
+
+    def _add_tool_algorithm(
+        self,
+        tool: "ToolboxTool",
+    ) -> None:
+        """
+        Create and register Processing algorithm for toolbox tool.
+
+        :param tool: Toolbox tool descriptor.
+        """
+        inputs, outputs = self._toolbox.fetch_tool_io_parameters(tool.name)
+
+        algorithm = NextgisToolboxAlgorithm(
+            tool_id=tool.name,
+            display_name=tool.alias,
+            description=tool.description,
+            inputs=inputs,
+            outputs=outputs,
+        )
+
+        self.addAlgorithm(algorithm)
+
+    def _notify_load_errors(
+        self,
+        load_errors: Dict[str, str],
+    ) -> None:
+        """
+        Notify user about failed toolbox algorithm loading.
+
+        :param load_errors: Mapping of tool name to error message.
+        """
+        self._notifier.display_message(
+            self.tr(
+                "Some tools could not be loaded. See plugin logs for details."
+            ),
+            level=Qgis.MessageLevel.Warning,
+        )
+
+        for tool_name, message in load_errors.items():
+            logger.warning(f"Failed to load tool '{tool_name}': {message}")

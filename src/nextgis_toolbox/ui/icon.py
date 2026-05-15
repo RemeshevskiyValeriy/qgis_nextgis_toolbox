@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
+from enum import IntEnum
 from pathlib import Path
 from typing import Dict, Optional, Union
 
@@ -33,6 +34,27 @@ from qgis.PyQt.QtWidgets import QLabel
 
 from nextgis_toolbox.core.constants import PACKAGE_NAME
 from nextgis_toolbox.core.logging import logger
+
+
+class CategoryIcon(IntEnum):
+    """Stable API category identifiers used to resolve category icons."""
+
+    FOREST = 1
+    VECTOR = 2
+    RASTER = 3
+    CONVERSION = 6
+    ELEVATION = 7
+    CADASTRE = 9
+    WEB_GIS = 10
+    PHOTO = 11
+    OPENSTREETMAP = 15
+    TEST = 16
+    REMOTE_SENSING = 17
+    ADDRESS = 18
+    QGIS = 19
+    VERSIONING = 20
+    GPS_TRACKS = 21
+
 
 _plugin_path = Path(__file__).parents[1]
 
@@ -233,3 +255,43 @@ def icon_to_base64(icon: QIcon, size: Optional[int] = None) -> str:
         data = data.decode("utf-8")
 
     return "data:image/png;base64, " + data
+
+
+_CATEGORY_ICON_MAP: Dict[CategoryIcon, QIcon] = {
+    CategoryIcon.FOREST: material_icon("forest", size=64),
+    CategoryIcon.VECTOR: qgis_icon("mIconVector.svg"),
+    CategoryIcon.RASTER: qgis_icon("mIconRaster.svg"),
+    CategoryIcon.CONVERSION: material_icon("conversion", size=64),
+    CategoryIcon.ELEVATION: qgis_icon("mLayoutItem3DMap.svg"),
+    CategoryIcon.CADASTRE: qgis_icon("mActionIdentify.svg"),
+    CategoryIcon.WEB_GIS: plugin_icon("nextgis_logo.svg"),
+    CategoryIcon.PHOTO: qgis_icon("mActionAddImage.svg"),
+    CategoryIcon.OPENSTREETMAP: plugin_icon("osm_logo.svg"),
+    CategoryIcon.TEST: plugin_icon("nextgis_toolbox_plugin_logo.svg"),
+    CategoryIcon.REMOTE_SENSING: qgis_icon("mSensor.svg"),
+    CategoryIcon.ADDRESS: material_icon("address", size=64),
+    CategoryIcon.QGIS: qgis_icon("mIconQgsProjectFile.svg"),
+    CategoryIcon.VERSIONING: qgis_icon("mActionHistory.svg"),
+    CategoryIcon.GPS_TRACKS: qgis_icon("mIconGps.svg"),
+}
+
+
+def toolbox_category_icon(tag_id: int) -> QIcon:
+    """Return a themed icon for a tag category by its stable API identifier.
+
+    :param tag_id: Numeric tag identifier from the NextGIS Toolbox API.
+
+    :returns: Resolved category icon.
+    """
+    fallback_icon = qgis_icon("processingModel.svg")
+
+    try:
+        category = CategoryIcon(tag_id)
+    except ValueError:
+        return fallback_icon
+
+    icon = _CATEGORY_ICON_MAP.get(category, fallback_icon)
+    if icon.isNull():
+        return fallback_icon
+
+    return icon

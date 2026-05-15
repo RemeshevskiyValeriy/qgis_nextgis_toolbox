@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import sys
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, cast
 
 from osgeo import gdal
 from processing import execAlgorithmDialog
@@ -28,7 +28,6 @@ from qgis.PyQt.QtCore import (
     QTimer,
     pyqtSlot,
 )
-from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMenu
 
 from nextgis_toolbox.about_dialog import AboutDialog
@@ -50,39 +49,12 @@ from nextgis_toolbox.processing.nextgis_toolbox_plugin_provider import (
 from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings_page import (
     NgToolboxPluginSettingsPageFactory,
 )
-from nextgis_toolbox.ui.icon import material_icon, plugin_icon, qgis_icon
+from nextgis_toolbox.ui.icon import plugin_icon, toolbox_category_icon
 
 if TYPE_CHECKING:
     from nextgis_toolbox.notifier.notifier_interface import (
         NotifierInterface,
     )
-
-_QGIS_ICON = "qgis"
-_PLUGIN_ICON = "plugin"
-_MATERIAL_ICON = "material"
-
-# Mapping: tag_id (stable, language-independent) → (icon_source, icon_name)
-# Tag IDs do not change when the API returns responses in different languages.
-
-# fmt: off
-_CATEGORY_ICON_MAP: Dict[int, Tuple[str, str]] = {
-    1: (_MATERIAL_ICON, "forest"),                             # Forest
-    2: (_QGIS_ICON, "mIconVector.svg"),                        # Vector
-    3: (_QGIS_ICON, "mIconRaster.svg"),                        # Raster
-    6: (_MATERIAL_ICON, "conversion"),                         # Conversion
-    7: (_QGIS_ICON, "mLayoutItem3DMap.svg"),                   # Elevation
-    9: (_QGIS_ICON, "mActionIdentify.svg"),                    # Cadastre
-    10: (_PLUGIN_ICON, "nextgis_logo.svg"),                    # Web GIS
-    11: (_QGIS_ICON, "mActionAddImage.svg"),                   # Photo
-    15: (_PLUGIN_ICON, "osm_logo.svg"),                        # OpenStreetMap
-    16: (_PLUGIN_ICON, "nextgis_toolbox_plugin_logo.svg"),     # Test
-    17: (_QGIS_ICON, "mSensor.svg"),                           # Remote sensing
-    18: (_MATERIAL_ICON, "address"),                           # Address
-    19: (_QGIS_ICON, "mIconQgsProjectFile.svg"),               # QGIS
-    20: (_QGIS_ICON, "mActionHistory.svg"),                    # Versioning
-    21: (_QGIS_ICON, "mIconGps.svg"),                          # GPS tracks
-}
-# fmt: on
 
 
 class NgToolboxPlugin(NgToolboxPluginInterface):
@@ -660,7 +632,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         category_menu = QMenu(tag.alias, parent_menu)
 
-        category_menu.setIcon(self._category_icon(tag.id))
+        category_menu.setIcon(toolbox_category_icon(tag.id))
         category_menu.setToolTipsVisible(True)
 
         return category_menu
@@ -694,31 +666,6 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         action.triggered.connect(self._start_tool)
 
         return action
-
-    def _category_icon(self, tag_id: int) -> QIcon:
-        """
-        Return a themed icon for a tag category by its stable API identifier.
-
-        :param tag_id: Numeric tag identifier from the NextGIS Toolbox API.
-
-        :returns: Resolved icon.
-        """
-        icon_source, icon_name = _CATEGORY_ICON_MAP.get(
-            tag_id,
-            (_QGIS_ICON, "processingModel.svg"),
-        )
-
-        if icon_source == _PLUGIN_ICON:
-            icon = plugin_icon(icon_name)
-        elif icon_source == _MATERIAL_ICON:
-            icon = material_icon(icon_name, size=64)
-        else:
-            icon = qgis_icon(icon_name)
-
-        if icon.isNull():
-            return qgis_icon("processingModel.svg")
-
-        return icon
 
     @pyqtSlot(bool)
     def _start_tool(self, _checked: bool) -> None:

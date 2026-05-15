@@ -17,7 +17,7 @@
 import configparser
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 from qgis import utils
 from qgis.core import QgsApplication
@@ -45,9 +45,13 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
     """
 
     settings_changed = pyqtSignal()
+    _instance: Optional["NgToolboxPluginInterface"] = None
 
     def __init__(self, iface: QgisInterface) -> None:
         super().__init__(iface)
+
+        NgToolboxPluginInterface._instance = self
+
         self._is_gui_loaded = False
         self._is_processing_loaded = False
 
@@ -59,7 +63,7 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
 
         :raises AssertionError: If the plugin has not been created yet.
         """
-        plugin = utils.plugins.get(PACKAGE_NAME)
+        plugin = cls._instance
         assert plugin is not None, "Using a plugin before it was created"
         return plugin
 
@@ -142,6 +146,9 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
                 self._unload_processing()
         except Exception:
             logger.exception("An error occurred while plugin unloading")
+        finally:
+            if NgToolboxPluginInterface._instance is self:
+                NgToolboxPluginInterface._instance = None
 
         unload_logger()
 

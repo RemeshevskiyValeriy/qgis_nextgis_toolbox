@@ -30,7 +30,6 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMenu
-from qgis.utils import iface
 
 from nextgis_toolbox.about_dialog import AboutDialog
 from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
@@ -106,8 +105,6 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
             f"<b>ⓘ Plugin path:</b> {self.path}"
             + (f" -> {self.path.resolve()}" if self.path.is_symlink() else "")
         )
-
-        self.iface = iface
 
         self._dock_widget = None
         self._show_action = None
@@ -338,7 +335,6 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         self._unload_dock_widget()
         self._unload_notifier()
-        self._unload_processing_provider()
 
         logger.debug("<b>End plugin unloading</b>")
 
@@ -419,7 +415,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         self._notifier = None
 
-    def _unload_processing_provider(self) -> None:
+    def _unload_processing(self) -> None:
         """
         Remove Processing provider from QGIS registry.
         """
@@ -435,7 +431,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
     def _load_settings(self) -> None:
         """Register the plugin settings page in the QGIS Options dialog."""
         self._options_factory = NgToolboxPluginSettingsPageFactory()
-        iface.registerOptionsWidgetFactory(self._options_factory)
+        self.qgis_iface.registerOptionsWidgetFactory(self._options_factory)
 
     @pyqtSlot(bool)
     def run(self, checked: bool) -> None:

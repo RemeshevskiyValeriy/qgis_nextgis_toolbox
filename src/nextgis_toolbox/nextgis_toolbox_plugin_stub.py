@@ -21,7 +21,6 @@ from osgeo import gdal
 from qgis.core import Qgis
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QT_VERSION_STR, QSysInfo, pyqtSlot
-from qgis.utils import iface
 
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
@@ -33,8 +32,6 @@ if TYPE_CHECKING:
     from nextgis_toolbox.notifier.notifier_interface import (
         NotifierInterface,
     )
-
-assert isinstance(iface, QgisInterface)
 
 
 class NgToolboxPluginStub(NgToolboxPluginInterface):

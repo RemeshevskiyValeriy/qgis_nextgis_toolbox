@@ -104,7 +104,7 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
         load_errors: Dict[str, str] = {}
 
         for tool in self._toolbox.tools:
-            if tool.is_dev:
+            if tool.is_dev or tool.name != "Test":
                 continue
 
             try:

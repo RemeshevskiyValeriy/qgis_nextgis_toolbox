@@ -75,10 +75,10 @@ class NextgisToolboxSettings:
         """Return saved NextGIS Toolbox authentication type."""
         value = self._settings.value(
             self.KEY_AUTHENTICATION_TYPE,
-            defaultValue=AuthenticationType.NONE,
+            defaultValue=str(AuthenticationType.NONE),
             type=str,
         )
-        return AuthenticationType[value]
+        return AuthenticationType(value)
 
     @authentication_type.setter
     def authentication_type(self, value: AuthenticationType) -> None:

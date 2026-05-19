@@ -727,7 +727,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
         return api_client
 
-    @pyqtSlot
+    @pyqtSlot()
     def _update_api_client(self) -> None:
         """Update API client configuration based on current settings."""
         api_client = self._create_api_client()

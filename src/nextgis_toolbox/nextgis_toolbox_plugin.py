@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -30,10 +30,9 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMenu
 
-from nextgis_toolbox.about_dialog import AboutDialog
 from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
 from nextgis_toolbox.core.exceptions import (
-    NgToolboxPluginProcessingRequiredWarning,
+    NextgisToolboxProcessingRequiredWarning,
 )
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
@@ -49,17 +48,18 @@ from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
     ToolsInterface,
 )
 from nextgis_toolbox.nextgis_toolbox.tools.tools_manager import ToolsManager
-from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
-    NgToolboxPluginInterface,
+from nextgis_toolbox.nextgis_toolbox_interface import (
+    NextgisToolboxInterface,
 )
 from nextgis_toolbox.nextgis_toolbox_window import ToolboxDockWidget
 from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
-from nextgis_toolbox.processing.nextgis_toolbox_plugin_provider import (
-    NgToolboxPluginProcessingProvider,
+from nextgis_toolbox.processing.nextgis_toolbox_processing_provider import (
+    NextgisToolboxProcessingProvider,
 )
-from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings_page import (
-    NgToolboxPluginSettingsPageFactory,
+from nextgis_toolbox.settings.nextgis_toolbox_settings_page import (
+    NextgisToolboxSettingsPageFactory,
 )
+from nextgis_toolbox.ui.about_dialog import AboutDialog
 from nextgis_toolbox.ui.icon import plugin_icon, toolbox_category_icon
 
 if TYPE_CHECKING:
@@ -68,8 +68,8 @@ if TYPE_CHECKING:
     )
 
 
-class NgToolboxPlugin(NgToolboxPluginInterface):
-    """NextGIS Toolbox Plugin"""
+class NextgisToolboxPlugin(NextgisToolboxInterface):
+    """NextGIS Toolbox"""
 
     _notifier: Optional[MessageBarNotifier]
     _tools_manager: Optional[ToolsInterface]
@@ -170,7 +170,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         self._tools_manager.load()
         self._tasks_manager.load()
 
-        self._processing_provider = NgToolboxPluginProcessingProvider(
+        self._processing_provider = NextgisToolboxProcessingProvider(
             tools_manager=self._tools_manager,
             tasks_manager=self._tasks_manager,
         )
@@ -216,23 +216,23 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         Handle missing QGIS Processing plugin.
         """
         self._notifier.display_exception(
-            NgToolboxPluginProcessingRequiredWarning()
+            NextgisToolboxProcessingRequiredWarning()
         )
 
         logger.debug(
             "<b>Processing plugin is not enabled. "
-            "NextGIS Toolbox Plugin initialization skipped</b>"
+            "NextGIS Toolbox initialization skipped</b>"
         )
 
     def _create_plugin_menu(self) -> None:
         """
         Create root plugin menu.
         """
-        icon = plugin_icon("nextgis_toolbox_plugin_logo.svg")
+        icon = plugin_icon()
 
         self._plugin_menu = QMenu(self.qgis_iface.mainWindow())
 
-        self._plugin_menu.setTitle("NextGIS Toolbox Plugin")
+        self._plugin_menu.setTitle("NextGIS Toolbox")
         self._plugin_menu.setIcon(icon)
 
     def _create_toolbox_menu(self) -> None:
@@ -242,10 +242,10 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         assert self._plugin_menu is not None
         assert self._processing_provider is not None
 
-        icon = plugin_icon("nextgis_toolbox_plugin_logo.svg")
+        icon = plugin_icon()
 
         self._tools_menu = QMenu(
-            self.tr("NextGIS Toolbox Tools"),
+            self.tr("Tools"),
             self._plugin_menu,
         )
 
@@ -278,11 +278,11 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Create main plugin toolbar action.
         """
-        icon = plugin_icon("nextgis_toolbox_plugin_logo.svg")
+        icon = plugin_icon()
 
         self._show_action = QAction(
             icon,
-            "NextGIS Toolbox Plugin",
+            "NextGIS Toolbox",
             self.qgis_iface.mainWindow(),
         )
 
@@ -293,7 +293,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Create plugin help menu action.
         """
-        icon = plugin_icon("nextgis_toolbox_plugin_logo.svg")
+        icon = plugin_icon()
 
         self._show_help_action = QAction(
             icon,
@@ -449,7 +449,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
     def _load_settings(self) -> None:
         """Register the plugin settings page in the QGIS Options dialog."""
-        self._options_factory = NgToolboxPluginSettingsPageFactory()
+        self._options_factory = NextgisToolboxSettingsPageFactory()
         self.qgis_iface.registerOptionsWidgetFactory(self._options_factory)
 
     @pyqtSlot(bool)
@@ -470,7 +470,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
             except Exception:
                 logger.exception("DockWidget creation failed")
                 self._notifier.display_message(
-                    self.tr("Failed to initialize NextGIS Toolbox plugin."),
+                    self.tr("Failed to initialize NextGIS Toolbox."),
                     level=Qgis.MessageLevel.Critical,
                 )
                 self._show_action.setChecked(False)

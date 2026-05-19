@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,8 @@ from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QT_VERSION_STR, QSysInfo, pyqtSlot
 
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
-    NgToolboxPluginInterface,
+from nextgis_toolbox.nextgis_toolbox_interface import (
+    NextgisToolboxInterface,
 )
 from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
 
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     )
 
 
-class NgToolboxPluginStub(NgToolboxPluginInterface):
+class NextgisToolboxPluginStub(NextgisToolboxInterface):
     """Stub implementation of plugin interface used to notify the user when the plugin failed to start."""
 
     def __init__(self, iface: QgisInterface) -> None:

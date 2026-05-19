@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     )
 
 
-class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
+class NextgisToolboxProcessingProvider(QgsProcessingProvider):
     """
     QGIS Processing provider for NextGIS Toolbox tools.
     """
@@ -87,7 +87,7 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
 
         :returns: Unique provider identifier.
         """
-        return "ngtoolbox"
+        return "nextgistoolbox"
 
     def name(self) -> str:
         """
@@ -98,7 +98,7 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
         return PLUGIN_NAME
 
     def icon(self) -> QIcon:
-        return plugin_icon("nextgis_toolbox_plugin_logo.svg")
+        return plugin_icon()
 
     def longName(self) -> str:
         """

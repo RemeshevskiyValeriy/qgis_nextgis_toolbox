@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -267,7 +267,7 @@ _CATEGORY_ICON_MAP: Dict[CategoryIcon, QIcon] = {
     CategoryIcon.WEB_GIS: plugin_icon("nextgis_logo.svg"),
     CategoryIcon.PHOTO: qgis_icon("mActionAddImage.svg"),
     CategoryIcon.OPENSTREETMAP: plugin_icon("osm_logo.svg"),
-    CategoryIcon.TEST: plugin_icon("nextgis_toolbox_plugin_logo.svg"),
+    CategoryIcon.TEST: plugin_icon(),
     CategoryIcon.REMOTE_SENSING: qgis_icon("mSensor.svg"),
     CategoryIcon.ADDRESS: material_icon("address", size=64),
     CategoryIcon.QGIS: qgis_icon("mIconQgsProjectFile.svg"),

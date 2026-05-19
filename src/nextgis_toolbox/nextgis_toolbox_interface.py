@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,8 @@ if TYPE_CHECKING:
     )
 
 
-class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
-    """Interface for the NextGIS Toolbox Plugin.
+class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
+    """Interface for the NextGIS Toolbox.
 
     This abstract base class provides singleton access to the plugin
     instance, exposes plugin metadata, version, and path, and defines
@@ -51,21 +51,21 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
     """
 
     settings_changed = pyqtSignal()
-    _instance: Optional["NgToolboxPluginInterface"] = None
+    _instance: Optional["NextgisToolboxInterface"] = None
 
     def __init__(self, iface: QgisInterface) -> None:
         super().__init__(iface)
 
-        NgToolboxPluginInterface._instance = self
+        NextgisToolboxInterface._instance = self
 
         self._is_gui_loaded = False
         self._is_processing_loaded = False
 
     @classmethod
-    def instance(cls) -> "NgToolboxPluginInterface":
-        """Return the singleton instance of the NextGIS Toolbox Plugin.
+    def instance(cls) -> "NextgisToolboxInterface":
+        """Return the singleton instance of the NextGIS Toolbox.
 
-        :returns: The NgToolboxPluginInterface plugin instance.
+        :returns: The NextgisToolboxInterface plugin instance.
 
         :raises AssertionError: If the plugin has not been created yet.
         """
@@ -175,8 +175,8 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
         except Exception:
             logger.exception("An error occurred while plugin unloading")
         finally:
-            if NgToolboxPluginInterface._instance is self:
-                NgToolboxPluginInterface._instance = None
+            if NextgisToolboxInterface._instance is self:
+                NextgisToolboxInterface._instance = None
 
         unload_logger()
 

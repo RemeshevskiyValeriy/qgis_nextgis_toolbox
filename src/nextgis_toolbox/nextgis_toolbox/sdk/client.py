@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,11 +31,11 @@ from nextgis_toolbox.core.qt_network_error import (
 from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
     ToolboxAuthentication,
 )
-from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
-    NgToolboxPluginInterface,
+from nextgis_toolbox.nextgis_toolbox_interface import (
+    NextgisToolboxInterface,
 )
-from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings import (
-    NgToolboxPluginSettings,
+from nextgis_toolbox.settings.nextgis_toolbox_settings import (
+    NextgisToolboxSettings,
 )
 
 API_BASE_ENDPOINT = "https://toolbox.nextgis.com/api"
@@ -48,7 +48,7 @@ class ToolboxApiClient:
         """Initialize API client."""
         self._authentication = None
 
-        NgToolboxPluginInterface.instance().settings_changed.connect(
+        NextgisToolboxInterface.instance().settings_changed.connect(
             self.set_authentication
         )
 
@@ -58,7 +58,7 @@ class ToolboxApiClient:
         """
         Set current authentication object.
         """
-        settings = NgToolboxPluginSettings()
+        settings = NextgisToolboxSettings()
         token = settings.nextgis_toolbox_token
 
         if not token:

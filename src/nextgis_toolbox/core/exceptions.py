@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@ from typing import Any, Callable, List, Optional, Tuple
 from qgis.core import QgsApplication
 
 
-class NgToolboxPluginExceptionInfoMixin:
-    """Mixin providing common fields and logic for NextGIS Toolbox Plugin errors and warnings."""
+class NextgisToolboxExceptionInfoMixin:
+    """Mixin providing common fields and logic for NextGIS Toolbox errors and warnings."""
 
     _error_id: str
     _log_message: str
@@ -151,8 +151,8 @@ class NgToolboxPluginExceptionInfoMixin:
             self.args = (f"{message}\n{note}",)
 
 
-class NgToolboxPluginError(NgToolboxPluginExceptionInfoMixin, Exception):
-    """Base exception for errors in the NextGIS Toolbox Plugin.
+class NextgisToolboxError(NextgisToolboxExceptionInfoMixin, Exception):
+    """Base exception for errors in the NextGIS Toolbox.
 
     Inherit from this class to define custom error types for the plugin.
     """
@@ -170,7 +170,7 @@ class NgToolboxPluginError(NgToolboxPluginExceptionInfoMixin, Exception):
         :param user_message: Message to display to the user.
         :param detail: Additional details about the error.
         """
-        NgToolboxPluginExceptionInfoMixin.__init__(
+        NextgisToolboxExceptionInfoMixin.__init__(
             self,
             log_message,
             user_message=user_message,
@@ -179,8 +179,8 @@ class NgToolboxPluginError(NgToolboxPluginExceptionInfoMixin, Exception):
         Exception.__init__(self, self._log_message)
 
 
-class NgToolboxPluginWarning(NgToolboxPluginExceptionInfoMixin, UserWarning):
-    """Base warning for non-critical issues in the NextGIS Toolbox Plugin.
+class NextgisToolboxWarning(NextgisToolboxExceptionInfoMixin, UserWarning):
+    """Base warning for non-critical issues in the NextGIS Toolbox.
 
     Inherit from this class to define custom warning types for the plugin.
     """
@@ -198,7 +198,7 @@ class NgToolboxPluginWarning(NgToolboxPluginExceptionInfoMixin, UserWarning):
         :param user_message: Message to display to the user.
         :param detail: Additional details about the error.
         """
-        NgToolboxPluginExceptionInfoMixin.__init__(
+        NextgisToolboxExceptionInfoMixin.__init__(
             self,
             log_message,
             user_message=user_message,
@@ -207,7 +207,7 @@ class NgToolboxPluginWarning(NgToolboxPluginExceptionInfoMixin, UserWarning):
         Exception.__init__(self, self._log_message)
 
 
-class NgToolboxPluginReloadAfterUpdateWarning(NgToolboxPluginWarning):
+class NextgisToolboxReloadAfterUpdateWarning(NextgisToolboxWarning):
     """Warning raised when the plugin structure has changed after an update.
 
     This warning indicates that the plugin was successfully updated, but due to changes
@@ -228,7 +228,7 @@ class NgToolboxPluginReloadAfterUpdateWarning(NgToolboxPluginWarning):
         # fmt: on
 
 
-class NgToolboxPluginUiLoadError(NgToolboxPluginError):
+class NextgisToolboxUiLoadError(NextgisToolboxError):
     """Exception raised when loading a UI file fails.
 
     :param log_message: Log message for debugging.
@@ -243,7 +243,7 @@ class NgToolboxPluginUiLoadError(NgToolboxPluginError):
         user_message: Optional[str] = None,
         detail: Optional[str] = None,
     ) -> None:
-        """Initialize NgToolboxPluginUiLoadError.
+        """Initialize NextgisToolboxUiLoadError.
 
         :param log_message: Log message for debugging.
         :param user_message: Message to display to the user.
@@ -261,7 +261,7 @@ class NgToolboxPluginUiLoadError(NgToolboxPluginError):
         )
 
 
-class NgToolboxPluginProcessingRequiredWarning(NgToolboxPluginWarning):
+class NextgisToolboxProcessingRequiredWarning(NextgisToolboxWarning):
     """Warning shown when the Processing core plugin is disabled."""
 
     def __init__(self) -> None:
@@ -271,7 +271,7 @@ class NgToolboxPluginProcessingRequiredWarning(NgToolboxPluginWarning):
             log_message="Processing plugin is disabled",
             user_message=QgsApplication.translate(
                 "Exceptions",
-                "NextGIS Toolbox Plugin requires the QGIS core "
+                "NextGIS Toolbox requires the QGIS core "
                 'plugin "Processing" to be enabled. '
                 "Please enable the Processing plugin in Plugin Manager "
                 "and restart QGIS."

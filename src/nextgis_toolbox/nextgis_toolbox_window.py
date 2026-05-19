@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -36,8 +36,8 @@ from qgis.PyQt.uic import loadUiType
 
 from nextgis_toolbox.inputs_dialog import InputsDialog
 from nextgis_toolbox.nextgis_toolbox.tasks.models import ToolboxResult
-from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
-    NgToolboxPluginInterface,
+from nextgis_toolbox.nextgis_toolbox_interface import (
+    NextgisToolboxInterface,
 )
 
 # from nextgis_toolbox.nextgis_toolbox_plugin_provider import NgPluginProvider
@@ -114,7 +114,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
         QApplication.processEvents()
         try:
-            plugin = NgToolboxPluginInterface.instance()
+            plugin = NextgisToolboxInterface.instance()
             tools_manager = plugin.tools_manager
 
             self.toolbox = tools_manager

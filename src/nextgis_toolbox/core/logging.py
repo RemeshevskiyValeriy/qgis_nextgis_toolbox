@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -25,8 +25,8 @@ from qgis.PyQt.QtWidgets import QPlainTextEdit, QTabWidget
 from qgis.utils import iface
 
 from nextgis_toolbox.core.constants import PLUGIN_NAME
-from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings import (
-    NgToolboxPluginSettings,
+from nextgis_toolbox.settings.nextgis_toolbox_settings import (
+    NextgisToolboxSettings,
 )
 
 if TYPE_CHECKING:
@@ -77,7 +77,7 @@ def map_qgis_level_to_logging(level: Qgis.MessageLevel) -> int:
 
 
 class QgisLogger(logging.Logger):
-    """Custom logger for NextGIS Toolbox Plugin.
+    """Custom logger for NextGIS Toolbox.
 
     Provides integration with QGIS message log and adds a 'success' level.
 
@@ -180,7 +180,7 @@ def load_logger() -> QgisLogger:
     handler = QgisLoggerHandler()
     logger.addHandler(handler)
 
-    is_debug_logs_enabled = NgToolboxPluginSettings().is_debug_logs_enabled
+    is_debug_logs_enabled = NextgisToolboxSettings().is_debug_logs_enabled
     logger.setLevel(logging.DEBUG if is_debug_logs_enabled else logging.INFO)
     if is_debug_logs_enabled:
         logger.warning("Debug messages are enabled")
@@ -190,7 +190,7 @@ def load_logger() -> QgisLogger:
 
 def update_logging_level() -> None:
     """Update logging level based on plugin settings."""
-    is_debug_logs_enabled = NgToolboxPluginSettings().is_debug_logs_enabled
+    is_debug_logs_enabled = NextgisToolboxSettings().is_debug_logs_enabled
     logger.setLevel(logging.DEBUG if is_debug_logs_enabled else logging.INFO)
 
 

@@ -1,9 +1,9 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 QGIS plugin providing NextGIS Toolbox functions
 
 Functionality
 -------------
-NextGIS Toolbox Plugin for QGIS. Sends tasks to NextGIS Toolbox server and recieve results. More: [https://toolbox.nextgis.com/](https://toolbox.nextgis.com/)
+NextGIS Toolbox for QGIS. Sends tasks to NextGIS Toolbox server and recieve results. More: [https://toolbox.nextgis.com/](https://toolbox.nextgis.com/)
 
 License
 -------
@@ -11,7 +11,7 @@ This program is licensed under GNU GPL v2 or any later version
 
 Commercial support
 ------------------
-Need to fix a bug or add a feature to NextGIS Toolbox Plugin?
+Need to fix a bug or add a feature to NextGIS Toolbox?
 
 We provide custom development and support for this software. [Contact us](https://nextgis.com/contact/) to discuss options!
 

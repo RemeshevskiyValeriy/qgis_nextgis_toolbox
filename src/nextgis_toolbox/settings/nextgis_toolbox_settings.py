@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@ from qgis.core import QgsSettings
 from nextgis_toolbox.core.constants import PLUGIN_SETTINGS_GROUP
 
 
-class NgToolboxPluginSettings:
-    """Centralized settings handler for the NextGIS Toolbox Plugin."""
+class NextgisToolboxSettings:
+    """Centralized settings handler for the NextGIS Toolbox."""
 
     KEY_NEXTGIS_TOOLBOX_TOKEN = (
         f"{PLUGIN_SETTINGS_GROUP}/authentication/nextgisToolboxToken"

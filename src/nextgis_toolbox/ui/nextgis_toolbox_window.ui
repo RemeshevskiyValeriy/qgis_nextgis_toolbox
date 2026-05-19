@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>NgToolboxDialogBase</class>
- <widget class="QMainWindow" name="NgToolboxDialogBase">
+ <class>NextgisToolboxDialogBase</class>
+ <widget class="QMainWindow" name="NextgisToolboxDialogBase">
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QWidget" name="mainLayout" native="true">

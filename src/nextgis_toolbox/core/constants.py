@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,6 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 PACKAGE_NAME = "nextgis_toolbox"
-PLUGIN_NAME = "NextGIS Toolbox Plugin"
+PLUGIN_NAME = "NextGIS Toolbox"
 COMPANY_NAME = "NextGIS"
-PLUGIN_SETTINGS_GROUP = "NextGIS/NextGIS Toolbox Plugin"
+PLUGIN_SETTINGS_GROUP = "NextGIS/NextGIS Toolbox"

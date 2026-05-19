@@ -1,5 +1,5 @@
 [general]
-name=NextGIS Toolbox Plugin
+name=NextGIS Toolbox
 qgisMinimumVersion=3.32
 qgisMaximumVersion=4.99
 description=NextGIS Toolbox provider for QGIS
@@ -15,7 +15,7 @@ homepage=https://nextgis.com/
 tracker=mailto:support@nextgis.com
 repository=support@nextgis.com
 
-icon=resources/icons/nextgis_toolbox_plugin_logo.svg
+icon=resources/icons/nextgis_toolbox_logo.svg
 experimental=False
 deprecated=False
 category=Web

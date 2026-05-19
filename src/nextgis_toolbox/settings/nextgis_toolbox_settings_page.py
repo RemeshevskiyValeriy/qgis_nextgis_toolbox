@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,20 +31,20 @@ from qgis.PyQt.QtWidgets import (
 )
 
 from nextgis_toolbox.core.constants import COMPANY_NAME
-from nextgis_toolbox.core.exceptions import NgToolboxPluginUiLoadError
+from nextgis_toolbox.core.exceptions import NextgisToolboxUiLoadError
 from nextgis_toolbox.core.logging import logger, update_logging_level
-from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
-    NgToolboxPluginInterface,
+from nextgis_toolbox.nextgis_toolbox_interface import (
+    NextgisToolboxInterface,
 )
-from nextgis_toolbox.settings.nextgis_toolbox_plugin_settings import (
-    NgToolboxPluginSettings,
+from nextgis_toolbox.settings.nextgis_toolbox_settings import (
+    NextgisToolboxSettings,
 )
 from nextgis_toolbox.ui.icon import plugin_icon
 
 
-class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
+class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
     """
-    NextGIS Toolbox Plugin settings page integrated into QGIS Options dialog.
+    NextGIS Toolbox settings page integrated into QGIS Options dialog.
     """
 
     widget: QWidget
@@ -63,7 +63,7 @@ class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
         """
         Save current settings when user confirms changes.
         """
-        settings = NgToolboxPluginSettings()
+        settings = NextgisToolboxSettings()
 
         settings.nextgis_toolbox_token = (
             self._widget.nextgis_toolbox_token_line_edit.text()
@@ -84,7 +84,7 @@ class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
             update_logging_level()
             logger.warning(f"Debug messages were {debug_state}")
 
-        plugin = NgToolboxPluginInterface.instance()
+        plugin = NextgisToolboxInterface.instance()
         plugin.settings_changed.emit()
 
     def cancel(self) -> None:
@@ -116,13 +116,13 @@ class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
                 str(
                     plugin_path
                     / "ui"
-                    / "nextgis_toolbox_plugin_settings_page_base.ui"
+                    / "nextgis_toolbox_settings_page_base.ui"
                 )
             )  # type: ignore
         except FileNotFoundError as error:
             message = self.tr("Failed to load settings UI")
             logger.exception(message)
-            raise NgToolboxPluginUiLoadError(
+            raise NextgisToolboxUiLoadError(
                 log_message=message,
                 user_message=message,
             ) from error
@@ -131,7 +131,7 @@ class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
             log_message = "Settings UI loading returned no widget"
             user_message = self.tr("Failed to load settings UI")
             logger.error(log_message)
-            raise NgToolboxPluginUiLoadError(
+            raise NextgisToolboxUiLoadError(
                 log_message=log_message,
                 user_message=user_message,
             )
@@ -141,7 +141,7 @@ class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
 
     def __init_settings(self) -> None:
         """Load persisted plugin settings into UI controls."""
-        settings = NgToolboxPluginSettings()
+        settings = NextgisToolboxSettings()
 
         self._widget.nextgis_toolbox_token_line_edit.setText(
             settings.nextgis_toolbox_token
@@ -157,7 +157,7 @@ class NgToolboxPluginSettingsPage(QgsOptionsPageWidget):
         self._widget.debug_checkbox.setChecked(settings.is_debug_logs_enabled)
 
 
-class NgToolboxPluginSettingsErrorPage(QgsOptionsPageWidget):
+class NextgisToolboxSettingsErrorPage(QgsOptionsPageWidget):
     """Error page shown if settings page fails to load."""
 
     widget: QWidget
@@ -185,16 +185,16 @@ class NgToolboxPluginSettingsErrorPage(QgsOptionsPageWidget):
         """Cancel changes (no-op for error page)."""
 
 
-class NgToolboxPluginSettingsPageFactory(QgsOptionsWidgetFactory):
+class NextgisToolboxSettingsPageFactory(QgsOptionsWidgetFactory):
     """
-    Factory registering NextGIS Toolbox Plugin options page under QGIS Options dialog.
+    Factory registering NextGIS Toolbox options page under QGIS Options dialog.
     """
 
     def __init__(self) -> None:
         """Initialize the settings page factory."""
         super().__init__(
-            "NextGIS Toolbox Plugin",
-            plugin_icon("nextgis_toolbox_plugin_logo.svg"),
+            "NextGIS Toolbox",
+            plugin_icon(),
         )
 
     def path(self) -> List[str]:
@@ -208,14 +208,14 @@ class NgToolboxPluginSettingsPageFactory(QgsOptionsWidgetFactory):
         self, parent: Optional[QWidget] = None
     ) -> Optional[QgsOptionsPageWidget]:
         """
-        Create and return the NextGIS Toolbox Plugin options widget or error page.
+        Create and return the NextGIS Toolbox options widget or error page.
 
         :param parent: Parent widget
 
-        :return: Initialized NextGIS Toolbox Plugin options or error page
+        :return: Initialized NextGIS Toolbox options or error page
         """
         try:
-            return NgToolboxPluginSettingsPage(parent)
+            return NextgisToolboxSettingsPage(parent)
         except Exception:
             logger.exception("An error occurred while loading settings page")
-            return NgToolboxPluginSettingsErrorPage(parent)
+            return NextgisToolboxSettingsErrorPage(parent)

@@ -1,4 +1,4 @@
-# NextGIS Toolbox Plugin
+# NextGIS Toolbox
 # Copyright (C) 2026  NextGIS
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,13 +27,13 @@ from qgis.utils import iface
 
 from nextgis_toolbox.core.constants import PLUGIN_NAME
 from nextgis_toolbox.core.exceptions import (
-    NgToolboxPluginError,
-    NgToolboxPluginWarning,
+    NextgisToolboxError,
+    NextgisToolboxWarning,
 )
 from nextgis_toolbox.core.logging import logger, open_plugin_logs
 from nextgis_toolbox.core.utils import utm_tags
-from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
-    NgToolboxPluginInterface,
+from nextgis_toolbox.nextgis_toolbox_interface import (
+    NextgisToolboxInterface,
 )
 from nextgis_toolbox.notifier.notifier_interface import NotifierInterface
 
@@ -43,12 +43,12 @@ if TYPE_CHECKING:
     assert isinstance(iface, QgisInterface)
 
 
-MESSAGE_BAR_ITEM_OBJECT_NAME = "NgToolboxPluginMessageBarItem"
-MESSAGE_BAR_MESSAGE_ID_PROPERTY = "NgToolboxPluginMessageId"
+MESSAGE_BAR_ITEM_OBJECT_NAME = "NextgisToolboxMessageBarItem"
+MESSAGE_BAR_MESSAGE_ID_PROPERTY = "NextgisToolboxMessageId"
 
 
 def let_us_know() -> None:
-    plugin = NgToolboxPluginInterface.instance()
+    plugin = NextgisToolboxInterface.instance()
     tracker_url = plugin.metadata.get("general", "tracker")
 
     if "github" in tracker_url:
@@ -129,14 +129,12 @@ class MessageBarNotifier(NotifierInterface):
 
         :return: An identifier for the displayed message.
         """
-        if not isinstance(
-            error, (NgToolboxPluginError, NgToolboxPluginWarning)
-        ):
+        if not isinstance(error, (NextgisToolboxError, NextgisToolboxWarning)):
             old_error = error
             error = (
-                NgToolboxPluginError()
+                NextgisToolboxError()
                 if not isinstance(error, Warning)
-                else NgToolboxPluginWarning()
+                else NextgisToolboxWarning()
             )
             error.__cause__ = old_error
             del old_error
@@ -152,7 +150,7 @@ class MessageBarNotifier(NotifierInterface):
 
         level = (
             Qgis.MessageLevel.Critical
-            if not isinstance(error, NgToolboxPluginWarning)
+            if not isinstance(error, NextgisToolboxWarning)
             else Qgis.MessageLevel.Warning
         )
 
@@ -189,7 +187,7 @@ class MessageBarNotifier(NotifierInterface):
             self._message_bar.popWidget(notification)
 
     def _add_error_buttons(
-        self, error: NgToolboxPluginError, item: QgsMessageBarItem
+        self, error: NextgisToolboxError, item: QgsMessageBarItem
     ) -> None:
         def show_details() -> None:
             user_message = error.user_message.rstrip(".")
@@ -226,7 +224,7 @@ class MessageBarNotifier(NotifierInterface):
             button.pressed.connect(open_plugin_logs)
             widget.layout().addWidget(button)
 
-        if type(error) is NgToolboxPluginError:
+        if type(error) is NextgisToolboxError:
             button = QPushButton(self.tr("Let us know"))
             button.pressed.connect(let_us_know)
             widget.layout().addWidget(button)

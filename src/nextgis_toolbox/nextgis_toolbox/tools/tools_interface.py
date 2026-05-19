@@ -23,7 +23,6 @@ from nextgis_toolbox.nextgis_toolbox.tools.models import (
     ToolboxParameter,
     ToolboxTag,
     ToolboxTool,
-    ToolboxToolWithTags,
 )
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
@@ -54,7 +53,7 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
 
     @abstractmethod
     def tools(self) -> List[ToolboxTool]:
-        """Return cached Toolbox tools.
+        """Return cached Toolbox tools with resolved tags.
 
         :returns: List of cached tool models.
         """
@@ -65,14 +64,6 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         """Return cached Toolbox tags.
 
         :returns: List of cached tag models.
-        """
-        ...
-
-    @abstractmethod
-    def tools_with_tags(self) -> List[ToolboxToolWithTags]:
-        """Return cached tools enriched with cached tags.
-
-        :returns: List of enriched tool models.
         """
         ...
 

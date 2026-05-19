@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
@@ -42,12 +42,12 @@ class ToolsRepository:
         self._api = api
 
     def fetch_tools(self) -> List[ToolboxTool]:
-        """Fetch and map available Toolbox tools.
+        """Fetch tool models from the API.
 
         :returns: List of Toolbox tool models.
         """
         return [
-            self._tool_from_dict(tool_data)
+            ToolboxTool.from_json(tool_data)
             for tool_data in self._api.fetch_tools()
         ]
 
@@ -55,7 +55,7 @@ class ToolsRepository:
         self,
         tool_name: str,
     ) -> Tuple[List[ToolboxParameter], List[ToolboxParameter]]:
-        """Fetch and map tool input and output parameter definitions.
+        """Fetch tool input and output parameter models.
 
         :param tool_name: Toolbox tool identifier.
 
@@ -63,93 +63,15 @@ class ToolsRepository:
         """
         response_data = self._api.fetch_tool_io_parameters(tool_name)
         inputs = [
-            self._parameter_from_dict(parameter_data)
+            ToolboxParameter.from_json(parameter_data)
             for parameter_data in response_data["inputs"]
         ]
         outputs = [
-            self._parameter_from_dict(parameter_data)
+            ToolboxParameter.from_json(parameter_data)
             for parameter_data in response_data["outputs"]
         ]
 
         return inputs, outputs
-
-    def to_dict(self, tool: ToolboxTool) -> Dict[str, Any]:
-        """Convert tool model to raw API-compatible dictionary.
-
-        :param tool: Toolbox tool model.
-
-        :returns: Raw tool dictionary.
-        """
-        return {
-            "id": tool.id,
-            "name": tool.name,
-            "alias": tool.alias,
-            "description": tool.description,
-            "is_dev": tool.is_dev,
-            "is_free": tool.is_free,
-            "is_new": tool.is_new,
-            "is_featured": tool.is_featured,
-            "can_run": tool.can_run,
-            "tags": tool.tag_ids,
-        }
-
-    def parameter_to_dict(
-        self,
-        parameter: ToolboxParameter,
-    ) -> Dict[str, Any]:
-        """Convert parameter model to raw API-compatible dictionary.
-
-        :param parameter: Toolbox parameter model.
-
-        :returns: Raw parameter dictionary.
-        """
-        return {
-            "name": parameter.name,
-            "type": parameter.parameter_type,
-            "alias": parameter.alias,
-            "description": parameter.description,
-            "required": parameter.required,
-            "choices": parameter.choices,
-        }
-
-    def _tool_from_dict(self, data: Dict[str, Any]) -> ToolboxTool:
-        """Build tool model from raw API payload.
-
-        :param data: Raw API payload.
-
-        :returns: Parsed Toolbox tool model.
-        """
-        return ToolboxTool(
-            id=data["id"],
-            name=data["name"],
-            alias=data["alias"],
-            description=data["description"],
-            is_dev=data["is_dev"],
-            is_free=data["is_free"],
-            is_new=data["is_new"],
-            is_featured=data["is_featured"],
-            can_run=data["can_run"],
-            tag_ids=data.get("tags", []),
-        )
-
-    def _parameter_from_dict(
-        self,
-        data: Dict[str, Any],
-    ) -> ToolboxParameter:
-        """Build parameter model from raw API payload.
-
-        :param data: Raw API payload.
-
-        :returns: Parsed Toolbox parameter model.
-        """
-        return ToolboxParameter(
-            name=data["name"],
-            parameter_type=data["type"],
-            alias=data.get("alias"),
-            description=data.get("description"),
-            required=data.get("required", False),
-            choices=data.get("choices"),
-        )
 
 
 class TagsRepository:
@@ -170,39 +92,11 @@ class TagsRepository:
         self._api = api
 
     def fetch_tags(self) -> List[ToolboxTag]:
-        """Fetch and map available Toolbox tags.
+        """Fetch tag models from the API.
 
         :returns: List of Toolbox tag models.
         """
         return [
-            self._tag_from_dict(tag_data)
+            ToolboxTag.from_json(tag_data)
             for tag_data in self._api.fetch_tags()
         ]
-
-    def to_dict(self, tag: ToolboxTag) -> Dict[str, Any]:
-        """Convert tag model to raw API-compatible dictionary.
-
-        :param tag: Toolbox tag model.
-
-        :returns: Raw tag dictionary.
-        """
-        return {
-            "id": tag.id,
-            "alias": tag.alias,
-            "icon": tag.icon,
-            "tools": tag.tools,
-        }
-
-    def _tag_from_dict(self, data: Dict[str, Any]) -> ToolboxTag:
-        """Build tag model from raw API payload.
-
-        :param data: Raw API payload.
-
-        :returns: Parsed Toolbox tag model.
-        """
-        return ToolboxTag(
-            id=data["id"],
-            alias=data["alias"],
-            icon=data["icon"],
-            tools=data["tools"],
-        )

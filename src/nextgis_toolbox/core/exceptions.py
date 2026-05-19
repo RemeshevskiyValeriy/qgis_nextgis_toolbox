@@ -261,6 +261,96 @@ class NextgisToolboxUiLoadError(NextgisToolboxError):
         )
 
 
+class NextgisToolboxNetworkError(NextgisToolboxError):
+    """Exception raised when a network request fails."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a network error.
+
+        :param log_message: Log message for debugging.
+        :param user_message: Message to display to the user.
+        :param detail: Additional details about the error.
+        """
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Failed to complete the network request."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class NextgisToolboxAuthenticationError(NextgisToolboxNetworkError):
+    """Exception raised when API authentication fails."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize an authentication error.
+
+        :param log_message: Log message for debugging.
+        :param user_message: Message to display to the user.
+        :param detail: Additional details about the error.
+        """
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Authentication failed. Check the Toolbox API Key."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class NextgisToolboxRequestCanceledError(NextgisToolboxNetworkError):
+    """Exception raised when a network request is canceled."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a request cancellation error.
+
+        :param log_message: Log message for debugging.
+        :param user_message: Message to display to the user.
+        :param detail: Additional details about the error.
+        """
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "The request was canceled."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
 class NextgisToolboxProcessingRequiredWarning(NextgisToolboxWarning):
     """Warning shown when the Processing core plugin is disabled."""
 

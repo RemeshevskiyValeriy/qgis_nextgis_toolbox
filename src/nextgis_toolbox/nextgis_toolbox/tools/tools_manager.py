@@ -23,7 +23,6 @@ from nextgis_toolbox.nextgis_toolbox.tools.models import (
     ToolboxParameter,
     ToolboxTag,
     ToolboxTool,
-    ToolboxToolWithTags,
 )
 from nextgis_toolbox.nextgis_toolbox.tools.repository import (
     TagsRepository,
@@ -64,8 +63,10 @@ class ToolsManager(ToolsInterface):
     @pyqtSlot()
     def load(self) -> None:
         """Load the tools feature and populate caches."""
-        self._tools = self._tools_repository.fetch_tools()
         self._tags = self._tags_repository.fetch_tags()
+        self._tools = self._tools_repository.fetch_tools()
+
+        self._assign_tags_to_tools()
 
     @pyqtSlot()
     def unload(self) -> None:
@@ -74,7 +75,7 @@ class ToolsManager(ToolsInterface):
         self._tags = []
 
     def tools(self) -> List[ToolboxTool]:
-        """Return cached Toolbox tools.
+        """Return cached Toolbox tools with resolved tags.
 
         :returns: List of cached tool models.
         """
@@ -87,25 +88,6 @@ class ToolsManager(ToolsInterface):
         """
         return self._tags
 
-    def tools_with_tags(self) -> List[ToolboxToolWithTags]:
-        """Return cached tools enriched with cached tags.
-
-        :returns: List of enriched tool models.
-        """
-        tag_by_id: Dict[int, ToolboxTag] = {tag.id: tag for tag in self._tags}
-
-        return [
-            ToolboxToolWithTags(
-                tool=tool,
-                tags=[
-                    tag_by_id[tag_id]
-                    for tag_id in tool.tag_ids
-                    if tag_id in tag_by_id
-                ],
-            )
-            for tool in self._tools
-        ]
-
     def fetch_tool_io_parameters(
         self,
         tool_name: str,
@@ -117,3 +99,14 @@ class ToolsManager(ToolsInterface):
         :returns: Tuple with input and output parameter lists.
         """
         return self._tools_repository.fetch_tool_io_parameters(tool_name)
+
+    def _assign_tags_to_tools(self) -> None:
+        """Resolve cached tag identifiers to cached tag models."""
+        tag_by_id: Dict[int, ToolboxTag] = {tag.id: tag for tag in self._tags}
+
+        for tool in self._tools:
+            tool.tags = [
+                tag_by_id[tag_id]
+                for tag_id in tool.tag_ids
+                if tag_id in tag_by_id
+            ]

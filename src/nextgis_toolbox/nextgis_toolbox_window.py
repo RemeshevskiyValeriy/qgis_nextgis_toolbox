@@ -205,7 +205,7 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             )  # and here !
 
         for tag in self.toolbox.tags():
-            add_item(tag.alias, tag.tools)
+            add_item(tag.alias, tag.tool_ids)
         if filter:
             self.treeWidget.expandAll()
 

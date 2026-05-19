@@ -57,28 +57,32 @@ class NextgisToolboxSettings:
     @property
     def endpoint(self) -> str:
         """Return saved NextGIS Toolbox API endpoint."""
-        return self._settings.value(
+        endpoint = self._settings.value(
             self.KEY_API_ENDPOINT,
             defaultValue=DEFAULT_API_ENDPOINT,
             type=str,
-        )
+        ).strip()
+        return endpoint or DEFAULT_API_ENDPOINT
 
     @endpoint.setter
-    def endpoint(self, value: str) -> None:
-        self._settings.setValue(
-            self.KEY_API_ENDPOINT,
-            value,
-        )
+    def endpoint(self, value: Optional[str]) -> None:
+        endpoint = value.strip() if value else None
+        self._settings.setValue(self.KEY_API_ENDPOINT, endpoint or None)
 
     @property
     def authentication_type(self) -> AuthenticationType:
         """Return saved NextGIS Toolbox authentication type."""
-        value = self._settings.value(
+        raw_authentication_type = self._settings.value(
             self.KEY_AUTHENTICATION_TYPE,
-            defaultValue=str(AuthenticationType.NONE),
+            defaultValue="",
             type=str,
         )
-        return AuthenticationType(value)
+
+        authentication_type = None
+        if raw_authentication_type in AuthenticationType.__members__:
+            authentication_type = AuthenticationType(raw_authentication_type)
+
+        return authentication_type or AuthenticationType.TOKEN
 
     @authentication_type.setter
     def authentication_type(self, value: AuthenticationType) -> None:
@@ -94,16 +98,14 @@ class NextgisToolboxSettings:
             self.KEY_AUTHENTICATION_TOKEN,
             defaultValue="",
             type=str,
-        )
+        ).strip()
 
     @authentication_token.setter
     def authentication_token(self, value: Optional[str]) -> None:
-        if not value:
-            self.authentication_type = AuthenticationType.NONE
-
+        token = value.strip() if value else None
         self._settings.setValue(
             self.KEY_AUTHENTICATION_TOKEN,
-            value,
+            token,
         )
 
     @property

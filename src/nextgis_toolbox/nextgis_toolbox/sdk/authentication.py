@@ -20,11 +20,17 @@ from uuid import UUID
 
 from qgis.PyQt.QtNetwork import QNetworkRequest
 
+from nextgis_toolbox.settings.nextgis_toolbox_settings import (
+    AuthenticationType,
+)
+
 
 class ToolboxAuthentication(ABC):
     """
     Manages NextGIS Toolbox authentication credentials.
     """
+
+    TYPE = AuthenticationType.NONE
 
     @property
     @abstractmethod
@@ -49,6 +55,8 @@ class ToolboxAuthentication(ABC):
 class ToolboxTokenAuthentication(ToolboxAuthentication):
     """Token-based authentication for NextGIS Toolbox API"""
 
+    TYPE = AuthenticationType.TOKEN
+
     def __init__(self, token: str) -> None:
         """
         Initialize authentication instance.
@@ -57,6 +65,11 @@ class ToolboxTokenAuthentication(ToolboxAuthentication):
         """
 
         self._token: UUID = UUID(token)
+
+    @property
+    def token(self) -> str:
+        """Return the configured API token as a string."""
+        return str(self._token)
 
     @property
     def headers(self) -> Dict[str, str]:

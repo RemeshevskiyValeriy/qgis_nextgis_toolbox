@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -25,6 +25,23 @@ class ToolboxResult:
     name: str
     result_type: str
     value: str
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "ToolboxResult":
+        """Build a result model from a JSON payload."""
+        return cls(
+            name=data["name"],
+            result_type=data["type"],
+            value=data["value"],
+        )
+
+    def to_json(self) -> Dict[str, Any]:
+        """Serialize the result model to a JSON-compatible payload."""
+        return {
+            "name": self.name,
+            "type": self.result_type,
+            "value": self.value,
+        }
 
 
 @dataclass
@@ -38,3 +55,31 @@ class ToolboxTask:
     results: List[ToolboxResult]
     operation: str
     state: str
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "ToolboxTask":
+        """Build a task model from a JSON payload."""
+        return cls(
+            tool=data["tool"],
+            status=data["status"],
+            progress=data["progress"],
+            error=data.get("error"),
+            results=[
+                ToolboxResult.from_json(result_data)
+                for result_data in data.get("output", [])
+            ],
+            operation=data["operation"],
+            state=data["state"],
+        )
+
+    def to_json(self) -> Dict[str, Any]:
+        """Serialize the task model to a JSON-compatible payload."""
+        return {
+            "tool": self.tool,
+            "status": self.status,
+            "progress": self.progress,
+            "error": self.error,
+            "output": [result.to_json() for result in self.results],
+            "operation": self.operation,
+            "state": self.state,
+        }

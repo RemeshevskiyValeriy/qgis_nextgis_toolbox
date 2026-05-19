@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 from nextgis_toolbox.nextgis_toolbox.tasks.models import (
@@ -63,137 +63,42 @@ class TasksRepository:
 
         return response_data["task_id"]
 
-    def retrieve_task(self, task_id: str) -> ToolboxTask:
-        """Retrieve and map task information.
+    def task_information(self, task_id: str) -> ToolboxTask:
+        """Retrieve a task model from the API.
 
         :param task_id: Toolbox task identifier.
 
         :returns: Toolbox task model.
         """
-        return self._task_from_dict(self._api.retrieve_task(task_id))
+        return ToolboxTask.from_json(self._api.task_information(task_id))
 
     def get_results(self, task_id: str) -> List[ToolboxResult]:
-        """Retrieve task result descriptors.
+        """Retrieve result models for a task.
 
         :param task_id: Toolbox task identifier.
 
         :returns: Toolbox result models.
         """
-        return self.retrieve_task(task_id).results
-
-    def _download_result(
-        self,
-        result: ToolboxResult,
-        directory: Path,
-        filename: Optional[str] = None,
-    ) -> Path:
-        """Download one Toolbox result file.
-
-        :param result: Toolbox result descriptor.
-        :param directory: Target directory.
-        :param filename: Optional output filename.
-
-        :returns: Saved file path.
-        """
-        return self._download_result_content(result.value, directory, filename)
+        return self.task_information(task_id).results
 
     def download_results(
         self,
         results: List[ToolboxResult],
         directory: Path,
     ) -> List[Path]:
-        """Download multiple Toolbox result files.
+        """Download task result files to the target directory.
 
         :param results: Toolbox result descriptors.
         :param directory: Target directory.
 
         :returns: Saved file paths.
         """
-        return [self._download_result(result, directory) for result in results]
+        downloaded_paths: List[Path] = []
 
-    def _download_result_content(
-        self,
-        url: str,
-        directory: Path,
-        filename: Optional[str] = None,
-    ) -> Path:
-        """Download file from NextGIS Toolbox API.
+        for result in results:
+            destination_path = directory / Path(result.value).name
+            downloaded_paths.append(
+                self._api.client.download(result.value, destination_path)
+            )
 
-        :param url: File URL.
-        :param directory: Target directory.
-        :param filename: Optional output filename.
-
-        :returns: Saved file path.
-        """
-        content = self._api.download_result_content(url)
-
-        if filename is None:
-            filename = Path(url).name
-
-        file_path = directory / filename
-        file_path.write_bytes(content)
-
-        return file_path
-
-    def to_dict(self, task: ToolboxTask) -> Dict[str, Any]:
-        """Convert task model to raw API-compatible dictionary.
-
-        :param task: Toolbox task model.
-
-        :returns: Raw task dictionary.
-        """
-        return {
-            "tool": task.tool,
-            "status": task.status,
-            "progress": task.progress,
-            "error": task.error,
-            "output": [self.result_to_dict(result) for result in task.results],
-            "operation": task.operation,
-            "state": task.state,
-        }
-
-    def result_to_dict(self, result: ToolboxResult) -> Dict[str, Any]:
-        """Convert result model to raw API-compatible dictionary.
-
-        :param result: Toolbox result model.
-
-        :returns: Raw result dictionary.
-        """
-        return {
-            "name": result.name,
-            "type": result.result_type,
-            "value": result.value,
-        }
-
-    def _task_from_dict(self, data: Dict[str, Any]) -> ToolboxTask:
-        """Build task model from raw API payload.
-
-        :param data: Raw API payload.
-
-        :returns: Parsed Toolbox task model.
-        """
-        return ToolboxTask(
-            tool=data["tool"],
-            status=data["status"],
-            progress=data["progress"],
-            error=data.get("error"),
-            results=[
-                self._result_from_dict(result_data)
-                for result_data in data.get("output", [])
-            ],
-            operation=data["operation"],
-            state=data["state"],
-        )
-
-    def _result_from_dict(self, data: Dict[str, Any]) -> ToolboxResult:
-        """Build result model from raw API payload.
-
-        :param data: Raw API payload.
-
-        :returns: Parsed Toolbox result model.
-        """
-        return ToolboxResult(
-            name=data["name"],
-            result_type=data["type"],
-            value=data["value"],
-        )
+        return downloaded_paths

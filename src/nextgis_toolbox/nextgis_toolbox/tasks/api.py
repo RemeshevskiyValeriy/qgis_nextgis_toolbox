@@ -57,7 +57,7 @@ class TasksApi:
 
         return self._client.post("tasks/", payload)
 
-    def retrieve_task(self, task_id: str) -> Dict[str, Any]:
+    def task_information(self, task_id: str) -> Dict[str, Any]:
         """Retrieve raw task information.
 
         :param task_id: Toolbox task identifier.
@@ -65,12 +65,3 @@ class TasksApi:
         :returns: Raw task dictionary.
         """
         return self._client.get(f"tasks/{task_id}")
-
-    def download_result_content(self, url: str) -> bytes:
-        """Download raw task result content.
-
-        :param url: Result file URL.
-
-        :returns: Downloaded file content.
-        """
-        return self._client.get_raw_data(url)

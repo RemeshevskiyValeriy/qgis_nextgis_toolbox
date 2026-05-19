@@ -36,6 +36,7 @@ from nextgis_toolbox.core.exceptions import (
 )
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
+    ToolboxAuthentication,
     ToolboxTokenAuthentication,
 )
 from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
@@ -48,7 +49,6 @@ from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
     ToolboxTag,
     ToolboxTool,
-    ToolboxToolWithTags,
 )
 from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
     ToolsInterface,
@@ -82,6 +82,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
     """NextGIS Toolbox"""
 
     _notifier: MessageBarNotifier
+    _api_client: ToolboxApiClient
     _tools_manager: ToolsInterface
     _tasks_manager: TasksInterface
 
@@ -108,9 +109,10 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
         self._first_start = True
 
-        self._processing_provider = None
-
         self._notifier = None  # type: ignore
+
+        self._processing_provider = None
+        self._api_client = None  # type: ignore
         self._tools_manager = None  # type: ignore
         self._tasks_manager = None  # type: ignore
 
@@ -174,9 +176,9 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         """
         Initialize and register the Processing provider.
         """
-        api_client = self._create_api_client()
-        self._tools_manager = ToolsManager(ToolsApi(api_client), self)
-        self._tasks_manager = TasksManager(TasksApi(api_client), self)
+        self._api_client = self._create_api_client()
+        self._tools_manager = ToolsManager(ToolsApi(self._api_client), self)
+        self._tasks_manager = TasksManager(TasksApi(self._api_client), self)
 
         self._tools_manager.load()
         self._tasks_manager.load()
@@ -427,7 +429,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         self._dock_widget.close()
         self._dock_widget.deleteLater()
 
-        self._dock_widget = None
+        del self._dock_widget
 
     def _unload_notifier(self) -> None:
         """
@@ -438,7 +440,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
         self._notifier.deleteLater()
 
-        self._notifier = None
+        del self._notifier
 
     def _unload_processing(self) -> None:
         """
@@ -460,6 +462,10 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
             self._tasks_manager.unload()
             self._tasks_manager.deleteLater()
             del self._tasks_manager
+
+        if self._api_client is not None:
+            self._api_client.deleteLater()
+            del self._api_client
 
     def _load_settings(self) -> None:
         """Register the plugin settings page in the QGIS Options dialog."""
@@ -533,8 +539,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         :param parent_menu: Root menu to populate.
         :param provider_id: QGIS Processing provider identifier.
         """
-        tools_with_tags = self.tools_manager.tools_with_tags()
-        tools_by_tag = self._group_tools_by_tag(tools_with_tags)
+        tools_by_tag = self._group_tools_by_tag(self.tools_manager.tools())
 
         for tag in sorted(
             self.tools_manager.tags(), key=lambda item: item.alias
@@ -631,24 +636,21 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
     def _group_tools_by_tag(
         self,
-        tools_with_tags: List[ToolboxToolWithTags],
+        tools: List[ToolboxTool],
     ) -> Dict[int, List[ToolboxTool]]:
         """
-        Group toolbox tools by tag identifier using enriched models.
+        Group toolbox tools by tag identifier.
 
-        :param tools_with_tags: Toolbox tools enriched with tag models.
-
+        :param tools: Toolbox tool models.
         :returns: Mapping of tag ID to toolbox tools.
         """
         tools_by_tag: Dict[int, List[ToolboxTool]] = {}
 
-        for tool_with_tags in tools_with_tags:
-            tool = tool_with_tags.tool
-
+        for tool in tools:
             if tool.is_dev:
                 continue
 
-            for tag in tool_with_tags.tags:
+            for tag in tool.tags:
                 tools_by_tag.setdefault(tag.id, []).append(tool)
 
         return tools_by_tag
@@ -715,21 +717,66 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
         execAlgorithmDialog(algorithm_id)
 
+    def _create_authentication(
+        self,
+        authentication_type: AuthenticationType,
+        authentication_token: Optional[str],
+    ) -> Optional[ToolboxAuthentication]:
+        """Create an authentication object from current settings."""
+        if authentication_type != AuthenticationType.TOKEN:
+            return None
+
+        token = authentication_token
+        if not token:
+            return None
+
+        return ToolboxTokenAuthentication(token)
+
+    def _is_authentication_changed(
+        self,
+        authentication_type: AuthenticationType,
+        authentication_token: Optional[str],
+    ) -> bool:
+        """Check whether client authentication differs from saved settings."""
+        new_auth = self._create_authentication(
+            authentication_type, authentication_token
+        )
+
+        return self._api_client.authentication != new_auth
+
     def _create_api_client(self) -> ToolboxApiClient:
         """Create and configure API client based on current settings."""
         settings = NextgisToolboxSettings()
+        authentication_type = settings.authentication_type
+        authentication_token = settings.authentication_token
 
-        api_client = ToolboxApiClient(self, endpoint=settings.endpoint)
-        if settings.authentication_type == AuthenticationType.TOKEN:
-            api_client.authentication = ToolboxTokenAuthentication(
-                settings.authentication_token,
-            )
-
-        return api_client
+        return ToolboxApiClient(
+            self,
+            endpoint=settings.endpoint,
+            authentication=self._create_authentication(
+                authentication_type, authentication_token
+            ),
+        )
 
     @pyqtSlot()
     def _update_api_client(self) -> None:
-        """Update API client configuration based on current settings."""
-        api_client = self._create_api_client()
-        self._tools_manager.set_api(ToolsApi(api_client))
-        self._tasks_manager.set_api(TasksApi(api_client))
+        """Update the shared API client only when connection settings change."""
+        settings = NextgisToolboxSettings()
+        endpoint_changed = self._api_client.endpoint != settings.endpoint
+        authentication_changed = self._is_authentication_changed(
+            settings.authentication_type, settings.authentication_token
+        )
+
+        if not endpoint_changed and not authentication_changed:
+            logger.debug("Connection settings is unchanged")
+            return
+
+        if endpoint_changed:
+            logger.debug("API client endpoint updated")
+            self._api_client.endpoint = settings.endpoint
+
+        if authentication_changed:
+            logger.debug("API client authentication updated")
+            self._api_client.authentication = self._create_authentication(
+                settings.authentication_type, settings.authentication_token
+            )

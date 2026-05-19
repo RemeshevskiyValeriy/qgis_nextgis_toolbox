@@ -90,7 +90,7 @@ class TasksManager(TasksInterface):
 
         :returns: Toolbox task model.
         """
-        return self._repository.retrieve_task(task_id)
+        return self._repository.task_information(task_id)
 
     def get_results(self, task_id: str) -> List[ToolboxResult]:
         """Retrieve Toolbox task results.

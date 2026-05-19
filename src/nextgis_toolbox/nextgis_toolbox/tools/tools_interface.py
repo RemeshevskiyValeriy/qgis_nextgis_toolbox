@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from abc import abstractmethod
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
 from qgis.PyQt.QtCore import QObject, pyqtSlot
 
@@ -27,9 +27,18 @@ from nextgis_toolbox.nextgis_toolbox.tools.models import (
 )
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
+if TYPE_CHECKING:
+    from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
+
 
 class ToolsInterface(QObject, metaclass=QObjectMetaClass):
     """Abstract QObject interface for the tools feature."""
+
+    def set_api(self, tools_api: "ToolsApi") -> None:
+        """Set the API for managing tools and tags.
+
+        :param tools_api: API for managing tools and tags.
+        """
 
     @pyqtSlot()
     @abstractmethod

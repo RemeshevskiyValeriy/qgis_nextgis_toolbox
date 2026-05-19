@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, List
 
 from qgis.core import Qgis, QgsProcessingProvider, QgsRuntimeProfiler
 from qgis.PyQt.QtGui import QIcon
 
-from nextgis_toolbox.core.constants import PLUGIN_NAME
+from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
 from nextgis_toolbox.processing.nextgis_toolbox_algorithm import (
@@ -71,9 +71,9 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
         Fetch tool I/O definitions from the API and register algorithms.
         """
 
-        with QgsRuntimeProfiler.profile(
+        with QgsRuntimeProfiler.profile(  # type: ignore PylancereportAttributeAccessIssue
             f"load algs: {len(self._tools_manager.tools())}"
-        ):  # type: ignore PylancereportAttributeAccessIssue
+        ):
             load_errors = self._load_tool_algorithms()
 
             if not load_errors:
@@ -87,7 +87,7 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
 
         :returns: Unique provider identifier.
         """
-        return "nextgistoolbox"
+        return PACKAGE_NAME
 
     def name(self) -> str:
         """
@@ -108,13 +108,13 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
         """
         return self.name()
 
-    def _load_tool_algorithms(self) -> Dict[str, str]:
+    def _load_tool_algorithms(self) -> List[str]:
         """
         Load and register toolbox Processing algorithms.
 
         :returns: Mapping of tool name to error message.
         """
-        load_errors: Dict[str, str] = {}
+        load_errors: List[str] = []
 
         for tool in self._tools_manager.tools():
             if tool.is_dev or tool.name != "hello":
@@ -123,8 +123,9 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
             try:
                 self._add_tool_algorithm(tool)
 
-            except Exception as error:
-                load_errors[tool.name] = str(error)
+            except Exception:
+                logger.exception(f"Failed to load tool '{tool.name}'")
+                load_errors.append(tool.name)
 
         return load_errors
 
@@ -154,19 +155,16 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
 
     def _notify_load_errors(
         self,
-        load_errors: Dict[str, str],
+        load_errors: List[str],
     ) -> None:
         """
         Notify user about failed toolbox algorithm loading.
 
-        :param load_errors: Mapping of tool name to error message.
+        :param load_errors: List of tool names that failed to load.
         """
         self._notifier.display_message(
             self.tr(
-                "Some tools could not be loaded. See plugin logs for details."
+                f"{len(load_errors)} tools could not be loaded. See plugin logs for details."
             ),
             level=Qgis.MessageLevel.Warning,
         )
-
-        for tool_name, message in load_errors.items():
-            logger.warning(f"Failed to load tool '{tool_name}': {message}")

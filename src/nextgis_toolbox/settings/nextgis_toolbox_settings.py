@@ -14,20 +14,31 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
+from enum import Enum
+from typing import Optional
+
 from qgis.core import QgsSettings
 
-from nextgis_toolbox.core.constants import PLUGIN_SETTINGS_GROUP
+from nextgis_toolbox.core.constants import (
+    DEFAULT_API_ENDPOINT,
+    PLUGIN_SETTINGS_GROUP,
+)
+
+
+class AuthenticationType(str, Enum):
+    NONE = "none"
+    TOKEN = "token"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class NextgisToolboxSettings:
     """Centralized settings handler for the NextGIS Toolbox."""
 
-    KEY_NEXTGIS_TOOLBOX_TOKEN = (
-        f"{PLUGIN_SETTINGS_GROUP}/authentication/nextgisToolboxToken"
-    )
-    KEY_IS_TOKEN_REMEMBERED = (
-        f"{PLUGIN_SETTINGS_GROUP}/authentication/isTokenRemembered"
-    )
+    KEY_API_ENDPOINT = f"{PLUGIN_SETTINGS_GROUP}/api/endpoint"
+    KEY_AUTHENTICATION_TYPE = f"{PLUGIN_SETTINGS_GROUP}/authentication/type"
+    KEY_AUTHENTICATION_TOKEN = f"{PLUGIN_SETTINGS_GROUP}/authentication/token"
     KEY_REFRESH_TASK_INTERVAL = (
         f"{PLUGIN_SETTINGS_GROUP}/tasks/refreshTaskInterval"
     )
@@ -44,34 +55,54 @@ class NextgisToolboxSettings:
         self._settings = QgsSettings()
 
     @property
-    def nextgis_toolbox_token(self) -> str:
-        """Return saved NextGIS Toolbox token."""
+    def endpoint(self) -> str:
+        """Return saved NextGIS Toolbox API endpoint."""
         return self._settings.value(
-            self.KEY_NEXTGIS_TOOLBOX_TOKEN,
-            defaultValue="",
+            self.KEY_API_ENDPOINT,
+            defaultValue=DEFAULT_API_ENDPOINT,
             type=str,
         )
 
-    @nextgis_toolbox_token.setter
-    def nextgis_toolbox_token(self, value: str) -> None:
+    @endpoint.setter
+    def endpoint(self, value: str) -> None:
         self._settings.setValue(
-            self.KEY_NEXTGIS_TOOLBOX_TOKEN,
+            self.KEY_API_ENDPOINT,
             value,
         )
 
     @property
-    def is_token_remembered(self) -> bool:
-        """Check whether token saving is enabled."""
-        return self._settings.value(
-            self.KEY_IS_TOKEN_REMEMBERED,
-            defaultValue=False,
-            type=bool,
+    def authentication_type(self) -> AuthenticationType:
+        """Return saved NextGIS Toolbox authentication type."""
+        value = self._settings.value(
+            self.KEY_AUTHENTICATION_TYPE,
+            defaultValue=AuthenticationType.NONE,
+            type=str,
+        )
+        return AuthenticationType[value]
+
+    @authentication_type.setter
+    def authentication_type(self, value: AuthenticationType) -> None:
+        self._settings.setValue(
+            self.KEY_AUTHENTICATION_TYPE,
+            str(value),
         )
 
-    @is_token_remembered.setter
-    def is_token_remembered(self, value: bool) -> None:
+    @property
+    def authentication_token(self) -> str:
+        """Return saved NextGIS Toolbox token."""
+        return self._settings.value(
+            self.KEY_AUTHENTICATION_TOKEN,
+            defaultValue="",
+            type=str,
+        )
+
+    @authentication_token.setter
+    def authentication_token(self, value: Optional[str]) -> None:
+        if not value:
+            self.authentication_type = AuthenticationType.NONE
+
         self._settings.setValue(
-            self.KEY_IS_TOKEN_REMEMBERED,
+            self.KEY_AUTHENTICATION_TOKEN,
             value,
         )
 

@@ -17,103 +17,125 @@
 import json
 from typing import Any, Dict, Optional
 
-from qgis.core import QgsNetworkAccessManager
-from qgis.PyQt.QtCore import QUrl, QUrlQuery
+from qgis.core import (
+    QgsFeedback,
+    QgsNetworkAccessManager,
+    QgsNetworkReplyContent,
+)
+from qgis.PyQt.QtCore import QObject, QUrl, QUrlQuery, pyqtSignal
 from qgis.PyQt.QtNetwork import (
     QNetworkReply,
     QNetworkRequest,
 )
 
 from nextgis_toolbox.core import utils
+from nextgis_toolbox.core.constants import DEFAULT_API_ENDPOINT
 from nextgis_toolbox.core.qt_network_error import (
     QtNetworkError,
 )
 from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
     ToolboxAuthentication,
 )
-from nextgis_toolbox.nextgis_toolbox_interface import (
-    NextgisToolboxInterface,
-)
-from nextgis_toolbox.settings.nextgis_toolbox_settings import (
-    NextgisToolboxSettings,
-)
-
-API_BASE_ENDPOINT = "https://toolbox.nextgis.com/api"
 
 
-class ToolboxApiClient:
+class ToolboxApiClient(QObject):
     """Low-level HTTP client for NextGIS Toolbox API."""
 
-    def __init__(self) -> None:
+    endpoint_changed = pyqtSignal()
+    authentication_changed = pyqtSignal()
+
+    def __init__(
+        self,
+        parent: Optional[QObject] = None,
+        endpoint: Optional[str] = DEFAULT_API_ENDPOINT,
+        authentication: Optional[ToolboxAuthentication] = None,
+    ) -> None:
         """Initialize API client."""
-        self._authentication = None
+        super().__init__(parent)
+        self._endpoint = endpoint
+        self._authentication = authentication
 
-        NextgisToolboxInterface.instance().settings_changed.connect(
-            self.set_authentication
-        )
+    @property
+    def endpoint(self) -> Optional[str]:
+        """Get current API endpoint URL."""
+        return self._endpoint
 
-        self.set_authentication()
+    @endpoint.setter
+    def endpoint(self, endpoint: str) -> None:
+        """
+        Set API endpoint URL.
 
-    def set_authentication(self) -> None:
+        :param endpoint: Base URL for API requests.
+        """
+        self._endpoint = endpoint
+        self.endpoint_changed.emit()
+
+    @property
+    def authentication(self) -> Optional[ToolboxAuthentication]:
+        """Get current authentication object."""
+        return self._authentication
+
+    @authentication.setter
+    def authentication(
+        self, authentication: Optional[ToolboxAuthentication] = None
+    ) -> None:
         """
         Set current authentication object.
+
+        :param authentication: Authentication object to use.
         """
-        settings = NextgisToolboxSettings()
-        token = settings.nextgis_toolbox_token
-
-        if not token:
-            self._authentication = None
-            return
-
-        authentication = ToolboxAuthentication(token)
         self._authentication = authentication
+        self.authentication_changed.emit()
 
     def get(
         self,
-        sub_url: str,
+        url: str,
         params: Optional[Dict[str, Any]] = None,
-        use_auth: bool = False,
+        feedback: Optional[QgsFeedback] = None,
     ) -> Dict[str, Any]:
         """
         Execute GET request and return parsed JSON.
 
-        :param sub_url: Relative API path.
+        :param url: Relative API path.
         :param params: Optional query parameters.
-        :param use_auth: Whether authorization is required.
+        :param feedback: Optional feedback object for progress reporting.
 
         :returns: Parsed JSON response.
         """
-        content = self.get_content(
-            sub_url=sub_url,
-            params=params,
-            use_auth=use_auth,
+        content = self.get_raw_data(
+            url=url,
+            url_params=params,
+            feedback=feedback,
         )
 
-        return json.loads(content.decode("utf-8"))
+        return json.loads(content.decode())
 
-    def get_content(
+    def get_raw_data(
         self,
-        sub_url: str,
-        params: Optional[Dict[str, Any]] = None,
-        use_auth: bool = False,
+        url: str,
+        url_params: Optional[Dict[str, Any]] = None,
+        feedback: Optional[QgsFeedback] = None,
     ) -> bytes:
         """
         Execute GET request and return raw binary content.
 
-        :param sub_url: Relative API path or full URL.
-        :param params: Optional query parameters.
-        :param use_auth: Whether authorization is required.
+        :param url: Relative API path or full URL.
+        :param url_params: Optional query parameters.
+        :param feedback: Optional feedback object for progress reporting.
 
         :returns: Raw response content.
         """
 
-        request = self._create_request(
-            sub_url=sub_url,
-            params=params,
-            use_auth=use_auth,
-        )
+        request = self._create_request(url, url_params)
 
-        response = QgsNetworkAccessManager.instance().blockingGet(request)
+        response = QgsNetworkAccessManager.instance().blockingGet(
+            request, feedback=feedback
+        )
+        if feedback is not None and feedback.isCanceled():
+            raise ConnectionError(
+                QNetworkReply.NetworkError.OperationCanceledError,
+                "Request was canceled by user.",
+            )
 
         self._validate_response(response)
 
@@ -121,29 +143,35 @@ class ToolboxApiClient:
 
     def post(
         self,
-        sub_url: str,
-        payload: Dict[str, Any],
-        use_auth: bool = True,
+        url: str,
+        payload_object: Dict[str, Any],
+        feedback: Optional[QgsFeedback] = None,
     ) -> Dict[str, Any]:
         """
         Execute POST request with JSON payload.
 
-        :param sub_url: Relative API path.
+        :param url: Relative API path.
         :param payload: Request payload.
         :param use_auth: Whether authorization is required.
+        :param feedback: Optional feedback object for progress reporting.
 
         :returns: Parsed JSON response.
         """
 
-        request = self._create_request(
-            sub_url=sub_url,
-            use_auth=use_auth,
-        )
+        request = self._create_request(url)
+        data = json.dumps(payload_object).encode()
 
         response = QgsNetworkAccessManager.instance().blockingPost(
             request,
-            json.dumps(payload).encode("utf-8"),
+            data,
+            feedback=feedback,
         )
+
+        if feedback is not None and feedback.isCanceled():
+            raise ConnectionError(
+                QNetworkReply.NetworkError.OperationCanceledError,
+                "Request was canceled by user.",
+            )
 
         self._validate_response(response)
 
@@ -153,8 +181,8 @@ class ToolboxApiClient:
 
     def _create_request(
         self,
-        sub_url: str,
-        params: Optional[Dict[str, Any]] = None,
+        url: str,
+        url_params: Optional[Dict[str, Any]] = None,
         use_auth: bool = False,
     ) -> QNetworkRequest:
         """
@@ -166,31 +194,23 @@ class ToolboxApiClient:
 
         :returns: Configured request.
         """
-        qurl = self._create_url(sub_url)
-        qurl_query = QUrlQuery()
+        query_url_params = QUrlQuery()
+        url_params = {} if url_params is None else url_params
+        for key, value in url_params.items():
+            query_url_params.addQueryItem(str(key), str(value))
 
-        params = {} if params is None else params
-        for key, value in params.items():
-            qurl_query.addQueryItem(str(key), str(value))
-
-        qurl.setQuery(qurl_query)
+        qurl = self._create_url(url)
+        qurl.setQuery(query_url_params)
 
         request = QNetworkRequest(qurl)
-
-        request.setRawHeader(b"Content-Type", b"application/json")
-        request.setRawHeader(
-            b"Accept-Language",
-            utils.qgis_locale().encode(),
+        self._apply_headers(
+            request,
+            {
+                "Content-Type": "application/json",
+                "Accept-Language": utils.qgis_locale(),
+            },
         )
-
-        if use_auth and self._authentication is not None:
-            headers = self._authentication.get_headers()
-
-            for header_name, header_value in headers.items():
-                request.setRawHeader(
-                    header_name.encode("utf-8"),
-                    header_value.encode("utf-8"),
-                )
+        self._apply_authentication(request)
 
         return request
 
@@ -205,11 +225,11 @@ class ToolboxApiClient:
         if qurl.isValid() and not qurl.isRelative():
             return qurl
 
-        return QUrl(f"{API_BASE_ENDPOINT}/{sub_url.lstrip('/')}")
+        return QUrl(f"{self._endpoint.rstrip('/')}/api/{sub_url.lstrip('/')}")
 
     def _validate_response(
         self,
-        response: QNetworkReply,
+        response: QgsNetworkReplyContent,
     ) -> None:
         """
         Validate Qt network response.
@@ -228,3 +248,24 @@ class ToolboxApiClient:
             error.value.code,
             error.value.description,
         )
+
+    def _apply_headers(
+        self, request: QNetworkRequest, headers: Dict[str, str]
+    ) -> None:
+        """
+        Apply given headers to the request.
+
+        :param request: Network request to apply headers to.
+        :param headers: Dictionary of headers to apply.
+        """
+        for header_name, header_value in headers.items():
+            request.setRawHeader(header_name.encode(), header_value.encode())
+
+    def _apply_authentication(self, request: QNetworkRequest) -> None:
+        """
+        Apply current authentication to the given request.
+
+        :param request: Network request to apply authentication to.
+        """
+        if self._authentication is not None:
+            self._authentication.apply(request)

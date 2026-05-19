@@ -29,6 +29,11 @@ class TasksApi:
         """
         self._client = client
 
+    @property
+    def client(self) -> ToolboxApiClient:
+        """Low-level API client."""
+        return self._client
+
     def submit_task(
         self,
         tool_name: str,
@@ -50,11 +55,7 @@ class TasksApi:
             "emailing": emailing,
         }
 
-        return self._client.post(
-            sub_url="tasks/",
-            payload=payload,
-            use_auth=True,
-        )
+        return self._client.post("tasks/", payload)
 
     def retrieve_task(self, task_id: str) -> Dict[str, Any]:
         """Retrieve raw task information.
@@ -63,10 +64,7 @@ class TasksApi:
 
         :returns: Raw task dictionary.
         """
-        return self._client.get(
-            sub_url=f"tasks/{task_id}",
-            use_auth=True,
-        )
+        return self._client.get(f"tasks/{task_id}")
 
     def download_result_content(self, url: str) -> bytes:
         """Download raw task result content.
@@ -75,7 +73,4 @@ class TasksApi:
 
         :returns: Downloaded file content.
         """
-        return self._client.get_content(
-            sub_url=url,
-            use_auth=True,
-        )
+        return self._client.get_raw_data(url)

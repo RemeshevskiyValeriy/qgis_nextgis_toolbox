@@ -29,12 +29,17 @@ class ToolsApi:
         """
         self._client = client
 
+    @property
+    def client(self) -> ToolboxApiClient:
+        """Low-level API client."""
+        return self._client
+
     def fetch_tools(self) -> List[Dict[str, Any]]:
         """Fetch raw tools payloads.
 
         :returns: List of raw tool dictionaries.
         """
-        response_data = self._client.get(sub_url="tools/")
+        response_data = self._client.get("tools/")
         return response_data["data"]
 
     def fetch_tags(self) -> List[Dict[str, Any]]:
@@ -42,7 +47,7 @@ class ToolsApi:
 
         :returns: List of raw tag dictionaries.
         """
-        response_data = self._client.get(sub_url="tags/")
+        response_data = self._client.get("tags/")
         return response_data["data"]
 
     def fetch_tool_io_parameters(
@@ -55,10 +60,7 @@ class ToolsApi:
 
         :returns: Raw dictionary with ``inputs`` and ``outputs`` lists.
         """
-        response_data = self._client.get(
-            sub_url=f"tools/{tool_name}",
-            use_auth=True,
-        )
+        response_data = self._client.get(f"tools/{tool_name}")
 
         return {
             "inputs": response_data["inputs"],

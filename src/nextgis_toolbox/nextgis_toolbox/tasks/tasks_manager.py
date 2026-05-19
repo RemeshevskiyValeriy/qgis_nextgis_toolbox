@@ -19,7 +19,6 @@ from typing import Any, Dict, List, Optional
 
 from qgis.PyQt.QtCore import QObject
 
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
 from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 from nextgis_toolbox.nextgis_toolbox.tasks.models import (
     ToolboxResult,
@@ -36,33 +35,23 @@ class TasksManager(TasksInterface):
 
     def __init__(
         self,
-        repository: TasksRepository,
+        tasks_api: TasksApi,
         parent: Optional[QObject] = None,
     ) -> None:
         """Initialize tasks manager.
 
-        :param repository: Repository for task models and result files.
+        :param tasks_api: API for managing tasks.
         :param parent: Optional Qt parent.
         """
         super().__init__(parent)
-        self._repository = repository
+        self._repository = TasksRepository(tasks_api)
 
-    @classmethod
-    def create(
-        cls,
-        parent: Optional[QObject] = None,
-    ) -> "TasksManager":
-        """Create manager with default API and repository.
+    def set_api(self, tasks_api: TasksApi) -> None:
+        """Set the API for managing tasks.
 
-        :param parent: Optional Qt parent.
-
-        :returns: Configured tasks manager.
+        :param tasks_api: API for managing tasks.
         """
-        api = TasksApi(ToolboxApiClient())
-        return cls(
-            repository=TasksRepository(api),
-            parent=parent,
-        )
+        self._repository.set_api(tasks_api)
 
     def load(self) -> None:
         """Load the tasks feature."""

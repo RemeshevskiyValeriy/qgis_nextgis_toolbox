@@ -65,11 +65,8 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         """
         settings = NextgisToolboxSettings()
 
-        settings.nextgis_toolbox_token = (
+        settings.authentication_token = (
             self._widget.nextgis_toolbox_token_line_edit.text()
-        )
-        settings.is_token_remembered = (
-            self._widget.remember_token_check_box.isChecked()
         )
 
         settings.refresh_task_interval = (
@@ -144,10 +141,7 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         settings = NextgisToolboxSettings()
 
         self._widget.nextgis_toolbox_token_line_edit.setText(
-            settings.nextgis_toolbox_token
-        )
-        self._widget.remember_token_check_box.setChecked(
-            settings.is_token_remembered
+            settings.authentication_token
         )
 
         self._widget.refresh_tasks_interval_spinbox.setValue(

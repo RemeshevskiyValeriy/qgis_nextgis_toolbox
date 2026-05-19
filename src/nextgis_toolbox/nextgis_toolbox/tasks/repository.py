@@ -34,6 +34,13 @@ class TasksRepository:
         """
         self._api = api
 
+    def set_api(self, api: TasksApi) -> None:
+        """Set the API gateway for managing tasks.
+
+        :param api: Tasks API gateway.
+        """
+        self._api = api
+
     def submit_task(
         self,
         tool_name: str,

@@ -34,6 +34,13 @@ class ToolsRepository:
         """
         self._api = api
 
+    def set_api(self, api: ToolsApi) -> None:
+        """Set API gateway instance.
+
+        :param api: Tools API gateway.
+        """
+        self._api = api
+
     def fetch_tools(self) -> List[ToolboxTool]:
         """Fetch and map available Toolbox tools.
 
@@ -150,6 +157,13 @@ class TagsRepository:
 
     def __init__(self, api: ToolsApi) -> None:
         """Initialize repository.
+
+        :param api: Tools API gateway.
+        """
+        self._api = api
+
+    def set_api(self, api: ToolsApi) -> None:
+        """Set API gateway instance.
 
         :param api: Tools API gateway.
         """

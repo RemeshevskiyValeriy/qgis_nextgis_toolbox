@@ -18,3 +18,5 @@ PACKAGE_NAME = "nextgis_toolbox"
 PLUGIN_NAME = "NextGIS Toolbox"
 COMPANY_NAME = "NextGIS"
 PLUGIN_SETTINGS_GROUP = "NextGIS/NextGIS Toolbox"
+
+DEFAULT_API_ENDPOINT = "https://toolbox.nextgis.com"

@@ -14,14 +14,40 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
+from abc import ABC, abstractmethod
 from typing import Dict
 from uuid import UUID
 
+from qgis.PyQt.QtNetwork import QNetworkRequest
 
-class ToolboxAuthentication:
+
+class ToolboxAuthentication(ABC):
     """
-    Represents NextGIS Toolbox authentication credentials.
+    Manages NextGIS Toolbox authentication credentials.
     """
+
+    @property
+    @abstractmethod
+    def headers(self) -> Dict[str, str]:
+        """
+        Get HTTP headers required for authenticated API requests.
+
+        :returns: Dictionary of HTTP headers.
+        """
+        ...
+
+    @abstractmethod
+    def apply(self, request: QNetworkRequest) -> None:
+        """
+        Apply authentication to the given network request.
+
+        :param request: Network request to apply authentication to.
+        """
+        ...
+
+
+class ToolboxTokenAuthentication(ToolboxAuthentication):
+    """Token-based authentication for NextGIS Toolbox API"""
 
     def __init__(self, token: str) -> None:
         """
@@ -30,15 +56,26 @@ class ToolboxAuthentication:
         :param token: NextGIS Toolbox API token.
         """
 
-        self.token: UUID = UUID(token)
+        self._token: UUID = UUID(token)
 
-    def get_headers(self) -> Dict[str, str]:
+    @property
+    def headers(self) -> Dict[str, str]:
         """
-        Build authorization headers for API requests.
+        Get HTTP headers required for authenticated API requests.
 
-        :returns: HTTP headers with authorization token.
+        :returns: Dictionary of HTTP headers.
         """
 
         return {
-            "Authorization": f"Token {self.token}",
+            "Authorization": f"Token {self._token}",
         }
+
+    def apply(self, request: QNetworkRequest) -> None:
+        """
+        Apply authentication headers to the given network request.
+
+        :param request: Network request to apply authentication to.
+        """
+
+        for key, value in self.headers.items():
+            request.setRawHeader(key.encode(), value.encode())

@@ -18,7 +18,6 @@ from typing import Dict, List, Optional, Tuple
 
 from qgis.PyQt.QtCore import QObject, pyqtSlot
 
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
 from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
     ToolboxParameter,
@@ -40,39 +39,27 @@ class ToolsManager(ToolsInterface):
 
     def __init__(
         self,
-        tools_repository: ToolsRepository,
-        tags_repository: TagsRepository,
+        tools_api: ToolsApi,
         parent: Optional[QObject] = None,
     ) -> None:
         """Initialize tools manager.
 
-        :param tools_repository: Repository for tool models.
-        :param tags_repository: Repository for tag models.
+        :param tools_api: API for managing tools and tags.
         :param parent: Optional Qt parent.
         """
         super().__init__(parent)
-        self._tools_repository = tools_repository
-        self._tags_repository = tags_repository
+        self._tools_repository = ToolsRepository(tools_api)
+        self._tags_repository = TagsRepository(tools_api)
         self._tools: List[ToolboxTool] = []
         self._tags: List[ToolboxTag] = []
 
-    @classmethod
-    def create(
-        cls,
-        parent: Optional[QObject] = None,
-    ) -> "ToolsManager":
-        """Create manager with default API and repositories.
+    def set_api(self, tools_api: ToolsApi) -> None:
+        """Set the API for managing tools and tags.
 
-        :param parent: Optional Qt parent.
-
-        :returns: Configured tools manager.
+        :param tools_api: API for managing tools and tags.
         """
-        api = ToolsApi(ToolboxApiClient())
-        return cls(
-            tools_repository=ToolsRepository(api),
-            tags_repository=TagsRepository(api),
-            parent=parent,
-        )
+        self._tools_repository.set_api(tools_api)
+        self._tags_repository.set_api(tools_api)
 
     @pyqtSlot()
     def load(self) -> None:

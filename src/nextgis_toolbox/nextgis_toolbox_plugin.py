@@ -35,10 +35,16 @@ from nextgis_toolbox.core.exceptions import (
     NextgisToolboxProcessingRequiredWarning,
 )
 from nextgis_toolbox.core.logging import logger
+from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
+    ToolboxTokenAuthentication,
+)
+from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
+from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
     TasksInterface,
 )
 from nextgis_toolbox.nextgis_toolbox.tasks.tasks_manager import TasksManager
+from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
     ToolboxTag,
     ToolboxTool,
@@ -56,6 +62,10 @@ from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
 from nextgis_toolbox.processing.nextgis_toolbox_processing_provider import (
     NextgisToolboxProcessingProvider,
 )
+from nextgis_toolbox.settings.nextgis_toolbox_settings import (
+    AuthenticationType,
+    NextgisToolboxSettings,
+)
 from nextgis_toolbox.settings.nextgis_toolbox_settings_page import (
     NextgisToolboxSettingsPageFactory,
 )
@@ -71,9 +81,9 @@ if TYPE_CHECKING:
 class NextgisToolboxPlugin(NextgisToolboxInterface):
     """NextGIS Toolbox"""
 
-    _notifier: Optional[MessageBarNotifier]
-    _tools_manager: Optional[ToolsInterface]
-    _tasks_manager: Optional[TasksInterface]
+    _notifier: MessageBarNotifier
+    _tools_manager: ToolsInterface
+    _tasks_manager: TasksInterface
 
     def __init__(self, iface: QgisInterface) -> None:
         super().__init__(iface)
@@ -100,9 +110,9 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
         self._processing_provider = None
 
-        self._notifier = None
-        self._tools_manager = None
-        self._tasks_manager = None
+        self._notifier = None  # type: ignore
+        self._tools_manager = None  # type: ignore
+        self._tasks_manager = None  # type: ignore
 
     @pyqtSlot()
     def open_about_dialog(self) -> None:
@@ -164,11 +174,14 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         """
         Initialize and register the Processing provider.
         """
-        self._tools_manager = ToolsManager.create(parent=self)
-        self._tasks_manager = TasksManager.create(parent=self)
+        api_client = self._create_api_client()
+        self._tools_manager = ToolsManager(ToolsApi(api_client), self)
+        self._tasks_manager = TasksManager(TasksApi(api_client), self)
 
         self._tools_manager.load()
         self._tasks_manager.load()
+
+        self.settings_changed.connect(self._update_api_client)
 
         self._processing_provider = NextgisToolboxProcessingProvider(
             tools_manager=self._tools_manager,
@@ -177,6 +190,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         QgsApplication.processingRegistry().addProvider(
             self._processing_provider
         )
+
         return True
 
     def _initialize_ui(self) -> None:
@@ -440,12 +454,12 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         if self._tools_manager is not None:
             self._tools_manager.unload()
             self._tools_manager.deleteLater()
-            self._tools_manager = None
+            del self._tools_manager
 
         if self._tasks_manager is not None:
             self._tasks_manager.unload()
             self._tasks_manager.deleteLater()
-            self._tasks_manager = None
+            del self._tasks_manager
 
     def _load_settings(self) -> None:
         """Register the plugin settings page in the QGIS Options dialog."""
@@ -700,3 +714,22 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         algorithm_id = action.data()
 
         execAlgorithmDialog(algorithm_id)
+
+    def _create_api_client(self) -> ToolboxApiClient:
+        """Create and configure API client based on current settings."""
+        settings = NextgisToolboxSettings()
+
+        api_client = ToolboxApiClient(self, endpoint=settings.endpoint)
+        if settings.authentication_type == AuthenticationType.TOKEN:
+            api_client.authentication = ToolboxTokenAuthentication(
+                settings.authentication_token,
+            )
+
+        return api_client
+
+    @pyqtSlot
+    def _update_api_client(self) -> None:
+        """Update API client configuration based on current settings."""
+        api_client = self._create_api_client()
+        self._tools_manager.set_api(ToolsApi(api_client))
+        self._tasks_manager.set_api(TasksApi(api_client))

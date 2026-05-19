@@ -16,7 +16,7 @@
 
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 
@@ -26,11 +26,20 @@ from nextgis_toolbox.nextgis_toolbox.tasks.models import (
 )
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
+if TYPE_CHECKING:
+    from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
+
 
 class TasksInterface(QObject, metaclass=QObjectMetaClass):
     """Abstract QObject interface for the tasks feature."""
 
     task_created = pyqtSignal(str)
+
+    def set_api(self, tasks_api: "TasksApi") -> None:
+        """Set the API for managing tasks.
+
+        :param tasks_api: API for managing tasks.
+        """
 
     @abstractmethod
     def load(self) -> None:

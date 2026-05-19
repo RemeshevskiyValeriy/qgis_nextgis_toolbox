@@ -31,7 +31,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.uic import loadUiType
 
-from nextgis_toolbox.nextgis_toolbox.sdk.client import API_BASE_ENDPOINT
+from nextgis_toolbox.nextgis_toolbox.sdk.client import DEFAULT_API_ENDPOINT
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
@@ -58,7 +58,7 @@ class ResultsDialog(QDialog, RESULTS_FORM_CLASS):
             valueItem = QTableWidgetItem(result.value)
             self.tableWidget.setItem(row, 1, valueItem)
 
-            if API_BASE_ENDPOINT in result.value:
+            if DEFAULT_API_ENDPOINT in result.value:
                 getButton = QPushButton(self.tr("Get"))
                 getButton.clicked.connect(self.get_result)
                 self.tableWidget.setCellWidget(row, 1, getButton)

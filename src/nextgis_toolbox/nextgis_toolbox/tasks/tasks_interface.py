@@ -14,71 +14,42 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
+from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from qgis.PyQt.QtCore import QObject
+from qgis.PyQt.QtCore import QObject, pyqtSignal
 
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 from nextgis_toolbox.nextgis_toolbox.tasks.models import (
     ToolboxResult,
     ToolboxTask,
 )
-from nextgis_toolbox.nextgis_toolbox.tasks.repository import TasksRepository
-from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
-    TasksInterface,
-)
+from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
 
-class TasksManager(TasksInterface):
-    """Feature-level manager for Toolbox tasks."""
+class TasksInterface(QObject, metaclass=QObjectMetaClass):
+    """Abstract QObject interface for the tasks feature."""
 
-    def __init__(
-        self,
-        repository: TasksRepository,
-        parent: Optional[QObject] = None,
-    ) -> None:
-        """Initialize tasks manager.
+    task_created = pyqtSignal(str)
 
-        :param repository: Repository for task models and result files.
-        :param parent: Optional Qt parent.
-        """
-        super().__init__(parent)
-        self._repository = repository
-
-    @classmethod
-    def create(
-        cls,
-        parent: Optional[QObject] = None,
-    ) -> "TasksManager":
-        """Create manager with default API and repository.
-
-        :param parent: Optional Qt parent.
-
-        :returns: Configured tasks manager.
-        """
-        api = TasksApi(ToolboxApiClient())
-        return cls(
-            repository=TasksRepository(api),
-            parent=parent,
-        )
-
+    @abstractmethod
     def load(self) -> None:
         """Load the tasks feature."""
-        pass
+        ...
 
+    @abstractmethod
     def unload(self) -> None:
         """Unload the tasks feature and clear runtime state."""
-        pass
+        ...
 
+    @abstractmethod
     def submit_task(
         self,
         tool_name: str,
         inputs: Dict[str, Any],
         emailing: bool = False,
     ) -> str:
-        """Submit Toolbox task and emit ``task_created``.
+        """Submit Toolbox task.
 
         :param tool_name: Toolbox tool identifier.
         :param inputs: Tool input values.
@@ -86,14 +57,9 @@ class TasksManager(TasksInterface):
 
         :returns: Created task identifier.
         """
-        task_id = self._repository.submit_task(
-            tool_name=tool_name,
-            inputs=inputs,
-            emailing=emailing,
-        )
+        ...
 
-        return task_id
-
+    @abstractmethod
     def retrieve_task(self, task_id: str) -> ToolboxTask:
         """Retrieve Toolbox task information.
 
@@ -101,8 +67,9 @@ class TasksManager(TasksInterface):
 
         :returns: Toolbox task model.
         """
-        return self._repository.retrieve_task(task_id)
+        ...
 
+    @abstractmethod
     def get_results(self, task_id: str) -> List[ToolboxResult]:
         """Retrieve Toolbox task results.
 
@@ -110,8 +77,9 @@ class TasksManager(TasksInterface):
 
         :returns: Toolbox result models.
         """
-        return self._repository.get_results(task_id)
+        ...
 
+    @abstractmethod
     def download_results(
         self,
         results: List[ToolboxResult],
@@ -124,4 +92,4 @@ class TasksManager(TasksInterface):
 
         :returns: Saved file paths.
         """
-        return self._repository.download_results(results, directory)
+        ...

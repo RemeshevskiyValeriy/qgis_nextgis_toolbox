@@ -15,26 +15,22 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
-from typing import List
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class ToolboxTag:
-    """
-    Descriptor of a NextGIS Toolbox tag (category).
-    """
+    """Descriptor of a NextGIS Toolbox tag."""
 
     id: int
     alias: str
     icon: str
-    tool_ids: List[int]
+    tools: List[int]
 
 
 @dataclass
 class ToolboxTool:
-    """
-    Descriptor of a NextGIS Toolbox tool.
-    """
+    """Descriptor of a NextGIS Toolbox tool."""
 
     id: int
     name: str
@@ -46,3 +42,23 @@ class ToolboxTool:
     is_featured: bool
     can_run: bool
     tag_ids: List[int]
+
+
+@dataclass
+class ToolboxToolWithTags:
+    """Descriptor of a Toolbox tool enriched with tag models."""
+
+    tool: ToolboxTool
+    tags: List[ToolboxTag]
+
+
+@dataclass(frozen=True)
+class ToolboxParameter:
+    """Immutable descriptor of a Toolbox input or output parameter."""
+
+    name: str
+    parameter_type: str
+    alias: Optional[str]
+    description: Optional[str]
+    required: bool
+    choices: Optional[List[Dict[str, Any]]]

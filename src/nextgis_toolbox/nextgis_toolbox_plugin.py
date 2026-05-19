@@ -36,8 +36,19 @@ from nextgis_toolbox.core.exceptions import (
     NgToolboxPluginProcessingRequiredWarning,
 )
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.api.toolbox import Toolbox
-from nextgis_toolbox.nextgis_toolbox.models.tool import ToolboxTag, ToolboxTool
+from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
+    TasksInterface,
+)
+from nextgis_toolbox.nextgis_toolbox.tasks.tasks_manager import TasksManager
+from nextgis_toolbox.nextgis_toolbox.tools.models import (
+    ToolboxTag,
+    ToolboxTool,
+    ToolboxToolWithTags,
+)
+from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
+    ToolsInterface,
+)
+from nextgis_toolbox.nextgis_toolbox.tools.tools_manager import ToolsManager
 from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
     NgToolboxPluginInterface,
 )
@@ -61,7 +72,8 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
     """NextGIS Toolbox Plugin"""
 
     _notifier: Optional[MessageBarNotifier]
-    _toolbox: Optional[Toolbox]
+    _tools_manager: Optional[ToolsInterface]
+    _tasks_manager: Optional[TasksInterface]
 
     def __init__(self, iface: QgisInterface) -> None:
         super().__init__(iface)
@@ -89,7 +101,8 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         self._processing_provider = None
 
         self._notifier = None
-        self._toolbox = None
+        self._tools_manager = None
+        self._tasks_manager = None
 
     @pyqtSlot()
     def open_about_dialog(self) -> None:
@@ -106,6 +119,32 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         assert self._notifier is not None, "Notifier is not initialized"
         return self._notifier
+
+    @property
+    def tools_manager(self) -> ToolsInterface:
+        """Return the tools feature manager.
+
+        :returns: Tools feature interface instance.
+
+        :raises AssertionError: If tools manager is not initialized.
+        """
+        assert self._tools_manager is not None, (
+            "Tools manager is not initialized"
+        )
+        return self._tools_manager
+
+    @property
+    def tasks_manager(self) -> TasksInterface:
+        """Return the tasks feature manager.
+
+        :returns: Tasks feature interface instance.
+
+        :raises AssertionError: If tasks manager is not initialized.
+        """
+        assert self._tasks_manager is not None, (
+            "Tasks manager is not initialized"
+        )
+        return self._tasks_manager
 
     def _load_ui(self) -> bool:
         """Initialize GUI elements."""
@@ -125,12 +164,15 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Initialize and register the Processing provider.
         """
-        self._toolbox = Toolbox()
-        self._toolbox.load_tools()
-        self._toolbox.load_tags()
+        self._tools_manager = ToolsManager.create(parent=self)
+        self._tasks_manager = TasksManager.create(parent=self)
+
+        self._tools_manager.load()
+        self._tasks_manager.load()
 
         self._processing_provider = NgToolboxPluginProcessingProvider(
-            self._toolbox
+            tools_manager=self._tools_manager,
+            tasks_manager=self._tasks_manager,
         )
         QgsApplication.processingRegistry().addProvider(
             self._processing_provider
@@ -198,7 +240,6 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         Create toolbox tools submenu.
         """
         assert self._plugin_menu is not None
-        assert self._toolbox is not None
         assert self._processing_provider is not None
 
         icon = plugin_icon("nextgis_toolbox_plugin_logo.svg")
@@ -212,8 +253,6 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         self._populate_toolbox_menu(
             parent_menu=self._tools_menu,
-            tools=self._toolbox.tools,
-            tags=self._toolbox.tags,
             provider_id=self._processing_provider.id(),
         )
 
@@ -391,14 +430,22 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         """
         Remove Processing provider from QGIS registry.
         """
-        if self._processing_provider is None:
-            return
+        if self._processing_provider is not None:
+            QgsApplication.processingRegistry().removeProvider(
+                self._processing_provider
+            )
 
-        QgsApplication.processingRegistry().removeProvider(
-            self._processing_provider
-        )
+            self._processing_provider = None
 
-        self._processing_provider = None
+        if self._tools_manager is not None:
+            self._tools_manager.unload()
+            self._tools_manager.deleteLater()
+            self._tools_manager = None
+
+        if self._tasks_manager is not None:
+            self._tasks_manager.unload()
+            self._tasks_manager.deleteLater()
+            self._tasks_manager = None
 
     def _load_settings(self) -> None:
         """Register the plugin settings page in the QGIS Options dialog."""
@@ -464,27 +511,23 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
     def _populate_toolbox_menu(
         self,
         parent_menu: QMenu,
-        tools: List[ToolboxTool],
-        tags: List[ToolboxTag],
         provider_id: str,
     ) -> None:
         """
         Populate plugin menu with toolbox categories and tools.
 
         :param parent_menu: Root menu to populate.
-        :param tools: Loaded toolbox tools.
-        :param tags: Loaded toolbox tags.
         :param provider_id: QGIS Processing provider identifier.
         """
+        tools_with_tags = self.tools_manager.tools_with_tags()
+        tools_by_tag = self._group_tools_by_tag(tools_with_tags)
 
-        tool_by_name = self._index_tools_by_name(tools)
-        tools_by_tag = self._group_tools_by_tag(tools)
-
-        for tag in sorted(tags, key=lambda item: item.alias):
+        for tag in sorted(
+            self.tools_manager.tags(), key=lambda item: item.alias
+        ):
             self._populate_tag_menu(
                 parent_menu=parent_menu,
                 tag=tag,
-                tool_by_name=tool_by_name,
                 tools_by_tag=tools_by_tag,
                 provider_id=provider_id,
             )
@@ -493,8 +536,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         self,
         parent_menu: QMenu,
         tag: ToolboxTag,
-        tool_by_name: Dict[str, ToolboxTool],
-        tools_by_tag: Dict[int, List[str]],
+        tools_by_tag: Dict[int, List[ToolboxTool]],
         provider_id: str,
     ) -> None:
         """
@@ -502,13 +544,12 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         :param parent_menu: Parent menu.
         :param tag: Toolbox tag.
-        :param tool_by_name: Indexed tools by name.
-        :param tools_by_tag: Mapping of tag IDs to tool names.
+        :param tools_by_tag: Mapping of tag IDs to toolbox tools.
         :param provider_id: QGIS Processing provider identifier.
         """
-        tool_names = tools_by_tag.get(tag.id, [])
+        tools = tools_by_tag.get(tag.id, [])
 
-        if not tool_names:
+        if not tools:
             return
 
         category_menu = self._create_category_menu(
@@ -516,11 +557,10 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
             parent_menu,
         )
 
-        for tool_name in tool_names:
+        for tool in tools:
             self._add_tool_to_category_menu(
                 category_menu=category_menu,
-                tool_name=tool_name,
-                tool_by_name=tool_by_name,
+                tool=tool,
                 provider_id=provider_id,
                 parent_menu=parent_menu,
             )
@@ -531,8 +571,7 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
     def _add_tool_to_category_menu(
         self,
         category_menu: QMenu,
-        tool_name: str,
-        tool_by_name: Dict[str, ToolboxTool],
+        tool: ToolboxTool,
         provider_id: str,
         parent_menu: QMenu,
     ) -> None:
@@ -540,16 +579,10 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
         Add toolbox tool action to category menu.
 
         :param category_menu: Category submenu.
-        :param tool_name: Toolbox tool identifier.
-        :param tool_by_name: Indexed tools by name.
+        :param tool: Toolbox tool model.
         :param provider_id: QGIS Processing provider identifier.
         :param parent_menu: Parent menu for QAction ownership.
         """
-        tool = tool_by_name.get(tool_name)
-
-        if tool is None:
-            return
-
         algorithm_id = f"{provider_id}:{tool.name}"
 
         if not self._algorithm_exists(algorithm_id):
@@ -582,38 +615,27 @@ class NgToolboxPlugin(NgToolboxPluginInterface):
 
         return registry.algorithmById(algorithm_id) is not None
 
-    def _index_tools_by_name(
-        self,
-        tools: List[ToolboxTool],
-    ) -> Dict[str, ToolboxTool]:
-        """
-        Build tool lookup mapping by tool name.
-
-        :param tools: Toolbox tools.
-
-        :returns: Mapping of tool name to toolbox tool.
-        """
-        return {tool.name: tool for tool in tools if not tool.is_dev}
-
     def _group_tools_by_tag(
         self,
-        tools: List[ToolboxTool],
-    ) -> Dict[int, List[str]]:
+        tools_with_tags: List[ToolboxToolWithTags],
+    ) -> Dict[int, List[ToolboxTool]]:
         """
-        Group toolbox tools by tag identifier.
+        Group toolbox tools by tag identifier using enriched models.
 
-        :param tools: Toolbox tools.
+        :param tools_with_tags: Toolbox tools enriched with tag models.
 
-        :returns: Mapping of tag ID to tool names.
+        :returns: Mapping of tag ID to toolbox tools.
         """
-        tools_by_tag: Dict[int, List[str]] = {}
+        tools_by_tag: Dict[int, List[ToolboxTool]] = {}
 
-        for tool in tools:
+        for tool_with_tags in tools_with_tags:
+            tool = tool_with_tags.tool
+
             if tool.is_dev:
                 continue
 
-            for tag_id in tool.tag_ids:
-                tools_by_tag.setdefault(tag_id, []).append(tool.name)
+            for tag in tool_with_tags.tags:
+                tools_by_tag.setdefault(tag.id, []).append(tool)
 
         return tools_by_tag
 

@@ -36,9 +36,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 from nextgis_toolbox.core.compat import (
     ProcessingNumberParameterType,
 )
-from nextgis_toolbox.nextgis_toolbox.models.parameter import (
-    ToolboxParameter,
-)
+from nextgis_toolbox.nextgis_toolbox.tools.models import ToolboxParameter
 
 _NGW_URL_SUFFIX = "_url"
 _NGW_LOGIN_SUFFIX = "_login"

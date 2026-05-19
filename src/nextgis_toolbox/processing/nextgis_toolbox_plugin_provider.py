@@ -28,8 +28,13 @@ from nextgis_toolbox.processing.nextgis_toolbox_algorithm import (
 from nextgis_toolbox.ui.icon import plugin_icon
 
 if TYPE_CHECKING:
-    from nextgis_toolbox.nextgis_toolbox.api.toolbox import Toolbox
-    from nextgis_toolbox.nextgis_toolbox.models.tool import ToolboxTool
+    from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
+        TasksInterface,
+    )
+    from nextgis_toolbox.nextgis_toolbox.tools.models import ToolboxTool
+    from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
+        ToolsInterface,
+    )
 
 
 class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
@@ -37,12 +42,20 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
     QGIS Processing provider for NextGIS Toolbox tools.
     """
 
-    def __init__(self, toolbox: "Toolbox") -> None:
+    def __init__(
+        self,
+        tools_manager: "ToolsInterface",
+        tasks_manager: "TasksInterface",
+    ) -> None:
         """
         Initialize plugin processing provider.
+
+        :param tools_manager: Tools feature interface.
+        :param tasks_manager: Tasks feature interface.
         """
         super().__init__()
-        self._toolbox = toolbox
+        self._tools_manager = tools_manager
+        self._tasks_manager = tasks_manager
 
         self._notifier = MessageBarNotifier(self)
 
@@ -59,7 +72,7 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
         """
 
         with QgsRuntimeProfiler.profile(
-            f"load algs: {len(self._toolbox.tools)}"
+            f"load algs: {len(self._tools_manager.tools())}"
         ):  # type: ignore PylancereportAttributeAccessIssue
             load_errors = self._load_tool_algorithms()
 
@@ -103,8 +116,8 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
         """
         load_errors: Dict[str, str] = {}
 
-        for tool in self._toolbox.tools:
-            if tool.is_dev or tool.name != "Test":
+        for tool in self._tools_manager.tools():
+            if tool.is_dev or tool.name != "hello":
                 continue
 
             try:
@@ -124,7 +137,9 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
 
         :param tool: Toolbox tool descriptor.
         """
-        inputs, outputs = self._toolbox.fetch_tool_io_parameters(tool.name)
+        inputs, outputs = self._tools_manager.fetch_tool_io_parameters(
+            tool.name
+        )
 
         algorithm = NextgisToolboxAlgorithm(
             tool_id=tool.name,
@@ -132,6 +147,7 @@ class NgToolboxPluginProcessingProvider(QgsProcessingProvider):
             description=tool.description,
             inputs=inputs,
             outputs=outputs,
+            tasks_manager=self._tasks_manager,
         )
 
         self.addAlgorithm(algorithm)

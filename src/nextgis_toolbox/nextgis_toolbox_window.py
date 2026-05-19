@@ -35,8 +35,10 @@ from qgis.PyQt.QtWidgets import (
 from qgis.PyQt.uic import loadUiType
 
 from nextgis_toolbox.inputs_dialog import InputsDialog
-from nextgis_toolbox.nextgis_toolbox.api.toolbox import Toolbox
-from nextgis_toolbox.nextgis_toolbox.models.result import ToolboxResult
+from nextgis_toolbox.nextgis_toolbox.tasks.models import ToolboxResult
+from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
+    NgToolboxPluginInterface,
+)
 
 # from nextgis_toolbox.nextgis_toolbox_plugin_provider import NgPluginProvider
 from nextgis_toolbox.results_dialog import ResultsDialog
@@ -112,7 +114,10 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
         iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
         QApplication.processEvents()
         try:
-            self.toolbox = Toolbox()
+            plugin = NgToolboxPluginInterface.instance()
+            tools_manager = plugin.tools_manager
+
+            self.toolbox = tools_manager
         except Exception:
             self.iface.messageBar().pushMessage(
                 "NextGis Toolbox",
@@ -174,33 +179,33 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
             if not hidden_name:
                 hidden_name = tag_name
             item.setText(1, hidden_name)
-            for tool in self.toolbox.tools:
+            for tool in self.toolbox.tools():
                 if (
-                    tool["is_dev"]
-                    or tool["id"] not in tag_tools
-                    or (filter and filter.lower() not in tool["name"].lower())
+                    tool.is_dev
+                    or tool.id not in tag_tools
+                    or (filter and filter.lower() not in tool.name.lower())
                 ):
                     continue
                 toolItem = QTreeWidgetItem(item)
-                toolItem.setText(0, tool["name"])
-                toolItem.setText(1, tool["name"])
-                toolItem.setData(0, 100, tool.get("operation_id", tool["id"]))
-                toolItem.setWhatsThis(0, tool["description"])
+                toolItem.setText(0, tool.name)
+                toolItem.setText(1, tool.name)
+                toolItem.setData(0, 100, tool.id)
+                toolItem.setWhatsThis(0, tool.description)
             if not item.childCount():
                 del item
             else:
                 self.treeWidget.addTopLevelItem(item)
 
         add_item(
-            self.tr("All"), [tool["id"] for tool in self.toolbox.tools], "!!"
+            self.tr("All"), [tool.id for tool in self.toolbox.tools()], "!!"
         )  # here it is !!
         if self.user_data["history"]:
             add_item(
                 self.tr("Favorites"), self.user_data["history"], "!"
             )  # and here !
 
-        for tag in self.toolbox.tags:
-            add_item(tag["alias"], tag["tools"])
+        for tag in self.toolbox.tags():
+            add_item(tag.alias, tag.tools)
         if filter:
             self.treeWidget.expandAll()
 

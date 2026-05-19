@@ -31,7 +31,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.PyQt.uic import loadUiType
 
-from nextgis_toolbox.nextgis_toolbox.api.client import API_BASE_ENDPOINT
+from nextgis_toolbox.nextgis_toolbox.sdk.client import API_BASE_ENDPOINT
 
 PLUGIN_DIR = os.path.dirname(__file__)
 

@@ -24,10 +24,10 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication
 
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.models.parameter import ToolboxParameter
-from nextgis_toolbox.nextgis_toolbox.tasks.tasks_manager import (
-    ToolboxTasksManager,
+from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
+    TasksInterface,
 )
+from nextgis_toolbox.nextgis_toolbox.tools.models import ToolboxParameter
 from nextgis_toolbox.processing.parameter_mapping import (
     create_input_parameter,
     create_ngw_connection_parameters,
@@ -41,7 +41,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
     Processing algorithm for a single NextGIS Toolbox tool.
     """
 
-    _tasks_manager: "ToolboxTasksManager"
+    _tasks_manager: "TasksInterface"
 
     def __init__(
         self,
@@ -50,6 +50,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         description: str,
         inputs: List[ToolboxParameter],
         outputs: List[ToolboxParameter],
+        tasks_manager: TasksInterface,
     ) -> None:
         """
         Initialize processing algorithm.
@@ -59,6 +60,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         :param description: Tool description.
         :param inputs: Tool input parameters.
         :param outputs: Tool output parameters.
+        :param tasks_manager: Tasks feature interface.
         """
         super().__init__()
 
@@ -67,8 +69,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         self._description = description
         self._inputs = inputs
         self._outputs = outputs
-
-        self._tasks_manager = ToolboxTasksManager()
+        self._tasks_manager = tasks_manager
 
     def initAlgorithm(
         self,
@@ -205,6 +206,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
             description=self._description,
             inputs=self._inputs,
             outputs=self._outputs,
+            tasks_manager=self._tasks_manager,
         )
 
     def tr(self, text: str) -> str:

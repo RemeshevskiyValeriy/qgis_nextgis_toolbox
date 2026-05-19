@@ -30,6 +30,12 @@ from nextgis_toolbox.core.utils import qgis_locale
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
 if TYPE_CHECKING:
+    from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
+        TasksInterface,
+    )
+    from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
+        ToolsInterface,
+    )
     from nextgis_toolbox.notifier.notifier_interface import (
         NotifierInterface,
     )
@@ -109,6 +115,28 @@ class NgToolboxPluginInterface(QObject, metaclass=QObjectMetaClass):
         :returns: Notifier interface instance.
         """
         ...
+
+    @property
+    def tools_manager(self) -> "ToolsInterface":
+        """Return the tools feature manager.
+
+        :returns: Tools feature interface instance.
+
+        :raises NotImplementedError: If a plugin implementation does not
+            provide the tools feature.
+        """
+        raise NotImplementedError
+
+    @property
+    def tasks_manager(self) -> "TasksInterface":
+        """Return the tasks feature manager.
+
+        :returns: Tasks feature interface instance.
+
+        :raises NotImplementedError: If a plugin implementation does not
+            provide the tasks feature.
+        """
+        raise NotImplementedError
 
     @pyqtSlot()
     @abstractmethod

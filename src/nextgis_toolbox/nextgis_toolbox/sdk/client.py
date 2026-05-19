@@ -28,7 +28,7 @@ from nextgis_toolbox.core import utils
 from nextgis_toolbox.core.qt_network_error import (
     QtNetworkError,
 )
-from nextgis_toolbox.nextgis_toolbox.api.authentication import (
+from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
     ToolboxAuthentication,
 )
 from nextgis_toolbox.nextgis_toolbox_plugin_interface import (
@@ -42,9 +42,7 @@ API_BASE_ENDPOINT = "https://toolbox.nextgis.com/api"
 
 
 class ToolboxApiClient:
-    """
-    Base API client for NextGIS Toolbox.
-    """
+    """Low-level HTTP client for NextGIS Toolbox API."""
 
     def __init__(self) -> None:
         """Initialize API client."""
@@ -60,7 +58,6 @@ class ToolboxApiClient:
         """
         Set current authentication object.
         """
-
         settings = NgToolboxPluginSettings()
         token = settings.nextgis_toolbox_token
 
@@ -169,7 +166,7 @@ class ToolboxApiClient:
 
         :returns: Configured request.
         """
-        qurl = QUrl(f"{API_BASE_ENDPOINT}/{sub_url.lstrip('/')}")
+        qurl = self._create_url(sub_url)
         qurl_query = QUrlQuery()
 
         params = {} if params is None else params
@@ -196,6 +193,19 @@ class ToolboxApiClient:
                 )
 
         return request
+
+    def _create_url(self, sub_url: str) -> QUrl:
+        """Create URL for relative API path or absolute URL.
+
+        :param sub_url: Relative API path or full URL.
+
+        :returns: Qt URL instance.
+        """
+        qurl = QUrl(sub_url)
+        if qurl.isValid() and not qurl.isRelative():
+            return qurl
+
+        return QUrl(f"{API_BASE_ENDPOINT}/{sub_url.lstrip('/')}")
 
     def _validate_response(
         self,

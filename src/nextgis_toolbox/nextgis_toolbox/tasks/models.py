@@ -15,14 +15,26 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
+from typing import List, Optional
 
 
 @dataclass
 class ToolboxResult:
-    """
-    Descriptor of a single NextGIS Toolbox task result.
-    """
+    """Descriptor of a single NextGIS Toolbox task result."""
 
     name: str
     result_type: str
     value: str
+
+
+@dataclass
+class ToolboxTask:
+    """Descriptor of a NextGIS Toolbox task."""
+
+    tool: str
+    status: str
+    progress: float
+    error: Optional[str]
+    results: List[ToolboxResult]
+    operation: str
+    state: str

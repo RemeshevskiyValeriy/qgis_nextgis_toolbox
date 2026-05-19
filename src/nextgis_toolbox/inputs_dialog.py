@@ -45,7 +45,7 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
-from nextgis_toolbox.nextgis_toolbox.models.parameter import ToolboxParameter
+from nextgis_toolbox.nextgis_toolbox.tools.models import ToolboxParameter
 
 TEMP_FOLDER = QgsProcessingUtils.tempFolder()
 

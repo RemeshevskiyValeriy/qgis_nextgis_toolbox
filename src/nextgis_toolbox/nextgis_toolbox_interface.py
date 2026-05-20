@@ -24,7 +24,7 @@ from qgis.core import QgsApplication
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QObject, QTranslator, pyqtSignal, pyqtSlot
 
-from nextgis_toolbox.core.constants import PACKAGE_NAME
+from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
 from nextgis_toolbox.core.logging import logger, unload_logger
 from nextgis_toolbox.core.utils import qgis_locale
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
@@ -151,6 +151,13 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
     def open_about_dialog(self) -> None:
         """Open the plugin about dialog."""
         ...
+
+    @pyqtSlot()
+    def open_settings(self) -> None:
+        """Open the plugin settings dialog."""
+        self.qgis_iface.showOptionsDialog(
+            self.qgis_iface.mainWindow(), PLUGIN_NAME
+        )
 
     def initGui(self) -> None:
         """Initialize the GUI components and load necessary resources."""

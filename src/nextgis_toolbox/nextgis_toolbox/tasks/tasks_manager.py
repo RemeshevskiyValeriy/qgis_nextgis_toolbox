@@ -46,6 +46,13 @@ class TasksManager(TasksInterface):
         super().__init__(parent)
         self._repository = TasksRepository(tasks_api)
 
+    def api(self) -> "TasksApi":
+        """Return the API for managing tasks.
+
+        :returns: Tasks API instance.
+        """
+        return self._repository.api()
+
     def set_api(self, tasks_api: TasksApi) -> None:
         """Set the API for managing tasks.
 
@@ -80,6 +87,8 @@ class TasksManager(TasksInterface):
             inputs=inputs,
             emailing=emailing,
         )
+
+        self.task_created.emit(task_id)
 
         return task_id
 

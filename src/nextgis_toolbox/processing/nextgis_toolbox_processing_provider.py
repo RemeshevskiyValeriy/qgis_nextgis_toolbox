@@ -25,6 +25,9 @@ from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
 from nextgis_toolbox.processing.nextgis_toolbox_algorithm import (
     NextgisToolboxAlgorithm,
 )
+from nextgis_toolbox.settings.nextgis_toolbox_settings import (
+    AuthenticationType,
+)
 from nextgis_toolbox.ui.icon import plugin_icon
 
 if TYPE_CHECKING:
@@ -68,7 +71,7 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
 
     def loadAlgorithms(self) -> None:
         """
-        Fetch tool I/O definitions from the API and register algorithms.
+        Register cached toolbox tools as Processing algorithms.
         """
 
         with QgsRuntimeProfiler.profile(  # type: ignore PylancereportAttributeAccessIssue
@@ -108,6 +111,18 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
         """
         return self.name()
 
+    def warningMessage(self) -> str:
+        if (
+            self._tasks_manager.api().client.authentication_type
+            != AuthenticationType.NONE
+        ):
+            return super().warningMessage()
+
+        return self.tr(
+            "Tool execution is unavailable due to missing authentication."
+            " Please set your API key in plugin settings."
+        )
+
     def _load_tool_algorithms(self) -> List[str]:
         """
         Load and register toolbox Processing algorithms.
@@ -117,9 +132,6 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
         load_errors: List[str] = []
 
         for tool in self._tools_manager.tools():
-            if tool.is_dev or tool.name != "hello":
-                continue
-
             try:
                 self._add_tool_algorithm(tool)
 
@@ -138,19 +150,7 @@ class NextgisToolboxProcessingProvider(QgsProcessingProvider):
 
         :param tool: Toolbox tool descriptor.
         """
-        inputs, outputs = self._tools_manager.fetch_tool_io_parameters(
-            tool.name
-        )
-
-        algorithm = NextgisToolboxAlgorithm(
-            tool_id=tool.name,
-            display_name=tool.alias,
-            description=tool.description,
-            inputs=inputs,
-            outputs=outputs,
-            tasks_manager=self._tasks_manager,
-        )
-
+        algorithm = NextgisToolboxAlgorithm(tool, self._tasks_manager)
         self.addAlgorithm(algorithm)
 
     def _notify_load_errors(

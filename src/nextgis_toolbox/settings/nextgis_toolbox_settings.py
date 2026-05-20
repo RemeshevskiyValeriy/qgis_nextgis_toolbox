@@ -45,6 +45,7 @@ class NextgisToolboxSettings:
     KEY_IS_DEBUG_LOGS_ENABLED = (
         f"{PLUGIN_SETTINGS_GROUP}/other/debugLogsEnabled"
     )
+    KEY_IS_DEVELOPER_MODE = f"{PLUGIN_SETTINGS_GROUP}/other/isDeveloperMode"
     KEY_DID_LAST_LAUNCH_FAIL = (
         f"{PLUGIN_SETTINGS_GROUP}/other/didLastLaunchFail"
     )
@@ -136,6 +137,19 @@ class NextgisToolboxSettings:
     @is_debug_logs_enabled.setter
     def is_debug_logs_enabled(self, value: bool) -> None:
         self._settings.setValue(self.KEY_IS_DEBUG_LOGS_ENABLED, value)
+
+    @property
+    def is_developer_mode(self) -> bool:
+        """Check if developer-only tools are enabled."""
+        return self._settings.value(
+            self.KEY_IS_DEVELOPER_MODE,
+            defaultValue=False,
+            type=bool,
+        )
+
+    @is_developer_mode.setter
+    def is_developer_mode(self, value: bool) -> None:
+        self._settings.setValue(self.KEY_IS_DEVELOPER_MODE, value)
 
     @property
     def did_last_launch_fail(self) -> bool:

@@ -180,10 +180,8 @@ class NgToolboxWindow(QMainWindow, MAIN_FORM_CLASS):
                 hidden_name = tag_name
             item.setText(1, hidden_name)
             for tool in self.toolbox.tools():
-                if (
-                    tool.is_dev
-                    or tool.id not in tag_tools
-                    or (filter and filter.lower() not in tool.name.lower())
+                if tool.id not in tag_tools or (
+                    filter and filter.lower() not in tool.name.lower()
                 ):
                     continue
                 toolItem = QTreeWidgetItem(item)

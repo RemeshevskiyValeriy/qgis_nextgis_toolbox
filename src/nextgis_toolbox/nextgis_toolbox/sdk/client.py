@@ -15,8 +15,11 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import json
+import re
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Dict, Optional
+from urllib.parse import unquote
 
 from qgis.core import (
     QgsFeedback,
@@ -40,9 +43,11 @@ from nextgis_toolbox.core import utils
 from nextgis_toolbox.core.constants import DEFAULT_API_ENDPOINT
 from nextgis_toolbox.core.exceptions import (
     NextgisToolboxAuthenticationError,
+    NextgisToolboxFileWriteError,
     NextgisToolboxNetworkError,
     NextgisToolboxRequestCanceledError,
 )
+from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.core.qt_network_error import (
     QtNetworkError,
 )
@@ -52,6 +57,12 @@ from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
 from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
 )
+
+
+class RequestResultStatus:
+    SUCCESS = "success"
+    FAILED = "failed"
+    CANCELED = "canceled"
 
 
 class ToolboxApiClient(QObject):
@@ -150,15 +161,82 @@ class ToolboxApiClient(QObject):
         :returns: Raw response content.
         """
         request = self._build_request(path, query_params)
+        request_url = request.url().toString()
+        started_at = self._log_request_started("GET", request_url, "↓")
+        status = RequestResultStatus.SUCCESS
 
-        response = QgsNetworkAccessManager.instance().blockingGet(
-            request, feedback=feedback
+        try:
+            response = QgsNetworkAccessManager.instance().blockingGet(
+                request, feedback=feedback
+            )
+
+            self._raise_if_request_canceled(feedback)
+            self._raise_for_network_error(response.error())
+
+            return response.content().data()
+        except NextgisToolboxRequestCanceledError:
+            status = RequestResultStatus.CANCELED
+            raise
+        except Exception:
+            status = RequestResultStatus.FAILED
+            raise
+        finally:
+            self._log_request_completed("GET", request_url, started_at, status)
+
+    def upload(
+        self,
+        source_path: Path,
+        feedback: Optional[QgsFeedback] = None,
+    ) -> Dict[str, Any]:
+        """Upload a file to Toolbox storage.
+
+        :param source_path: Source file path.
+        :param feedback: Optional feedback object for progress reporting.
+
+        :returns: Uploaded file metadata.
+        """
+        file_path = Path(source_path)
+        request = self._build_request(
+            "upload",
+            query_params={
+                "filename": file_path.name,
+                "format": "json",
+            },
+            with_language=False,
         )
+        request.setRawHeader(
+            b"Content-Type",
+            b"application/octet-stream",
+        )
+        request_url = request.url().toString()
+        started_at = self._log_request_started("UPLOAD", request_url, "↑")
+        status = RequestResultStatus.SUCCESS
 
-        self._raise_if_request_canceled(feedback)
-        self._raise_for_network_error(response.error())
+        try:
+            payload_bytes = file_path.read_bytes()
+            response = QgsNetworkAccessManager.instance().blockingPost(
+                request,
+                payload_bytes,
+                feedback=feedback,
+            )
 
-        return response.content().data()
+            self._raise_if_request_canceled(feedback)
+            self._raise_for_network_error(response.error())
+
+            return json.loads(response.content().data().decode())
+        except NextgisToolboxRequestCanceledError:
+            status = RequestResultStatus.CANCELED
+            raise
+        except Exception:
+            status = RequestResultStatus.FAILED
+            raise
+        finally:
+            self._log_request_completed(
+                "UPLOAD",
+                request_url,
+                started_at,
+                status,
+            )
 
     def download(
         self,
@@ -176,64 +254,47 @@ class ToolboxApiClient(QObject):
 
         :returns: Saved file path.
         """
-        request = self._build_request(path, query_params)
-        saved_path = Path(destination_path)
-        saved_path.parent.mkdir(parents=True, exist_ok=True)
-
-        output_file = QSaveFile(str(saved_path))
-        if not output_file.open(QIODevice.OpenModeFlag.WriteOnly):
-            raise OSError(f"Failed to open '{saved_path}' for writing.")
-
-        reply = QgsNetworkAccessManager.instance().get(request)
-        event_loop = QEventLoop(self)
-        write_error: Optional[Exception] = None
-
-        def write_available_data() -> None:
-            nonlocal write_error
-
-            if write_error is not None:
-                return
-
-            chunk = reply.readAll()
-            if chunk.isEmpty():
-                return
-
-            chunk_bytes = chunk.data()
-            written_bytes = output_file.write(chunk_bytes)
-
-            if written_bytes != len(chunk_bytes):
-                write_error = OSError(
-                    f"Failed to write downloaded data to '{saved_path}'."
-                )
-                reply.abort()
-
-        if feedback is not None:
-            feedback.canceled.connect(reply.abort)
-
-        reply.readyRead.connect(write_available_data)
-        reply.finished.connect(write_available_data)
-        reply.finished.connect(event_loop.quit)
+        request = self._build_download_request(path, query_params)
+        request_url = request.url().toString()
+        started_at = self._log_request_started("DOWNLOAD", request_url, "↓")
+        status = RequestResultStatus.SUCCESS
 
         try:
-            event_loop.exec()
+            filename = self._fetch_download_filename(request, feedback)
+            saved_path = self._resolve_download_path(
+                destination_path, filename
+            )
+            self._ensure_download_directory(saved_path)
+            output_file = self._open_download_file(saved_path)
+            reply = self._start_download_reply(request, feedback)
 
-            if write_error is not None:
-                raise write_error
-
-            self._raise_if_request_canceled(feedback)
-            self._raise_for_network_error(reply.error())
-
-            if not output_file.commit():
-                raise OSError(
-                    f"Failed to save downloaded file to '{saved_path}'."
+            try:
+                self._execute_download(
+                    reply,
+                    output_file,
+                    saved_path,
+                    feedback,
                 )
+            except Exception:
+                output_file.cancelWriting()
+                raise
+            finally:
+                reply.deleteLater()
+
+            return saved_path
+        except NextgisToolboxRequestCanceledError:
+            status = RequestResultStatus.CANCELED
+            raise
         except Exception:
-            output_file.cancelWriting()
+            status = RequestResultStatus.FAILED
             raise
         finally:
-            reply.deleteLater()
-
-        return saved_path
+            self._log_request_completed(
+                "DOWNLOAD",
+                request_url,
+                started_at,
+                status,
+            )
 
     def post(
         self,
@@ -251,25 +312,40 @@ class ToolboxApiClient(QObject):
         :returns: Parsed JSON response.
         """
         request = self._build_request(path)
+        request_url = request.url().toString()
+        started_at = self._log_request_started("POST", request_url, "↑")
         payload_bytes = json.dumps(payload).encode()
+        status = RequestResultStatus.SUCCESS
 
-        response = QgsNetworkAccessManager.instance().blockingPost(
-            request,
-            payload_bytes,
-            feedback=feedback,
-        )
+        try:
+            response = QgsNetworkAccessManager.instance().blockingPost(
+                request,
+                payload_bytes,
+                feedback=feedback,
+            )
 
-        self._raise_if_request_canceled(feedback)
-        self._raise_for_network_error(response.error())
+            self._raise_if_request_canceled(feedback)
+            self._raise_for_network_error(response.error())
 
-        response_content = response.content().data().decode()
+            response_content = response.content().data().decode()
 
-        return json.loads(response_content)
+            return json.loads(response_content)
+        except NextgisToolboxRequestCanceledError:
+            status = RequestResultStatus.CANCELED
+            raise
+        except Exception:
+            status = RequestResultStatus.FAILED
+            raise
+        finally:
+            self._log_request_completed(
+                "POST", request_url, started_at, status
+            )
 
     def _build_request(
         self,
         path: str,
         query_params: Optional[Dict[str, Any]] = None,
+        with_language: bool = True,
     ) -> QNetworkRequest:
         """
         Create configured API request.
@@ -280,6 +356,8 @@ class ToolboxApiClient(QObject):
         :returns: Configured request.
         """
         query_url_params = QUrlQuery()
+        if with_language:
+            query_url_params.addQueryItem("lang", utils.qgis_locale())
         query_params = {} if query_params is None else query_params
         for key, value in query_params.items():
             query_url_params.addQueryItem(str(key), str(value))
@@ -299,6 +377,29 @@ class ToolboxApiClient(QObject):
 
         return request
 
+    def _build_download_request(
+        self,
+        path: str,
+        query_params: Optional[Dict[str, Any]] = None,
+    ) -> QNetworkRequest:
+        """Create configured request for file downloads."""
+        query_url_params = QUrlQuery()
+        query_params = {} if query_params is None else query_params
+        for key, value in query_params.items():
+            query_url_params.addQueryItem(str(key), str(value))
+
+        qurl = self._build_download_url(path)
+        qurl.setQuery(query_url_params)
+
+        request = QNetworkRequest(qurl)
+        self._apply_headers(
+            request,
+            {"Accept-Language": utils.qgis_locale()},
+        )
+        self._apply_authentication(request)
+
+        return request
+
     def _build_url(self, path: str) -> QUrl:
         """Create URL for relative API path or absolute URL.
 
@@ -311,6 +412,260 @@ class ToolboxApiClient(QObject):
             return qurl
 
         return QUrl(f"{self._endpoint.rstrip('/')}/api/{path.lstrip('/')}")
+
+    def _build_download_url(self, path: str) -> QUrl:
+        """Create URL for download endpoint or absolute URL."""
+        qurl = QUrl(path)
+        if qurl.isValid() and not qurl.isRelative():
+            return qurl
+
+        normalized_path = path.lstrip("/")
+        if normalized_path.startswith("api/"):
+            return QUrl(f"{self._endpoint.rstrip('/')}/{normalized_path}")
+
+        if normalized_path.startswith("download/"):
+            return QUrl(f"{self._endpoint.rstrip('/')}/api/{normalized_path}")
+
+        return QUrl(
+            f"{self._endpoint.rstrip('/')}/api/download/{normalized_path}"
+        )
+
+    def _log_request_started(
+        self,
+        method: str,
+        request_url: str,
+        direction: str,
+    ) -> float:
+        """Log request start and return a timer origin."""
+        logger.debug(f"{direction} {method} {request_url}")
+        return perf_counter()
+
+    def _log_request_completed(
+        self,
+        method: str,
+        request_url: str,
+        started_at: float,
+        status: str,
+    ) -> None:
+        """Log request completion with elapsed time."""
+        elapsed_seconds = perf_counter() - started_at
+        logger.debug(
+            f"✓ {method} {request_url} finished with status "
+            f"'{status}' in {elapsed_seconds:.3f}s"
+        )
+
+    def _fetch_download_filename(
+        self,
+        request: QNetworkRequest,
+        feedback: Optional[QgsFeedback],
+    ) -> Optional[str]:
+        """Try to resolve the final download filename from response headers."""
+        request_url = request.url().toString()
+        started_at = self._log_request_started("HEAD", request_url, "↓")
+        status = RequestResultStatus.SUCCESS
+        reply = QgsNetworkAccessManager.instance().head(request)
+        event_loop = QEventLoop(self)
+
+        if feedback is not None:
+            feedback.canceled.connect(reply.abort)
+
+        reply.finished.connect(event_loop.quit)
+
+        try:
+            event_loop.exec()
+            self._raise_if_request_canceled(feedback)
+
+            if self._is_optional_head_failure(reply):
+                return None
+
+            self._raise_for_network_error(reply.error())
+            return self._extract_filename_from_reply(reply)
+        except NextgisToolboxRequestCanceledError:
+            status = RequestResultStatus.CANCELED
+            raise
+        except Exception:
+            status = RequestResultStatus.FAILED
+            raise
+        finally:
+            reply.deleteLater()
+            self._log_request_completed(
+                "HEAD",
+                request_url,
+                started_at,
+                status,
+            )
+
+    def _is_optional_head_failure(self, reply: QNetworkReply) -> bool:
+        """Return whether a failed HEAD request can be ignored."""
+        if reply.error() == QNetworkReply.NetworkError.NoError:
+            return False
+
+        status_code = reply.attribute(
+            QNetworkRequest.Attribute.HttpStatusCodeAttribute
+        )
+        return status_code in (405, 501)
+
+    def _extract_filename_from_reply(
+        self,
+        reply: QNetworkReply,
+    ) -> Optional[str]:
+        """Extract download filename from response headers."""
+        header_value = bytes(reply.rawHeader(b"Content-Disposition")).decode(
+            "utf-8",
+            errors="ignore",
+        )
+        if not header_value:
+            return None
+
+        return self._extract_filename_from_content_disposition(header_value)
+
+    def _extract_filename_from_content_disposition(
+        self,
+        header_value: str,
+    ) -> Optional[str]:
+        """Extract filename from content disposition header value."""
+        filename_match = re.search(
+            r"filename\*=UTF-8''([^;]+)|filename=\"([^\"]+)\"|filename=([^;]+)",
+            header_value,
+        )
+        if filename_match is None:
+            return None
+
+        filename = (
+            filename_match.group(1)
+            or filename_match.group(2)
+            or filename_match.group(3)
+        )
+        return unquote(filename.strip()) if filename is not None else None
+
+    def _resolve_download_path(
+        self,
+        destination_path: Path,
+        filename: Optional[str],
+    ) -> Path:
+        """Resolve destination path for a downloaded file."""
+        saved_path = Path(destination_path)
+        if filename is None:
+            return saved_path
+
+        if saved_path.exists() and saved_path.is_dir():
+            return saved_path / filename
+
+        if saved_path.suffix:
+            return saved_path
+
+        if saved_path.exists() and not saved_path.is_dir():
+            return saved_path
+
+        return saved_path / filename
+
+    def _ensure_download_directory(self, saved_path: Path) -> None:
+        """Ensure destination directory exists."""
+        try:
+            saved_path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            raise NextgisToolboxFileWriteError(
+                log_message=f"Failed to prepare directory for '{saved_path}'.",
+                detail=str(error).strip() or None,
+            ) from error
+
+    def _open_download_file(self, saved_path: Path) -> QSaveFile:
+        """Open destination file for streamed download."""
+        output_file = QSaveFile(str(saved_path))
+        if not output_file.open(QIODevice.OpenModeFlag.WriteOnly):
+            raise NextgisToolboxFileWriteError(
+                log_message=f"Failed to open '{saved_path}' for writing.",
+                detail=output_file.errorString().strip() or None,
+            )
+
+        return output_file
+
+    def _start_download_reply(
+        self,
+        request: QNetworkRequest,
+        feedback: Optional[QgsFeedback],
+    ) -> QNetworkReply:
+        """Start download request."""
+        reply = QgsNetworkAccessManager.instance().get(request)
+        if feedback is not None:
+            feedback.canceled.connect(reply.abort)
+
+        return reply
+
+    def _execute_download(
+        self,
+        reply: QNetworkReply,
+        output_file: QSaveFile,
+        saved_path: Path,
+        feedback: Optional[QgsFeedback],
+    ) -> None:
+        """Stream reply data to file and finalize the download."""
+        event_loop = QEventLoop(self)
+        write_error: Optional[Exception] = None
+
+        def write_available_data() -> None:
+            nonlocal write_error
+            write_error = self._write_download_chunk(
+                reply,
+                output_file,
+                saved_path,
+                write_error,
+            )
+            if write_error is not None:
+                reply.abort()
+
+        reply.readyRead.connect(write_available_data)
+        reply.finished.connect(write_available_data)
+        reply.finished.connect(event_loop.quit)
+        event_loop.exec()
+
+        if write_error is not None:
+            raise write_error
+
+        self._raise_if_request_canceled(feedback)
+        self._raise_for_network_error(reply.error())
+        self._commit_download_file(output_file, saved_path)
+
+    def _write_download_chunk(
+        self,
+        reply: QNetworkReply,
+        output_file: QSaveFile,
+        saved_path: Path,
+        current_error: Optional[Exception],
+    ) -> Optional[Exception]:
+        """Write the next available chunk from reply to disk."""
+        if current_error is not None:
+            return current_error
+
+        chunk = reply.readAll()
+        if chunk.isEmpty():
+            return None
+
+        chunk_bytes = chunk.data()
+        written_bytes = output_file.write(chunk_bytes)
+        if written_bytes == len(chunk_bytes):
+            return None
+
+        return NextgisToolboxFileWriteError(
+            log_message=(
+                f"Failed to write downloaded data to '{saved_path}'."
+            ),
+            detail=output_file.errorString().strip() or None,
+        )
+
+    def _commit_download_file(
+        self,
+        output_file: QSaveFile,
+        saved_path: Path,
+    ) -> None:
+        """Commit streamed file to the final location."""
+        if output_file.commit():
+            return
+
+        raise NextgisToolboxFileWriteError(
+            log_message=f"Failed to save downloaded file to '{saved_path}'.",
+            detail=output_file.errorString().strip() or None,
+        )
 
     def _raise_if_request_canceled(
         self,

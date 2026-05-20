@@ -15,7 +15,34 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Dict, List, Optional
+
+
+class TaskStatus(str, Enum):
+    """Normalized task execution status."""
+
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    STARTED = "STARTED"
+    PENDING = "PENDING"
+    UNKNOWN = "UNKNOWN"
+
+    @classmethod
+    def from_value(cls, value: Optional[str]) -> "TaskStatus":
+        """Convert raw API value to enum."""
+        if value is None:
+            return cls.UNKNOWN
+
+        normalized_value = value.upper()
+        for status in cls:
+            if status.value == normalized_value:
+                return status
+
+        return cls.UNKNOWN
+
+    def __str__(self) -> str:
+        return self.value
 
 
 @dataclass
@@ -49,37 +76,37 @@ class ToolboxTask:
     """Descriptor of a NextGIS Toolbox task."""
 
     tool: str
-    status: str
+    status: TaskStatus
     progress: float
     error: Optional[str]
     results: List[ToolboxResult]
     operation: str
-    state: str
+    state: TaskStatus
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> "ToolboxTask":
         """Build a task model from a JSON payload."""
         return cls(
             tool=data["tool"],
-            status=data["status"],
-            progress=data["progress"],
+            status=TaskStatus.from_value(data.get("status")),
+            progress=float(data.get("progress", 0.0)),
             error=data.get("error"),
             results=[
                 ToolboxResult.from_json(result_data)
                 for result_data in data.get("output", [])
             ],
             operation=data["operation"],
-            state=data["state"],
+            state=TaskStatus.from_value(data.get("state")),
         )
 
     def to_json(self) -> Dict[str, Any]:
         """Serialize the task model to a JSON-compatible payload."""
         return {
             "tool": self.tool,
-            "status": self.status,
+            "status": str(self.status),
             "progress": self.progress,
             "error": self.error,
             "output": [result.to_json() for result in self.results],
             "operation": self.operation,
-            "state": self.state,
+            "state": str(self.state),
         }

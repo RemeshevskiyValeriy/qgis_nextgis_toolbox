@@ -15,7 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from time import sleep
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from qgis.core import (
     QgsProcessingAlgorithm,
@@ -24,15 +24,23 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication
 
 from nextgis_toolbox.core.logging import logger
+from nextgis_toolbox.core.utils import nextgis_domain
+from nextgis_toolbox.nextgis_toolbox.tasks.models import TaskStatus
 from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
     TasksInterface,
 )
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolboxParameter
+from nextgis_toolbox.nextgis_toolbox.tools.models import (
+    ToolboxTool,
+)
 from nextgis_toolbox.processing.parameter_mapping import (
     create_input_parameter,
     create_ngw_connection_parameters,
     create_output_parameter,
     resolve_parameter_value,
+)
+from nextgis_toolbox.processing.utils import (
+    format_tool_description,
+    format_tool_help,
 )
 
 
@@ -41,39 +49,28 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
     Processing algorithm for a single NextGIS Toolbox tool.
     """
 
+    _tool: ToolboxTool
     _tasks_manager: "TasksInterface"
 
     def __init__(
         self,
-        tool_id: str,
-        display_name: str,
-        description: str,
-        inputs: List[ToolboxParameter],
-        outputs: List[ToolboxParameter],
+        tool: ToolboxTool,
         tasks_manager: TasksInterface,
     ) -> None:
         """
         Initialize processing algorithm.
 
-        :param tool_id: Tool identifier.
-        :param display_name: Visible algorithm name.
-        :param description: Tool description.
-        :param inputs: Tool input parameters.
-        :param outputs: Tool output parameters.
+        :param tool: Toolbox tool descriptor.
         :param tasks_manager: Tasks feature interface.
         """
         super().__init__()
 
-        self._tool_id = tool_id
-        self._display_name = display_name
-        self._description = description
-        self._inputs = inputs
-        self._outputs = outputs
+        self._tool = tool
         self._tasks_manager = tasks_manager
 
     def initAlgorithm(
         self,
-        configuration: Optional[Dict[str, Any]] = None,
+        configuration: Optional[Dict[Optional[str], Any]] = None,
     ) -> None:
         """
         Declare algorithm parameters and outputs.
@@ -81,7 +78,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         :param configuration: Optional provider configuration dict
             (unused, required by base class API).
         """
-        for input_parameter in self._inputs:
+        for input_parameter in self._tool.inputs:
             if input_parameter.parameter_type == "ngw_connection":
                 for qgis_parameter in create_ngw_connection_parameters(
                     input_parameter
@@ -90,12 +87,12 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
             else:
                 self.addParameter(create_input_parameter(input_parameter))
 
-        for output_param in self._outputs:
+        for output_param in self._tool.outputs:
             self.addOutput(create_output_parameter(output_param))
 
     def processAlgorithm(
         self,
-        parameters: Dict[str, Any],
+        parameters: Dict[Optional[str], Any],
         context: QgsProcessingContext,
         feedback,
     ) -> Dict[str, Any]:
@@ -108,17 +105,17 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
 
         :returns: Processing result.
         """
-        logger.info(f"Running tool '{self._tool_id}'")
+        logger.info(f"Running tool '{self._tool.name}'")
 
         resolved_parameters: Dict[str, Any] = {
             input_parameter.name: resolve_parameter_value(
                 input_parameter, self, parameters, context
             )
-            for input_parameter in self._inputs
+            for input_parameter in self._tool.inputs
         }
 
         task_id = self._tasks_manager.submit_task(
-            self._tool_id,
+            self._tool.name,
             resolved_parameters,
         )
 
@@ -136,17 +133,19 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
 
             state = task.state
 
-            if state == "SUCCESS":
-                logger.info((f"Tool '{self._tool_id}' finished successfully"))
+            if state == TaskStatus.SUCCESS:
+                logger.info(f"Tool '{self._tool.name}' finished successfully")
 
                 feedback.setProgress(100)
                 return {}
 
-            if state == "FAILED":
+            if state == TaskStatus.FAILED:
                 error_message = task.error
 
                 logger.warning(
-                    (f"Tool '{self._tool_id}' failed. Error: {error_message}")
+                    (
+                        f"Tool '{self._tool.name}' failed. Error: {error_message}"
+                    )
                 )
 
                 raise Exception(error_message)
@@ -165,7 +164,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         )
 
         logger.warning(
-            (f"Tool '{self._tool_id}' execution was canceled by user")
+            f"Tool '{self._tool.name}' execution was canceled by user"
         )
 
         return {}
@@ -176,7 +175,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
 
         :returns: Algorithm identifier.
         """
-        return self._tool_id
+        return self._tool.name
 
     def displayName(self) -> str:
         """
@@ -184,7 +183,15 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
 
         :returns: Display name.
         """
-        return self._display_name
+        return self._tool.alias
+
+    def shortDescription(self) -> str:
+        """
+        Return algorithm short description.
+
+        :returns: Short description.
+        """
+        return format_tool_description(self._tool)
 
     def shortHelpString(self) -> str:
         """
@@ -192,7 +199,17 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
 
         :returns: Help text.
         """
-        return self._description or ""
+        return format_tool_help(self._tool)
+
+    def helpUrl(self) -> str:
+        """Return URL to the tool documentation.
+
+        :returns: Documentation URL based on the current locale.
+        """
+        return (
+            nextgis_domain("docs")
+            + f"/docs_toolbox/source/{self._tool.name}.html"
+        )
 
     def createInstance(self) -> "NextgisToolboxAlgorithm":
         """
@@ -201,11 +218,7 @@ class NextgisToolboxAlgorithm(QgsProcessingAlgorithm):
         :returns: New algorithm instance.
         """
         return type(self)(
-            tool_id=self._tool_id,
-            display_name=self._display_name,
-            description=self._description,
-            inputs=self._inputs,
-            outputs=self._outputs,
+            tool=self._tool,
             tasks_manager=self._tasks_manager,
         )
 

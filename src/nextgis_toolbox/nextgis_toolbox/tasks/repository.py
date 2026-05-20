@@ -17,6 +17,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
+from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 from nextgis_toolbox.nextgis_toolbox.tasks.models import (
     ToolboxResult,
@@ -33,6 +34,13 @@ class TasksRepository:
         :param api: Tasks API gateway.
         """
         self._api = api
+
+    def api(self) -> "TasksApi":
+        """Return the API gateway for managing tasks.
+
+        :returns: Tasks API gateway.
+        """
+        return self._api
 
     def set_api(self, api: TasksApi) -> None:
         """Set the API gateway for managing tasks.
@@ -55,6 +63,7 @@ class TasksRepository:
 
         :returns: Created task identifier.
         """
+        logger.debug(f"Submitting task for tool '{tool_name}'")
         response_data = self._api.submit_task(
             tool_name=tool_name,
             inputs=inputs,
@@ -70,6 +79,7 @@ class TasksRepository:
 
         :returns: Toolbox task model.
         """
+        logger.debug(f"Fetching task information for '{task_id}'")
         return ToolboxTask.from_json(self._api.task_information(task_id))
 
     def get_results(self, task_id: str) -> List[ToolboxResult]:
@@ -96,9 +106,11 @@ class TasksRepository:
         downloaded_paths: List[Path] = []
 
         for result in results:
-            destination_path = directory / Path(result.value).name
+            logger.debug(
+                f"Downloading task result '{result.name}' to '{directory}'"
+            )
             downloaded_paths.append(
-                self._api.client.download(result.value, destination_path)
+                self._api.client.download(result.value, directory)
             )
 
         return downloaded_paths

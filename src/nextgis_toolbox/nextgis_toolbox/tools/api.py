@@ -35,7 +35,7 @@ class ToolsApi:
         return self._client
 
     def fetch_tools(self) -> List[Dict[str, Any]]:
-        """Fetch raw tools payloads.
+        """Fetch raw tool summary payloads.
 
         :returns: List of raw tool dictionaries.
         """
@@ -50,19 +50,14 @@ class ToolsApi:
         response_data = self._client.get("tags/")
         return response_data["data"]
 
-    def fetch_tool_io_parameters(
+    def fetch_tool(
         self,
         tool_name: str,
-    ) -> Dict[str, List[Dict[str, Any]]]:
-        """Fetch raw input and output parameter definitions.
+    ) -> Dict[str, Any]:
+        """Fetch raw tool details.
 
         :param tool_name: Toolbox tool identifier.
 
-        :returns: Raw dictionary with ``inputs`` and ``outputs`` lists.
+        :returns: Raw tool dictionary.
         """
-        response_data = self._client.get(f"tools/{tool_name}")
-
-        return {
-            "inputs": response_data["inputs"],
-            "outputs": response_data["outputs"],
-        }
+        return self._client.get(f"tools/{tool_name}")

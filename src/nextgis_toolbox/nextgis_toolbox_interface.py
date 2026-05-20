@@ -108,6 +108,14 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
         return Path(__file__).parent
 
     @property
+    def has_processing_provider(self) -> bool:
+        """Check if the plugin provides a processing provider.
+
+        :returns: True if the plugin has a processing provider, False otherwise.
+        """
+        return self.metadata.getboolean("general", "hasProcessingProvider")
+
+    @property
     @abstractmethod
     def notifier(self) -> "NotifierInterface":
         """Return the notifier for displaying messages to the user.
@@ -148,8 +156,10 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
         """Initialize the GUI components and load necessary resources."""
         self._translators = list()
 
-        if self.metadata.get("general", "hasProcessingProvider"):
+        if self.has_processing_provider:
             self.initProcessing()
+            if not self._is_processing_loaded:
+                return
 
         try:
             self._load_translations()

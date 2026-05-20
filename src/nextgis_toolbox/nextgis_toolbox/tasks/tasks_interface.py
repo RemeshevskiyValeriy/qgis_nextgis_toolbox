@@ -35,6 +35,13 @@ class TasksInterface(QObject, metaclass=QObjectMetaClass):
 
     task_created = pyqtSignal(str)
 
+    def api(self) -> "TasksApi":
+        """Return the API for managing tasks.
+
+        :returns: Tasks API instance.
+        """
+        ...
+
     def set_api(self, tasks_api: "TasksApi") -> None:
         """Set the API for managing tasks.
 

@@ -15,10 +15,10 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import sys
-from typing import TYPE_CHECKING, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 from osgeo import gdal
-from processing import execAlgorithmDialog
+from processing import execAlgorithmDialog  # type: ignore
 from qgis.core import Qgis, QgsApplication
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import (
@@ -28,10 +28,16 @@ from qgis.PyQt.QtCore import (
     QTimer,
     pyqtSlot,
 )
-from qgis.PyQt.QtWidgets import QAction, QDockWidget, QMenu
+from qgis.PyQt.QtWidgets import (
+    QAction,
+    QDockWidget,
+    QMainWindow,
+    QMenu,
+)
 
 from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
 from nextgis_toolbox.core.exceptions import (
+    NextgisToolboxError,
     NextgisToolboxProcessingRequiredWarning,
 )
 from nextgis_toolbox.core.logging import logger
@@ -106,6 +112,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         self._about_action = None
         self._show_help_action = None
         self._plugin_menu = None
+        self._options_factory = None
 
         self._first_start = True
 
@@ -189,9 +196,11 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
             tools_manager=self._tools_manager,
             tasks_manager=self._tasks_manager,
         )
-        QgsApplication.processingRegistry().addProvider(
+
+        if not QgsApplication.processingRegistry().addProvider(
             self._processing_provider
-        )
+        ):
+            raise NextgisToolboxError("Failed to register Processing provider")
 
         return True
 
@@ -358,6 +367,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         self._unregister_plugin_menu()
         self._unregister_help_action()
 
+        self._unload_settings()
         self._delete_actions()
 
         self._unload_dock_widget()
@@ -467,6 +477,15 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
             self._api_client.deleteLater()
             del self._api_client
 
+    def _unload_settings(self) -> None:
+        """Unregister the plugin settings page from QGIS options."""
+        if self._options_factory is None:
+            return
+
+        self.qgis_iface.unregisterOptionsWidgetFactory(self._options_factory)
+        self._options_factory.deleteLater()
+        self._options_factory = None
+
     def _load_settings(self) -> None:
         """Register the plugin settings page in the QGIS Options dialog."""
         self._options_factory = NextgisToolboxSettingsPageFactory()
@@ -480,11 +499,12 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         """
         if self._first_start and checked:
             self._first_start = False
+            main_window = cast(QMainWindow, self.qgis_iface.mainWindow())
 
             try:
                 self._dock_widget = ToolboxDockWidget(
                     self.qgis_iface,
-                    self.qgis_iface.mainWindow(),
+                    main_window,
                 )
                 self._dock_widget.window_closed.connect(self._on_dock_closed)
             except Exception:
@@ -504,15 +524,13 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
             right_docks = [
                 dock
-                for dock in self.qgis_iface.mainWindow().findChildren(
-                    QDockWidget
-                )
-                if self.qgis_iface.mainWindow().dockWidgetArea(dock)
+                for dock in main_window.findChildren(QDockWidget)
+                if main_window.dockWidgetArea(dock)
                 == Qt.DockWidgetArea.RightDockWidgetArea
             ]
 
             if right_docks:
-                self.qgis_iface.mainWindow().tabifyDockWidget(
+                main_window.tabifyDockWidget(
                     right_docks[0],
                     self._dock_widget,
                 )
@@ -539,85 +557,37 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         :param parent_menu: Root menu to populate.
         :param provider_id: QGIS Processing provider identifier.
         """
-        tools_by_tag = self._group_tools_by_tag(self.tools_manager.tools())
+        for tag in self.tools_manager.tags():
+            tools = self.tools_manager.find_tools(tag=tag)
 
-        for tag in sorted(
-            self.tools_manager.tags(), key=lambda item: item.alias
-        ):
-            self._populate_tag_menu(
-                parent_menu=parent_menu,
-                tag=tag,
-                tools_by_tag=tools_by_tag,
-                provider_id=provider_id,
+            if not tools:
+                continue
+
+            category_menu = self._create_category_menu(
+                tag,
+                parent_menu,
             )
 
-    def _populate_tag_menu(
-        self,
-        parent_menu: QMenu,
-        tag: ToolboxTag,
-        tools_by_tag: Dict[int, List[ToolboxTool]],
-        provider_id: str,
-    ) -> None:
-        """
-        Populate menu for a single toolbox tag.
+            for tool in tools:
+                algorithm_id = f"{provider_id}:{tool.name}"
 
-        :param parent_menu: Parent menu.
-        :param tag: Toolbox tag.
-        :param tools_by_tag: Mapping of tag IDs to toolbox tools.
-        :param provider_id: QGIS Processing provider identifier.
-        """
-        tools = tools_by_tag.get(tag.id, [])
+                if not self._algorithm_exists(algorithm_id):
+                    logger.warning(
+                        f"Algorithm '{algorithm_id}' not found in registry; "
+                        "skipping menu entry."
+                    )
+                    continue
 
-        if not tools:
-            return
+                category_menu.addAction(
+                    self._create_tool_action(
+                        tool,
+                        algorithm_id,
+                        parent_menu,
+                    )
+                )
 
-        category_menu = self._create_category_menu(
-            tag,
-            parent_menu,
-        )
-
-        for tool in tools:
-            self._add_tool_to_category_menu(
-                category_menu=category_menu,
-                tool=tool,
-                provider_id=provider_id,
-                parent_menu=parent_menu,
-            )
-
-        if not category_menu.isEmpty():
-            parent_menu.addMenu(category_menu)
-
-    def _add_tool_to_category_menu(
-        self,
-        category_menu: QMenu,
-        tool: ToolboxTool,
-        provider_id: str,
-        parent_menu: QMenu,
-    ) -> None:
-        """
-        Add toolbox tool action to category menu.
-
-        :param category_menu: Category submenu.
-        :param tool: Toolbox tool model.
-        :param provider_id: QGIS Processing provider identifier.
-        :param parent_menu: Parent menu for QAction ownership.
-        """
-        algorithm_id = f"{provider_id}:{tool.name}"
-
-        if not self._algorithm_exists(algorithm_id):
-            logger.warning(
-                f"Algorithm '{algorithm_id}' not found in registry; "
-                "skipping menu entry."
-            )
-            return
-
-        action = self._create_tool_action(
-            tool,
-            algorithm_id,
-            parent_menu,
-        )
-
-        category_menu.addAction(action)
+            if not category_menu.isEmpty():
+                parent_menu.addMenu(category_menu)
 
     def _algorithm_exists(
         self,
@@ -633,27 +603,6 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         registry = QgsApplication.processingRegistry()
 
         return registry.algorithmById(algorithm_id) is not None
-
-    def _group_tools_by_tag(
-        self,
-        tools: List[ToolboxTool],
-    ) -> Dict[int, List[ToolboxTool]]:
-        """
-        Group toolbox tools by tag identifier.
-
-        :param tools: Toolbox tool models.
-        :returns: Mapping of tag ID to toolbox tools.
-        """
-        tools_by_tag: Dict[int, List[ToolboxTool]] = {}
-
-        for tool in tools:
-            if tool.is_dev:
-                continue
-
-            for tag in tool.tags:
-                tools_by_tag.setdefault(tag.id, []).append(tool)
-
-        return tools_by_tag
 
     def _create_category_menu(
         self,

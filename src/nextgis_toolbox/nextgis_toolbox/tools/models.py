@@ -15,7 +15,17 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional
+
+
+class SortBy(str, Enum):
+    ID = "id"
+    NAME = "name"
+    ALIAS = "alias"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 @dataclass
@@ -62,6 +72,9 @@ class ToolboxTool:
     can_run: bool
     tag_ids: List[int]
     tags: List[ToolboxTag] = field(default_factory=list)
+    inputs: List["ToolboxParameter"] = field(default_factory=list)
+    outputs: List["ToolboxParameter"] = field(default_factory=list)
+    help: Optional[str] = None
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> "ToolboxTool":
@@ -77,7 +90,15 @@ class ToolboxTool:
             is_featured=data["is_featured"],
             can_run=data["can_run"],
             tag_ids=data.get("tags", []),
-            tags=[],
+            inputs=[
+                ToolboxParameter.from_json(parameter_data)
+                for parameter_data in data.get("inputs", [])
+            ],
+            outputs=[
+                ToolboxParameter.from_json(parameter_data)
+                for parameter_data in data.get("outputs", [])
+            ],
+            help=data.get("docs"),
         )
 
     def to_json(self) -> Dict[str, Any]:
@@ -95,6 +116,9 @@ class ToolboxTool:
             "is_featured": self.is_featured,
             "can_run": self.can_run,
             "tags": tag_ids,
+            "inputs": [parameter.to_json() for parameter in self.inputs],
+            "outputs": [parameter.to_json() for parameter in self.outputs],
+            "docs": self.help,
         }
 
 

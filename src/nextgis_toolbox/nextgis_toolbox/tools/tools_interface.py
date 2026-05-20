@@ -15,12 +15,12 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from qgis.PyQt.QtCore import QObject, pyqtSlot
 
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    ToolboxParameter,
+    SortBy,
     ToolboxTag,
     ToolboxTool,
 )
@@ -52,7 +52,7 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         ...
 
     @abstractmethod
-    def tools(self) -> List[ToolboxTool]:
+    def tools(self, *, sort_by: SortBy = SortBy.NAME) -> List[ToolboxTool]:
         """Return cached Toolbox tools with resolved tags.
 
         :returns: List of cached tool models.
@@ -60,7 +60,30 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         ...
 
     @abstractmethod
-    def tags(self) -> List[ToolboxTag]:
+    def tool(
+        self,
+        *,
+        tool_id: Optional[int] = None,
+        name: Optional[str] = None,
+    ) -> Optional[ToolboxTool]:
+        """Return one cached Toolbox tool by identifier."""
+        ...
+
+    @abstractmethod
+    def find_tools(
+        self,
+        *,
+        tool_id: Optional[Union[int, List[int]]] = None,
+        name: Optional[Union[str, List[str]]] = None,
+        tag: Optional[
+            Union[int, ToolboxTag, List[Union[int, ToolboxTag]]]
+        ] = None,
+    ) -> List[ToolboxTool]:
+        """Return cached tools matching a single search criterion."""
+        ...
+
+    @abstractmethod
+    def tags(self, *, sort_by: SortBy = SortBy.ALIAS) -> List[ToolboxTag]:
         """Return cached Toolbox tags.
 
         :returns: List of cached tag models.
@@ -68,14 +91,6 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         ...
 
     @abstractmethod
-    def fetch_tool_io_parameters(
-        self,
-        tool_name: str,
-    ) -> Tuple[List[ToolboxParameter], List[ToolboxParameter]]:
-        """Fetch input and output parameters for a tool.
-
-        :param tool_name: Toolbox tool identifier.
-
-        :returns: Tuple with input and output parameter lists.
-        """
+    def tag(self, tag_id: int) -> Optional[ToolboxTag]:
+        """Return one cached Toolbox tag by identifier."""
         ...

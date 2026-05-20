@@ -14,13 +14,16 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Tuple
+from typing import Any, Dict, List
 
+from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    ToolboxParameter,
     ToolboxTag,
     ToolboxTool,
+)
+from nextgis_toolbox.settings.nextgis_toolbox_settings import (
+    NextgisToolboxSettings,
 )
 
 
@@ -46,32 +49,37 @@ class ToolsRepository:
 
         :returns: List of Toolbox tool models.
         """
-        return [
-            ToolboxTool.from_json(tool_data)
-            for tool_data in self._api.fetch_tools()
-        ]
+        logger.debug("Fetching Toolbox tools catalog")
+        settings = NextgisToolboxSettings()
+        is_developer_mode = settings.is_developer_mode
 
-    def fetch_tool_io_parameters(
+        unfiltered_tools = self._api.fetch_tools()
+        logger.debug(f"Fetched {len(unfiltered_tools)} tools")
+
+        tools: List[ToolboxTool] = []
+
+        for tool_data in unfiltered_tools:
+            if not self._is_tool_available(tool_data, is_developer_mode):
+                continue
+
+            logger.debug(
+                f"Fetching Toolbox tool details for '{tool_data['name']}'"
+            )
+            tool_details = self._api.fetch_tool(tool_data["name"])
+            tools.append(ToolboxTool.from_json({**tool_data, **tool_details}))
+
+        return tools
+
+    def _is_tool_available(
         self,
-        tool_name: str,
-    ) -> Tuple[List[ToolboxParameter], List[ToolboxParameter]]:
-        """Fetch tool input and output parameter models.
+        tool_data: Dict[str, Any],
+        is_developer_mode: bool,
+    ) -> bool:
+        """Check whether a tool should be exposed to the plugin."""
+        if tool_data.get("is_dev", False) and not is_developer_mode:
+            return False
 
-        :param tool_name: Toolbox tool identifier.
-
-        :returns: Tuple with input and output parameter lists.
-        """
-        response_data = self._api.fetch_tool_io_parameters(tool_name)
-        inputs = [
-            ToolboxParameter.from_json(parameter_data)
-            for parameter_data in response_data["inputs"]
-        ]
-        outputs = [
-            ToolboxParameter.from_json(parameter_data)
-            for parameter_data in response_data["outputs"]
-        ]
-
-        return inputs, outputs
+        return True
 
 
 class TagsRepository:
@@ -96,7 +104,10 @@ class TagsRepository:
 
         :returns: List of Toolbox tag models.
         """
-        return [
+        logger.debug("Fetching Toolbox tags catalog")
+        tags = [
             ToolboxTag.from_json(tag_data)
             for tag_data in self._api.fetch_tags()
         ]
+        logger.debug(f"Fetched {len(tags)} tags")
+        return tags

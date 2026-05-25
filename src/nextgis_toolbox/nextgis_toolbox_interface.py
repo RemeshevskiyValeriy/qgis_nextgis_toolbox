@@ -15,18 +15,30 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import configparser
-from abc import abstractmethod
+import sys
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, cast
 
+from osgeo import gdal
 from qgis import utils
-from qgis.core import QgsApplication
+from qgis.core import Qgis, QgsApplication, QgsTaskManager
 from qgis.gui import QgisInterface
-from qgis.PyQt.QtCore import QObject, QTranslator, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtCore import (
+    QT_VERSION_STR,
+    QObject,
+    QSysInfo,
+    QTranslator,
+    pyqtSignal,
+    pyqtSlot,
+)
 
 from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
+from nextgis_toolbox.core.exceptions import NextgisToolboxError
 from nextgis_toolbox.core.logging import logger, unload_logger
 from nextgis_toolbox.core.utils import qgis_locale
+from nextgis_toolbox.notifier.cli_notifier import CliNotifier
+from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
 if TYPE_CHECKING:
@@ -50,16 +62,29 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
     subclasses.
     """
 
+    class Mode(Enum):
+        """Enum representing the plugin mode."""
+
+        LOADING = "loading"
+        GUI = "gui"
+        PROCESSING = "processing"
+        ERROR = "error"
+        UNLOADED = "unloaded"
+
     settings_changed = pyqtSignal()
     _instance: Optional["NextgisToolboxInterface"] = None
 
     def __init__(self, iface: QgisInterface) -> None:
         super().__init__(iface)
+        self._log_versions()
 
         NextgisToolboxInterface._instance = self
 
+        self._mode = self.Mode.LOADING
         self._is_gui_loaded = False
         self._is_processing_loaded = False
+        self._notifier = None  # type: Optional[NotifierInterface]
+        self._translators = list()
 
     @classmethod
     def instance(cls) -> "NextgisToolboxInterface":
@@ -108,21 +133,24 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
         return Path(__file__).parent
 
     @property
-    def has_processing_provider(self) -> bool:
-        """Check if the plugin provides a processing provider.
+    def mode(self) -> Mode:
+        """Return the plugin mode.
 
-        :returns: True if the plugin has a processing provider, False otherwise.
+        :returns: The plugin mode (GUI or PROCESSING).
         """
-        return self.metadata.getboolean("general", "hasProcessingProvider")
+        return self._mode
 
     @property
-    @abstractmethod
     def notifier(self) -> "NotifierInterface":
         """Return the notifier for displaying messages to the user.
 
         :returns: Notifier interface instance.
         """
-        ...
+        if self._notifier is None:
+            raise NextgisToolboxError(
+                "Using notifier before it was initialized"
+            )
+        return self._notifier
 
     @property
     def tools_manager(self) -> "ToolsInterface":
@@ -130,10 +158,12 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
 
         :returns: Tools feature interface instance.
 
-        :raises NotImplementedError: If a plugin implementation does not
+        :raises NextgisToolboxError: If a plugin implementation does not
             provide the tools feature.
         """
-        raise NotImplementedError
+        raise NextgisToolboxError(
+            "Plugin does not implement tools manager access"
+        )
 
     @property
     def tasks_manager(self) -> "TasksInterface":
@@ -141,16 +171,23 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
 
         :returns: Tasks feature interface instance.
 
-        :raises NotImplementedError: If a plugin implementation does not
+        :raises NextgisToolboxError: If a plugin implementation does not
             provide the tasks feature.
         """
-        raise NotImplementedError
+        raise NextgisToolboxError(
+            "Plugin does not implement tasks manager access"
+        )
+
+    @property
+    def qgis_tasks_manager(self) -> QgsTaskManager:
+        raise NextgisToolboxError(
+            "Plugin does not implement QGIS tasks manager access"
+        )
 
     @pyqtSlot()
-    @abstractmethod
     def open_about_dialog(self) -> None:
         """Open the plugin about dialog."""
-        ...
+        raise NextgisToolboxError("Plugin does not implement about dialog")
 
     @pyqtSlot()
     def open_settings(self) -> None:
@@ -161,71 +198,138 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
 
     def initGui(self) -> None:
         """Initialize the GUI components and load necessary resources."""
-        self._translators = list()
-
-        if self.has_processing_provider:
-            self.initProcessing()
-            if not self._is_processing_loaded:
-                return
+        self._mode = self.Mode.GUI
+        self._notifier = MessageBarNotifier(self)
 
         try:
             self._load_translations()
+
+            if self.metadata.getboolean("general", "hasProcessingProvider"):
+                self._init_processing()
+
             self._is_gui_loaded = self._load_ui()
-        except Exception:
-            logger.exception("An error occurred while plugin loading")
+            if not self._is_gui_loaded:
+                raise NextgisToolboxError("Failed to load GUI components")
+
+        except Exception as error:
+            logger.error("An error occurred while initializing the GUI")
+            self._process_error(error)
+            return
+
+        logger.debug(f"✓ Plugin initialized in {self._mode.name} mode")
 
     def initProcessing(self) -> None:
         """Initialize the processing provider and algorithms."""
+        self._mode = self.Mode.PROCESSING
+        self._notifier = CliNotifier(self)
+
         try:
-            self._is_processing_loaded = self._load_processing()
-        except Exception:
-            logger.exception("An error occurred while initializing processing")
+            self._init_processing()
+
+        except Exception as error:
+            logger.error("An error occurred while initializing processing")
+            self._process_error(error)
+            return
+
+        logger.debug(f"✓ Plugin initialized in {self._mode.name} mode")
 
     def unload(self) -> None:
         """Unload the plugin and perform cleanup operations."""
         try:
             if self._is_gui_loaded:
                 self._unload_ui()
-                self._unload_translations()
+
             if self._is_processing_loaded:
                 self._unload_processing()
+
+            if self._translators:
+                self._unload_translations()
+
+            self._unload_notifier()
+
         except Exception:
-            logger.exception("An error occurred while plugin unloading")
+            logger.warning(
+                "An error occurred while unloading the plugin, some resources"
+                " may not be cleaned up properly"
+            )
+
         finally:
             if NextgisToolboxInterface._instance is self:
                 NextgisToolboxInterface._instance = None
 
+        logger.debug("✓ Plugin unloaded")
+
         unload_logger()
 
-    @abstractmethod
+        self._mode = self.Mode.UNLOADED
+
+    def _init_processing(self) -> None:
+        """Initialize the processing provider and algorithms."""
+        if self.mode == self.Mode.ERROR:
+            logger.debug(
+                "Plugin is in error mode, skipping processing provider initialization"
+            )
+            return
+
+        self._is_processing_loaded = self._load_processing()
+        if not self._is_processing_loaded:
+            raise NextgisToolboxError("Failed to load processing provider")
+
     def _load_ui(self) -> bool:
         """Load the plugin resources and initialize components.
 
         This method must be implemented by subclasses.
         """
-        ...
+        if self._mode == self.Mode.ERROR:
+            logger.debug("Plugin is in error mode, skipping UI loading")
+            return False
 
-    @abstractmethod
+        raise NextgisToolboxError(
+            "Plugin has UI components but they are not implemented"
+        )
+
     def _unload_ui(self) -> None:
         """Unload the plugin resources and clean up components.
 
         This method must be implemented by subclasses.
         """
-        ...
+        if self._mode == self.Mode.ERROR:
+            logger.debug("Plugin is in error mode, skipping UI unloading")
+            return
+
+        raise NextgisToolboxError(
+            "Plugin has UI components but they are not implemented"
+        )
 
     def _load_processing(self) -> bool:
         """Load the processing provider and algorithms.
 
         This method must be implemented by subclasses.
         """
-        return False
+        if self.mode == self.Mode.ERROR:
+            logger.debug(
+                "Plugin is in error mode, skipping processing provider loading"
+            )
+            return True
+
+        raise NextgisToolboxError(
+            "Plugin has processing provider but it is not implemented"
+        )
 
     def _unload_processing(self) -> None:
         """Unload the processing provider and algorithms.
 
         This method must be implemented by subclasses.
         """
-        pass
+        if self.mode == self.Mode.ERROR:
+            logger.debug(
+                "Plugin is in error mode, skipping processing provider unloading"
+            )
+            return
+
+        raise NextgisToolboxError(
+            "Plugin has processing provider but it is not implemented"
+        )
 
     def _add_translator(self, translator_path: Path) -> None:
         """Add a translator for the plugin.
@@ -261,3 +365,43 @@ class NextgisToolboxInterface(QObject, metaclass=QObjectMetaClass):
         for translator in self._translators:
             QgsApplication.removeTranslator(translator)
         self._translators.clear()
+
+    def _unload_notifier(self) -> None:
+        """Unload the notifier component."""
+        if self._notifier is None:
+            return
+
+        self._notifier.deleteLater()
+        self._notifier = None
+
+    def _log_versions(self) -> None:
+        """Log versions of QGIS, Python, GDAL, and the plugin itself."""
+
+        logger.debug(f"<b>ⓘ OS:</b> {QSysInfo().prettyProductName()}")
+        logger.debug(f"<b>ⓘ Qt version:</b> {QT_VERSION_STR}")
+        logger.debug(f"<b>ⓘ QGIS version:</b> {Qgis.version()}")
+        logger.debug(f"<b>ⓘ Python version:</b> {sys.version}")
+        logger.debug(f"<b>ⓘ GDAL version:</b> {gdal.__version__}")
+        logger.debug(f"<b>ⓘ Plugin version:</b> {self.version}")
+        logger.debug(
+            f"<b>ⓘ Plugin path:</b> {self.path}"
+            + (f" -> {self.path.resolve()}" if self.path.is_symlink() else "")
+        )
+
+    def _process_error(self, error: Exception) -> None:
+        """Log an error with its traceback."""
+        self._mode = self.Mode.ERROR
+        if self._notifier is not None:
+            self._notifier.display_exception(error)
+        else:
+            logger.exception(f"An error occurred: {error}")
+
+
+class NextgisToolboxPluginStub(NextgisToolboxInterface):
+    """Stub implementation of plugin interface used to notify the user when the plugin failed to start."""
+
+    def __init__(self, iface: QgisInterface) -> None:
+        """Initialize the plugin stub."""
+        super().__init__(iface)
+        self._mode = self.Mode.ERROR
+        logger.debug("<b>✓ Plugin stub created</b>")

@@ -55,7 +55,7 @@ def classFactory(iface: "QgisInterface") -> NextgisToolboxInterface:
         from nextgis_toolbox.core.exceptions import (
             NextgisToolboxReloadAfterUpdateWarning,
         )
-        from nextgis_toolbox.nextgis_toolbox_plugin_stub import (
+        from nextgis_toolbox.nextgis_toolbox_interface import (
             NextgisToolboxPluginStub,
         )
 

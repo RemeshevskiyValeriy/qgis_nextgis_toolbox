@@ -14,32 +14,25 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from qgis.core import (
-    QgsProcessingAlgorithm,
-)
+from typing import Optional
 
-from nextgis_toolbox.ui.icon import qgis_icon
+from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtWidgets import QWidget
+
+from nextgis_toolbox.shared.ui import LoadingPushButton
+from nextgis_toolbox.ui.icon import plugin_icon
 
 
-class AuthRequiredStubAlgorithm(QgsProcessingAlgorithm):
-    """
-    Stub algorithm shown when user is not authenticated.
-    """
+class DemoButton(LoadingPushButton):
+    OBJECT_NAME = "nextgisToolboxDemoButton"
 
-    def initAlgorithm(self, configuration=None):
-        pass
+    apply_preset = pyqtSignal()
 
-    def name(self):
-        return "authentication_required"
-
-    def displayName(self):
-        return "Authentication required"
-
-    def icon(self):
-        return qgis_icon("mIconDelete.svg")
-
-    def processAlgorithm(self, parameters, context, feedback):
-        return {}
-
-    def createInstance(self):
-        return AuthRequiredStubAlgorithm()
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        super().__init__(
+            icon=plugin_icon(),
+            parent=parent,
+        )
+        self.setText(self.tr("Demo"))
+        self.setObjectName(self.OBJECT_NAME)
+        self.clicked.connect(self.apply_preset.emit)

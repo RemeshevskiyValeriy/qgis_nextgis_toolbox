@@ -97,8 +97,8 @@ class QgisLogger(logging.Logger):
         self,
         level: Union[int, Qgis.MessageLevel],
         msg: str,
-        *args,
-        **kwargs,
+        *args: object,
+        **kwargs: object,
     ) -> None:
         """Log 'msg % args' with the integer severity 'level'.
 
@@ -112,7 +112,7 @@ class QgisLogger(logging.Logger):
 
         super().log(level, msg, *args, **kwargs)
 
-    def success(self, message: str, *args, **kwargs) -> None:
+    def success(self, message: str, *args: object, **kwargs: object) -> None:
         """Log a message with SUCCESS level.
 
         :param message: Log message
@@ -182,8 +182,6 @@ def load_logger() -> QgisLogger:
 
     is_debug_logs_enabled = NextgisToolboxSettings().is_debug_logs_enabled
     logger.setLevel(logging.DEBUG if is_debug_logs_enabled else logging.INFO)
-    if is_debug_logs_enabled:
-        logger.warning("Debug messages are enabled")
 
     return cast(QgisLogger, logger)
 
@@ -242,7 +240,7 @@ def extract_plugin_logs() -> str:
     text_edit: Optional[QPlainTextEdit] = None
     for index in range(tab_widget.count()):
         if tab_widget.tabText(index) == PLUGIN_NAME:
-            text_edit = tab_widget.widget(index)
+            text_edit = cast(QPlainTextEdit, tab_widget.widget(index))
             break
 
     if text_edit is None:

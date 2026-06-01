@@ -14,33 +14,15 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-import sys
-from typing import TYPE_CHECKING, Optional, cast
+from typing import Optional
 
-from osgeo import gdal
-from processing import execAlgorithmDialog  # type: ignore
-from qgis.core import Qgis, QgsApplication
+from qgis.core import Qgis, QgsApplication, QgsTaskManager
 from qgis.gui import QgisInterface
-from qgis.PyQt.QtCore import (
-    QT_VERSION_STR,
-    QSysInfo,
-    Qt,
-    QTimer,
-    pyqtSlot,
-)
-from qgis.PyQt.QtWidgets import (
-    QAction,
-    QDockWidget,
-    QMainWindow,
-    QMenu,
-)
+from qgis.PyQt.QtCore import pyqtSlot
 
-from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
-from nextgis_toolbox.core.exceptions import (
-    NextgisToolboxError,
-    NextgisToolboxProcessingRequiredWarning,
-)
+from nextgis_toolbox.core.exceptions import ToolboxError
 from nextgis_toolbox.core.logging import logger
+from nextgis_toolbox.core.utils import assert_not_none
 from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
     ToolboxAuthentication,
     ToolboxTokenAuthentication,
@@ -52,10 +34,6 @@ from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
 )
 from nextgis_toolbox.nextgis_toolbox.tasks.tasks_manager import TasksManager
 from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    ToolboxTag,
-    ToolboxTool,
-)
 from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
     ToolsInterface,
 )
@@ -63,8 +41,6 @@ from nextgis_toolbox.nextgis_toolbox.tools.tools_manager import ToolsManager
 from nextgis_toolbox.nextgis_toolbox_interface import (
     NextgisToolboxInterface,
 )
-from nextgis_toolbox.nextgis_toolbox_window import ToolboxDockWidget
-from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
 from nextgis_toolbox.processing.nextgis_toolbox_processing_provider import (
     NextgisToolboxProcessingProvider,
 )
@@ -72,72 +48,39 @@ from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
     NextgisToolboxSettings,
 )
-from nextgis_toolbox.settings.nextgis_toolbox_settings_page import (
-    NextgisToolboxSettingsPageFactory,
-)
-from nextgis_toolbox.ui.about_dialog import AboutDialog
-from nextgis_toolbox.ui.icon import plugin_icon, toolbox_category_icon
-
-if TYPE_CHECKING:
-    from nextgis_toolbox.notifier.notifier_interface import (
-        NotifierInterface,
-    )
+from nextgis_toolbox.ui.plugin_ui_manager import PluginUiManager
 
 
 class NextgisToolboxPlugin(NextgisToolboxInterface):
     """NextGIS Toolbox"""
 
-    _notifier: MessageBarNotifier
     _api_client: ToolboxApiClient
     _tools_manager: ToolsInterface
     _tasks_manager: TasksInterface
+    _qgis_task_manager: QgsTaskManager
+    _processing_provider: NextgisToolboxProcessingProvider
+    _ui_manager: Optional[PluginUiManager]
 
     def __init__(self, iface: QgisInterface) -> None:
         super().__init__(iface)
 
-        logger.debug("<b>✓ Plugin created</b>")
-        logger.debug(f"<b>ⓘ OS:</b> {QSysInfo().prettyProductName()}")
-        logger.debug(f"<b>ⓘ Qt version:</b> {QT_VERSION_STR}")
-        logger.debug(f"<b>ⓘ QGIS version:</b> {Qgis.version()}")
-        logger.debug(f"<b>ⓘ Python version:</b> {sys.version}")
-        logger.debug(f"<b>ⓘ GDAL version:</b> {gdal.__version__}")
-        logger.debug(f"<b>ⓘ Plugin version:</b> {self.version}")
-        logger.debug(
-            f"<b>ⓘ Plugin path:</b> {self.path}"
-            + (f" -> {self.path.resolve()}" if self.path.is_symlink() else "")
-        )
-
-        self._dock_widget = None
-        self._show_action = None
-        self._about_action = None
-        self._show_help_action = None
-        self._plugin_menu = None
-        self._options_factory = None
-
-        self._first_start = True
-
-        self._notifier = None  # type: ignore
-
-        self._processing_provider = None
         self._api_client = None  # type: ignore
         self._tools_manager = None  # type: ignore
         self._tasks_manager = None  # type: ignore
+        self._qgis_task_manager = None  # pyright: ignore[reportAttributeAccessIssue]
+        self._processing_provider = None  # pyright: ignore[reportAttributeAccessIssue]
+        self._ui_manager = None
 
     @pyqtSlot()
     def open_about_dialog(self) -> None:
-        dialog = AboutDialog(PACKAGE_NAME)
-        dialog.exec()
+        if self._ui_manager is None:
+            self.notifier.display_message(
+                self.tr("About dialog is unavailable."),
+                level=Qgis.MessageLevel.Warning,
+            )
+            return
 
-    @property
-    def notifier(self) -> "NotifierInterface":
-        """Return the notifier for displaying messages to the user.
-
-        :returns: Notifier interface instance.
-
-        :raises AssertionError: If notifier is not initialized.
-        """
-        assert self._notifier is not None, "Notifier is not initialized"
-        return self._notifier
+        self._ui_manager.open_about_dialog()
 
     @property
     def tools_manager(self) -> ToolsInterface:
@@ -145,12 +88,12 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
         :returns: Tools feature interface instance.
 
-        :raises AssertionError: If tools manager is not initialized.
+        :raises NextgisToolboxError: If tools manager is not initialized.
         """
-        assert self._tools_manager is not None, (
-            "Tools manager is not initialized"
+        return assert_not_none(
+            self._tools_manager,
+            "Tools manager is not initialized",
         )
-        return self._tools_manager
 
     @property
     def tasks_manager(self) -> TasksInterface:
@@ -158,24 +101,54 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
 
         :returns: Tasks feature interface instance.
 
-        :raises AssertionError: If tasks manager is not initialized.
+        :raises NextgisToolboxError: If tasks manager is not initialized.
         """
-        assert self._tasks_manager is not None, (
-            "Tasks manager is not initialized"
+        return assert_not_none(
+            self._tasks_manager,
+            "Tasks manager is not initialized",
         )
-        return self._tasks_manager
+
+    @property
+    def processing_provider(self) -> NextgisToolboxProcessingProvider:
+        """Return the Processing provider instance.
+
+        :returns: Processing provider instance.
+        """
+        return assert_not_none(
+            self._processing_provider,
+            "Processing provider is not initialized",
+        )
+
+    @property
+    def api_client(self) -> ToolboxApiClient:
+        return assert_not_none(
+            self._api_client,
+            "API client is not initialized",
+        )
+
+    @property
+    def qgis_tasks_manager(self) -> QgsTaskManager:
+        return assert_not_none(
+            self._qgis_task_manager,
+            "Plugin Task manager is not initialized",
+        )
 
     def _load_ui(self) -> bool:
         """Initialize GUI elements."""
-        logger.debug("<b>Start plugin initialization</b>")
+        self._ui_manager = PluginUiManager(
+            qgis_iface=self.qgis_iface,
+            notifier=self.notifier,
+            api_client=self.api_client,
+            tools_manager=self.tools_manager,
+            tasks_manager=self.tasks_manager,
+            processing_provider=self.processing_provider,
+            parent=self,
+        )
+        self._ui_manager.load()
 
-        self._notifier = MessageBarNotifier(self)
+        self.tools_manager.refresh()
 
-        QTimer.singleShot(0, self._initialize_ui)
-
-        self._load_settings()
-
-        logger.debug("<b>End plugin initialization</b>")
+        self.settings_changed.connect(self._on_settings_changed)
 
         return True
 
@@ -183,14 +156,18 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         """
         Initialize and register the Processing provider.
         """
-        self._api_client = self._create_api_client()
-        self._tools_manager = ToolsManager(ToolsApi(self._api_client), self)
-        self._tasks_manager = TasksManager(TasksApi(self._api_client), self)
+        self._qgis_task_manager = QgsTaskManager(self)
 
+        self._api_client = self._create_api_client()
+
+        self._tools_manager = ToolsManager(ToolsApi(self._api_client), self)
         self._tools_manager.load()
+
+        self._tasks_manager = TasksManager(TasksApi(self._api_client), self)
         self._tasks_manager.load()
 
-        self.settings_changed.connect(self._update_api_client)
+        if self.mode != self.Mode.GUI:
+            self._tools_manager.refresh()
 
         self._processing_provider = NextgisToolboxProcessingProvider(
             tools_manager=self._tools_manager,
@@ -200,257 +177,17 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         if not QgsApplication.processingRegistry().addProvider(
             self._processing_provider
         ):
-            raise NextgisToolboxError("Failed to register Processing provider")
+            raise ToolboxError("Failed to register Processing provider")
 
         return True
 
-    def _initialize_ui(self) -> None:
-        """
-        Create plugin UI after QGIS main window initialization.
-        """
-        processing_menu = self._find_processing_menu()
-
-        if processing_menu is None:
-            self._handle_missing_processing_plugin()
-            return
-
-        self._create_plugin_menu()
-        self._create_toolbox_menu()
-        self._create_about_action()
-        self._create_show_action()
-        self._create_help_action()
-
-        self._register_plugin_menu(processing_menu)
-        self._register_toolbar_action()
-        self._register_help_action()
-
-    def _find_processing_menu(self) -> Optional[QMenu]:
-        """
-        Find QGIS Processing menu.
-
-        :returns: Processing menu or None.
-        """
-        for menu in self.qgis_iface.mainWindow().findChildren(QMenu):
-            if menu.objectName() == "processing":
-                return menu
-
-        return None
-
-    def _handle_missing_processing_plugin(self) -> None:
-        """
-        Handle missing QGIS Processing plugin.
-        """
-        self._notifier.display_exception(
-            NextgisToolboxProcessingRequiredWarning()
-        )
-
-        logger.debug(
-            "<b>Processing plugin is not enabled. "
-            "NextGIS Toolbox initialization skipped</b>"
-        )
-
-    def _create_plugin_menu(self) -> None:
-        """
-        Create root plugin menu.
-        """
-        icon = plugin_icon()
-
-        self._plugin_menu = QMenu(self.qgis_iface.mainWindow())
-
-        self._plugin_menu.setTitle("NextGIS Toolbox")
-        self._plugin_menu.setIcon(icon)
-
-    def _create_toolbox_menu(self) -> None:
-        """
-        Create toolbox tools submenu.
-        """
-        assert self._plugin_menu is not None
-        assert self._processing_provider is not None
-
-        icon = plugin_icon()
-
-        self._tools_menu = QMenu(
-            self.tr("Tools"),
-            self._plugin_menu,
-        )
-
-        self._tools_menu.setIcon(icon)
-
-        self._populate_toolbox_menu(
-            parent_menu=self._tools_menu,
-            provider_id=self._processing_provider.id(),
-        )
-
-        self._plugin_menu.addMenu(self._tools_menu)
-
-    def _create_about_action(self) -> None:
-        """
-        Create About action.
-        """
-        assert self._plugin_menu is not None
-
-        self._about_action = QAction(
-            QgsApplication.getThemeIcon("mActionPropertiesWidget.svg"),
-            self.tr("About plugin…"),
-            self.qgis_iface.mainWindow(),
-        )
-
-        self._about_action.triggered.connect(self.open_about_dialog)
-
-        self._plugin_menu.addAction(self._about_action)
-
-    def _create_show_action(self) -> None:
-        """
-        Create main plugin toolbar action.
-        """
-        icon = plugin_icon()
-
-        self._show_action = QAction(
-            icon,
-            "NextGIS Toolbox",
-            self.qgis_iface.mainWindow(),
-        )
-
-        self._show_action.setCheckable(True)
-        self._show_action.toggled.connect(self.run)
-
-    def _create_help_action(self) -> None:
-        """
-        Create plugin help menu action.
-        """
-        icon = plugin_icon()
-
-        self._show_help_action = QAction(
-            icon,
-            PLUGIN_NAME,
-        )
-
-        self._show_help_action.triggered.connect(self.open_about_dialog)
-
-    def _register_plugin_menu(
-        self,
-        processing_menu: QMenu,
-    ) -> None:
-        """
-        Register plugin menu in Processing menu.
-
-        :param processing_menu: QGIS Processing menu.
-        """
-        assert self._plugin_menu is not None
-
-        processing_menu.addMenu(self._plugin_menu)
-
-    def _register_toolbar_action(self) -> None:
-        """
-        Register plugin toolbar action.
-        """
-        attributes_toolbar = self.qgis_iface.attributesToolBar()
-
-        if attributes_toolbar is not None:
-            attributes_toolbar.addAction(self._show_action)
-
-    def _register_help_action(self) -> None:
-        """
-        Register plugin action in Help menu.
-        """
-        plugin_help_menu = self.qgis_iface.pluginHelpMenu()
-        assert plugin_help_menu is not None
-        plugin_help_menu.addAction(self._show_help_action)
-
     def _unload_ui(self) -> None:
-        """
-        Cleanup plugin UI.
-        """
-        logger.debug("<b>Start plugin unloading</b>")
-
-        self._unregister_toolbar_action()
-        self._unregister_plugin_menu()
-        self._unregister_help_action()
-
-        self._unload_settings()
-        self._delete_actions()
-
-        self._unload_dock_widget()
-        self._unload_notifier()
-
-        logger.debug("<b>End plugin unloading</b>")
-
-    def _unregister_toolbar_action(self) -> None:
-        """
-        Remove plugin action from QGIS toolbar.
-        """
-        attributes_toolbar = self.qgis_iface.attributesToolBar()
-
-        if attributes_toolbar is not None:
-            attributes_toolbar.removeAction(self._show_action)
-
-    def _unregister_plugin_menu(self) -> None:
-        """
-        Remove plugin menu from Processing menu.
-        """
-        if self._plugin_menu is None:
+        if self._ui_manager is None:
             return
 
-        for menu in self.qgis_iface.mainWindow().findChildren(QMenu):
-            if menu.objectName() == "processing":
-                menu.removeAction(self._plugin_menu.menuAction())
-                break
-
-    def _unregister_help_action(self) -> None:
-        """
-        Remove plugin action from QGIS Help menu.
-        """
-        if self._show_help_action is None:
-            return
-
-        plugin_help_menu = self.qgis_iface.pluginHelpMenu()
-        assert plugin_help_menu is not None
-        plugin_help_menu.removeAction(self._show_help_action)
-
-    def _delete_actions(self) -> None:
-        """
-        Delete plugin menus and actions.
-        """
-        if self._plugin_menu is not None:
-            self._plugin_menu.deleteLater()
-            self._plugin_menu = None
-
-        if self._show_action is not None:
-            self._show_action.deleteLater()
-            self._show_action = None
-
-        if self._about_action is not None:
-            self._about_action.deleteLater()
-            self._about_action = None
-
-        if self._show_help_action is not None:
-            self._show_help_action.deleteLater()
-            self._show_help_action = None
-
-    def _unload_dock_widget(self) -> None:
-        """
-        Unload dock widget.
-        """
-        if self._dock_widget is None:
-            return
-
-        self._dock_widget.unload_proc()
-
-        self._dock_widget.close()
-        self._dock_widget.deleteLater()
-
-        del self._dock_widget
-
-    def _unload_notifier(self) -> None:
-        """
-        Delete notifier instance.
-        """
-        if self._notifier is None:
-            return
-
-        self._notifier.deleteLater()
-
-        del self._notifier
+        self._ui_manager.unload()
+        self._ui_manager.deleteLater()
+        self._ui_manager = None
 
     def _unload_processing(self) -> None:
         """
@@ -461,7 +198,7 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
                 self._processing_provider
             )
 
-            self._processing_provider = None
+            self._processing_provider = None  # pyright: ignore[reportAttributeAccessIssue]
 
         if self._tools_manager is not None:
             self._tools_manager.unload()
@@ -477,194 +214,9 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
             self._api_client.deleteLater()
             del self._api_client
 
-    def _unload_settings(self) -> None:
-        """Unregister the plugin settings page from QGIS options."""
-        if self._options_factory is None:
-            return
-
-        self.qgis_iface.unregisterOptionsWidgetFactory(self._options_factory)
-        self._options_factory.deleteLater()
-        self._options_factory = None
-
-    def _load_settings(self) -> None:
-        """Register the plugin settings page in the QGIS Options dialog."""
-        self._options_factory = NextgisToolboxSettingsPageFactory()
-        self.qgis_iface.registerOptionsWidgetFactory(self._options_factory)
-
-    @pyqtSlot(bool)
-    def run(self, checked: bool) -> None:
-        """Toggle dock widget visibility.
-
-        :param checked: Action state
-        """
-        if self._first_start and checked:
-            self._first_start = False
-            main_window = cast(QMainWindow, self.qgis_iface.mainWindow())
-
-            try:
-                self._dock_widget = ToolboxDockWidget(
-                    self.qgis_iface,
-                    main_window,
-                )
-                self._dock_widget.window_closed.connect(self._on_dock_closed)
-            except Exception:
-                logger.exception("DockWidget creation failed")
-                self._notifier.display_message(
-                    self.tr("Failed to initialize NextGIS Toolbox."),
-                    level=Qgis.MessageLevel.Critical,
-                )
-                self._show_action.setChecked(False)
-                self._first_start = True
-                return
-
-            self.qgis_iface.addDockWidget(
-                Qt.DockWidgetArea.RightDockWidgetArea,
-                self._dock_widget,
-            )
-
-            right_docks = [
-                dock
-                for dock in main_window.findChildren(QDockWidget)
-                if main_window.dockWidgetArea(dock)
-                == Qt.DockWidgetArea.RightDockWidgetArea
-            ]
-
-            if right_docks:
-                main_window.tabifyDockWidget(
-                    right_docks[0],
-                    self._dock_widget,
-                )
-
-        if not self._dock_widget:
-            return
-
-        self._dock_widget.setVisible(checked)
-
-    @pyqtSlot()
-    def _on_dock_closed(self) -> None:
-        """Handle dock widget close event."""
-        if self._show_action:
-            self._show_action.setChecked(False)
-
-    def _populate_toolbox_menu(
-        self,
-        parent_menu: QMenu,
-        provider_id: str,
-    ) -> None:
-        """
-        Populate plugin menu with toolbox categories and tools.
-
-        :param parent_menu: Root menu to populate.
-        :param provider_id: QGIS Processing provider identifier.
-        """
-        for tag in self.tools_manager.tags():
-            tools = self.tools_manager.find_tools(tag=tag)
-
-            if not tools:
-                continue
-
-            category_menu = self._create_category_menu(
-                tag,
-                parent_menu,
-            )
-
-            for tool in tools:
-                algorithm_id = f"{provider_id}:{tool.name}"
-
-                if not self._algorithm_exists(algorithm_id):
-                    logger.warning(
-                        f"Algorithm '{algorithm_id}' not found in registry; "
-                        "skipping menu entry."
-                    )
-                    continue
-
-                category_menu.addAction(
-                    self._create_tool_action(
-                        tool,
-                        algorithm_id,
-                        parent_menu,
-                    )
-                )
-
-            if not category_menu.isEmpty():
-                parent_menu.addMenu(category_menu)
-
-    def _algorithm_exists(
-        self,
-        algorithm_id: str,
-    ) -> bool:
-        """
-        Check whether Processing algorithm exists in registry.
-
-        :param algorithm_id: QGIS Processing algorithm identifier.
-
-        :returns: True if algorithm exists.
-        """
-        registry = QgsApplication.processingRegistry()
-
-        return registry.algorithmById(algorithm_id) is not None
-
-    def _create_category_menu(
-        self,
-        tag: ToolboxTag,
-        parent_menu: QMenu,
-    ) -> QMenu:
-        """
-        Create toolbox category submenu.
-
-        :param tag: Toolbox tag.
-        :param parent_menu: Parent menu.
-
-        :returns: Configured category menu.
-        """
-        category_menu = QMenu(tag.alias, parent_menu)
-
-        category_menu.setIcon(toolbox_category_icon(tag.id))
-        category_menu.setToolTipsVisible(True)
-
-        return category_menu
-
-    def _create_tool_action(
-        self,
-        tool: ToolboxTool,
-        algorithm_id: str,
-        parent_menu: QMenu,
-    ) -> QAction:
-        """
-        Create toolbox tool action.
-
-        :param tool: Toolbox tool.
-        :param algorithm_id: QGIS Processing algorithm identifier.
-        :param parent_menu: Parent menu.
-
-        :returns: Configured QAction instance.
-        """
-        action = QAction(
-            QgsApplication.getThemeIcon("processingAlgorithm.svg"),
-            tool.alias,
-            parent_menu,
-        )
-
-        action.setToolTip(tool.description or "")
-        action.setStatusTip(tool.description or "")
-
-        action.setData(algorithm_id)
-
-        action.triggered.connect(self._start_tool)
-
-        return action
-
-    @pyqtSlot(bool)
-    def _start_tool(self, _checked: bool) -> None:
-        """
-        Open QGIS Processing execution dialog for selected toolbox algorithm.
-
-        :param _checked: QAction checked state (unused).
-        """
-        action = cast(QAction, self.sender())
-        algorithm_id = action.data()
-
-        execAlgorithmDialog(algorithm_id)
+        if self._qgis_task_manager is not None:
+            self._qgis_task_manager.deleteLater()
+            del self._qgis_task_manager
 
     def _create_authentication(
         self,
@@ -699,13 +251,36 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         authentication_type = settings.authentication_type
         authentication_token = settings.authentication_token
 
+        authentication = self._create_authentication(
+            authentication_type, authentication_token
+        )
+
         return ToolboxApiClient(
             self,
+            self._qgis_profile_name(),
             endpoint=settings.endpoint,
-            authentication=self._create_authentication(
-                authentication_type, authentication_token
-            ),
+            authentication=authentication,
         )
+
+    def _qgis_profile_name(self) -> str:
+        user_profile_manager = self.qgis_iface.userProfileManager()
+        if not user_profile_manager:
+            return "default"
+
+        user_profile = user_profile_manager.userProfile()
+        if user_profile is None:
+            return "default"
+
+        profile_name = user_profile.name()
+
+        return profile_name or "default"
+
+    @pyqtSlot()
+    def _on_settings_changed(self) -> None:
+        if self._ui_manager is not None:
+            self._ui_manager.reset_refresh_feedback_delay()
+
+        self._update_api_client()
 
     @pyqtSlot()
     def _update_api_client(self) -> None:
@@ -729,3 +304,4 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
             self._api_client.authentication = self._create_authentication(
                 settings.authentication_type, settings.authentication_token
             )
+        self.tools_manager.refresh(clear_cache=True)

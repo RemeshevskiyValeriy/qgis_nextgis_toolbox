@@ -17,12 +17,26 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin
+
+from nextgis_toolbox.core.utils import nextgis_domain
 
 
 class SortBy(str, Enum):
     ID = "id"
     NAME = "name"
     ALIAS = "alias"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class ToolsManagerState(str, Enum):
+    INITIALIZATION = "initializing"
+    LOADING = "loading"
+    LOADED = "loaded"
+    ERROR = "error"
+    UNLOADED = "unloaded"
 
     def __str__(self) -> str:
         return self.value
@@ -72,9 +86,11 @@ class ToolboxTool:
     can_run: bool
     tag_ids: List[int]
     tags: List[ToolboxTag] = field(default_factory=list)
-    inputs: List["ToolboxParameter"] = field(default_factory=list)
-    outputs: List["ToolboxParameter"] = field(default_factory=list)
+    inputs: List["ToolInputParameter"] = field(default_factory=list)
+    outputs: List["ToolOutputParameter"] = field(default_factory=list)
+    presets: List["ToolPreset"] = field(default_factory=list)
     help: Optional[str] = None
+    is_favorite: bool = False
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> "ToolboxTool":
@@ -91,14 +107,19 @@ class ToolboxTool:
             can_run=data["can_run"],
             tag_ids=data.get("tags", []),
             inputs=[
-                ToolboxParameter.from_json(parameter_data)
+                ToolInputParameter.from_json(parameter_data)
                 for parameter_data in data.get("inputs", [])
             ],
             outputs=[
-                ToolboxParameter.from_json(parameter_data)
+                ToolOutputParameter.from_json(parameter_data)
                 for parameter_data in data.get("outputs", [])
             ],
+            presets=[
+                ToolPreset.from_json(preset_data)
+                for preset_data in data.get("presets", [])
+            ],
             help=data.get("docs"),
+            is_favorite=data.get("is_favorite", False),
         )
 
     def to_json(self) -> Dict[str, Any]:
@@ -118,27 +139,93 @@ class ToolboxTool:
             "tags": tag_ids,
             "inputs": [parameter.to_json() for parameter in self.inputs],
             "outputs": [parameter.to_json() for parameter in self.outputs],
+            "presets": [preset.to_json() for preset in self.presets],
             "docs": self.help,
+            "is_favorite": self.is_favorite,
         }
+
+    def demo_preset(self) -> Optional["ToolPreset"]:
+        if not self.presets:
+            return None
+
+        return self.presets[0]
+
+    def web_url(self, base_url: str) -> str:
+        """Construct a URL to the tool's page in NextGIS Web."""
+        return urljoin(base_url, f"/t/{self.name}")
+
+    def help_url(self) -> str:
+        """Construct a URL to the tool's help page in NextGIS Web."""
+        return urljoin(
+            nextgis_domain("docs"),
+            f"/docs_toolbox/source/{self.name}.html",
+        )
+
+
+class InputParameterType(Enum):
+    STRING = "string"
+    INTEGER = "int"
+    FLOAT = "float"
+    BOOLEAN = "boolean"
+    DATE = "date"
+    BBOX = "bbox"
+    FILE = "file"
+    SINGLE_CHOICE = "single_choice"
+    MULTIPLE_CHOICE = "multiple_choice"
+    NGW_CONNECTION = "ngw_connection"
+
+    def __str__(self) -> str:
+        return self.value
+
+    @classmethod
+    def from_json(cls, name: str) -> "InputParameterType":
+        return cls(name)
+
+    def to_json(self) -> str:
+        return self.value
+
+
+class OutputParameterType(Enum):
+    STRING = "string"
+    INTEGER = "int"
+    FLOAT = "float"
+    BOOLEAN = "boolean"
+    DATE = "date"
+    BBOX = "bbox"
+    FILE = "file"
+
+    def __str__(self) -> str:
+        return self.value
+
+    @classmethod
+    def from_json(cls, name: str) -> "OutputParameterType":
+        return cls(name)
+
+    def to_json(self) -> str:
+        return self.value
 
 
 @dataclass(frozen=True)
-class ToolboxParameter:
-    """Immutable descriptor of a Toolbox input or output parameter."""
+class ToolInputParameter:
+    """Immutable descriptor of a Toolbox input parameter."""
 
     name: str
-    parameter_type: str
+    parameter_type: InputParameterType
     alias: Optional[str]
     description: Optional[str]
     required: bool
     choices: Optional[List[Dict[str, Any]]]
 
+    @property
+    def label(self) -> str:
+        return self.alias or self.description or self.name
+
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "ToolboxParameter":
+    def from_json(cls, data: Dict[str, Any]) -> "ToolInputParameter":
         """Build a parameter model from a JSON payload."""
         return cls(
             name=data["name"],
-            parameter_type=data["type"],
+            parameter_type=InputParameterType.from_json(data["type"]),
             alias=data.get("alias"),
             description=data.get("description"),
             required=data.get("required", False),
@@ -154,4 +241,62 @@ class ToolboxParameter:
             "description": self.description,
             "required": self.required,
             "choices": self.choices,
+        }
+
+
+@dataclass(frozen=True)
+class ToolOutputParameter:
+    """Immutable descriptor of a Toolbox input or output parameter."""
+
+    name: str
+    parameter_type: OutputParameterType
+    alias: Optional[str]
+    description: Optional[str]
+    required: bool
+
+    @property
+    def label(self) -> str:
+        return self.alias or self.name
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "ToolOutputParameter":
+        """Build a parameter model from a JSON payload."""
+        return cls(
+            name=data["name"],
+            parameter_type=OutputParameterType.from_json(data["type"]),
+            alias=data.get("alias"),
+            description=data.get("description"),
+            required=data.get("required", False),
+        )
+
+    def to_json(self) -> Dict[str, Any]:
+        """Serialize the parameter model to a JSON-compatible payload."""
+        return {
+            "name": self.name,
+            "type": self.parameter_type.to_json(),
+            "alias": self.alias,
+            "description": self.description,
+            "required": self.required,
+        }
+
+
+@dataclass(frozen=True)
+class ToolPreset:
+    alias: str
+    inputs: Dict[str, Any]
+    outputs: Dict[str, Any]
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "ToolPreset":
+        return cls(
+            alias=data["alias"],
+            inputs=data.get("inputs", {}),
+            outputs=data.get("outputs", {}),
+        )
+
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            "alias": self.alias,
+            "inputs": self.inputs,
+            "outputs": self.outputs,
         }

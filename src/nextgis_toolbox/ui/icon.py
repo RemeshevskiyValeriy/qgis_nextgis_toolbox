@@ -15,6 +15,7 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from enum import IntEnum
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Optional, Union
 
@@ -257,23 +258,54 @@ def icon_to_base64(icon: QIcon, size: Optional[int] = None) -> str:
     return "data:image/png;base64, " + data
 
 
-_CATEGORY_ICON_MAP: Dict[CategoryIcon, QIcon] = {
-    CategoryIcon.FOREST: material_icon("forest", size=64),
-    CategoryIcon.VECTOR: qgis_icon("mIconVector.svg"),
-    CategoryIcon.RASTER: qgis_icon("mIconRaster.svg"),
-    CategoryIcon.CONVERSION: material_icon("conversion", size=64),
-    CategoryIcon.ELEVATION: qgis_icon("mLayoutItem3DMap.svg"),
-    CategoryIcon.CADASTRE: qgis_icon("mActionIdentify.svg"),
-    CategoryIcon.WEB_GIS: plugin_icon("nextgis_logo.svg"),
-    CategoryIcon.PHOTO: qgis_icon("mActionAddImage.svg"),
-    CategoryIcon.OPENSTREETMAP: plugin_icon("osm_logo.svg"),
-    CategoryIcon.TEST: plugin_icon(),
-    CategoryIcon.REMOTE_SENSING: qgis_icon("mSensor.svg"),
-    CategoryIcon.ADDRESS: material_icon("address", size=64),
-    CategoryIcon.QGIS: qgis_icon("mIconQgsProjectFile.svg"),
-    CategoryIcon.VERSIONING: qgis_icon("mActionHistory.svg"),
-    CategoryIcon.GPS_TRACKS: qgis_icon("mIconGps.svg"),
-}
+@lru_cache(maxsize=None)
+def _category_icon(category: CategoryIcon) -> QIcon:
+    if category == CategoryIcon.FOREST:
+        return material_icon("forest", size=64)
+
+    if category == CategoryIcon.VECTOR:
+        return qgis_icon("mIconVector.svg")
+
+    if category == CategoryIcon.RASTER:
+        return qgis_icon("mIconRaster.svg")
+
+    if category == CategoryIcon.CONVERSION:
+        return material_icon("conversion", size=64)
+
+    if category == CategoryIcon.ELEVATION:
+        return qgis_icon("mLayoutItem3DMap.svg")
+
+    if category == CategoryIcon.CADASTRE:
+        return qgis_icon("mActionIdentify.svg")
+
+    if category == CategoryIcon.WEB_GIS:
+        return plugin_icon("nextgis_logo.svg")
+
+    if category == CategoryIcon.PHOTO:
+        return qgis_icon("mActionAddImage.svg")
+
+    if category == CategoryIcon.OPENSTREETMAP:
+        return plugin_icon("osm_logo.svg")
+
+    if category == CategoryIcon.TEST:
+        return plugin_icon()
+
+    if category == CategoryIcon.REMOTE_SENSING:
+        return qgis_icon("mSensor.svg")
+
+    if category == CategoryIcon.ADDRESS:
+        return material_icon("address", size=64)
+
+    if category == CategoryIcon.QGIS:
+        return qgis_icon("mIconQgsProjectFile.svg")
+
+    if category == CategoryIcon.VERSIONING:
+        return qgis_icon("mActionHistory.svg")
+
+    if category == CategoryIcon.GPS_TRACKS:
+        return qgis_icon("mIconGps.svg")
+
+    return qgis_icon("processingModel.svg")
 
 
 def toolbox_category_icon(tag_id: int) -> QIcon:
@@ -290,7 +322,7 @@ def toolbox_category_icon(tag_id: int) -> QIcon:
     except ValueError:
         return fallback_icon
 
-    icon = _CATEGORY_ICON_MAP.get(category, fallback_icon)
+    icon = _category_icon(category)
     if icon.isNull():
         return fallback_icon
 

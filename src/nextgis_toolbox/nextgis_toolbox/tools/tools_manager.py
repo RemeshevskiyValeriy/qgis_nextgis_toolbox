@@ -14,15 +14,26 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
-from qgis.PyQt.QtCore import QObject, pyqtSlot
+from qgis.PyQt.QtCore import pyqtSlot
 
+from nextgis_toolbox.core.exceptions import (
+    ToolboxError,
+    ToolboxSortingError,
+    ToolboxTagNotFoundError,
+    ToolboxToolNotFoundError,
+)
+from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
+from nextgis_toolbox.nextgis_toolbox.tools.load_tools_task import (
+    LoadToolsTask,
+)
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
     SortBy,
     ToolboxTag,
     ToolboxTool,
+    ToolsManagerState,
 )
 from nextgis_toolbox.nextgis_toolbox.tools.repository import (
     TagsRepository,
@@ -32,6 +43,11 @@ from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
     ToolsInterface,
 )
 
+if TYPE_CHECKING:
+    from nextgis_toolbox.nextgis_toolbox_interface import (
+        NextgisToolboxInterface,
+    )
+
 
 class ToolsManager(ToolsInterface):
     """Feature-level manager for Toolbox tools."""
@@ -39,7 +55,7 @@ class ToolsManager(ToolsInterface):
     def __init__(
         self,
         tools_api: ToolsApi,
-        parent: Optional[QObject] = None,
+        parent: Optional["NextgisToolboxInterface"] = None,
     ) -> None:
         """Initialize tools manager.
 
@@ -47,53 +63,61 @@ class ToolsManager(ToolsInterface):
         :param parent: Optional Qt parent.
         """
         super().__init__(parent)
+        self._tools_api = tools_api
         self._tools_repository = ToolsRepository(tools_api)
         self._tags_repository = TagsRepository(tools_api)
         self._tools: List[ToolboxTool] = []
-        self._tools_by_alias_sorted: Optional[List[ToolboxTool]] = None
-        self._tools_by_id: Optional[Dict[int, ToolboxTool]] = None
-        self._tools_by_id_sorted: Optional[List[ToolboxTool]] = None
-        self._tools_by_name: Optional[Dict[str, ToolboxTool]] = None
-        self._tools_by_tag_id: Optional[Dict[int, List[ToolboxTool]]] = None
         self._tags: List[ToolboxTag] = []
-        self._tags_by_id: Optional[Dict[int, ToolboxTag]] = None
-        self._tags_by_id_sorted: Optional[List[ToolboxTag]] = None
+
+        self._catalog_load_task: Optional[LoadToolsTask] = None
+
+        self._state = ToolsManagerState.INITIALIZATION
+        self._error: Optional[ToolboxError] = None
+
+    @property
+    def state(self) -> ToolsManagerState:
+        return self._state
+
+    @property
+    def error(self) -> Optional[ToolboxError]:
+        return self._error
 
     def set_api(self, tools_api: ToolsApi) -> None:
         """Set the API for managing tools and tags.
 
         :param tools_api: API for managing tools and tags.
         """
+        self._tools_api = tools_api
         self._tools_repository.set_api(tools_api)
         self._tags_repository.set_api(tools_api)
 
     @pyqtSlot()
     def load(self) -> None:
-        """Load the tools feature and populate caches."""
-        self._tags = self._sort_tags(
-            self._tags_repository.fetch_tags(),
-            sort_by=SortBy.ALIAS,
-        )
-        self._tools = self._sort_tools(
-            self._tools_repository.fetch_tools(),
-            sort_by=SortBy.NAME,
-        )
-
-        self._assign_tags_to_tools()
-        self._invalidate_indexes()
+        """Load all components of the tools feature."""
 
     @pyqtSlot()
     def unload(self) -> None:
-        """Unload the tools feature and clear cached models."""
-        self._tools = []
-        self._tools_by_alias_sorted = None
-        self._tools_by_id = None
-        self._tools_by_id_sorted = None
-        self._tools_by_name = None
-        self._tools_by_tag_id = None
-        self._tags = []
-        self._tags_by_id = None
-        self._tags_by_id_sorted = None
+        """Unload all components of the tools feature."""
+        self._reset()
+        self._set_state(ToolsManagerState.UNLOADED)
+
+    def refresh(
+        self,
+        *,
+        clear_cache: bool = False,
+    ) -> None:
+        """Refresh the tools catalog using the active runtime mode.
+
+        :param clear_cache: Clear API cache before reloading.
+        """
+        plugin = cast("NextgisToolboxInterface", self.parent())
+        use_async_refresh = plugin.mode == plugin.Mode.GUI
+
+        if use_async_refresh:
+            self._start_catalog_load(clear_cache=clear_cache)
+            return
+
+        self._load_synchronously(clear_cache=clear_cache)
 
     def tools(
         self,
@@ -108,19 +132,19 @@ class ToolsManager(ToolsInterface):
             return self._tools
 
         if sort_by == SortBy.ID:
-            return self._tools_by_id_sorted_cache()
+            return self._sort_tools(self._tools, sort_by=SortBy.ID)
 
         if sort_by == SortBy.ALIAS:
-            return self._tools_by_alias_sorted_cache()
+            return self._sort_tools(self._tools, sort_by=SortBy.ALIAS)
 
-        raise ValueError(f"Unsupported tool sorting: {sort_by}")
+        raise ToolboxSortingError("tool", sort_by)
 
     def tool(
         self,
         *,
         tool_id: Optional[int] = None,
         name: Optional[str] = None,
-    ) -> Optional[ToolboxTool]:
+    ) -> ToolboxTool:
         """Return one cached Toolbox tool by identifier."""
         if (tool_id is None) == (name is None):
             raise ValueError(
@@ -128,10 +152,18 @@ class ToolsManager(ToolsInterface):
             )
 
         if tool_id is not None:
-            return self._tools_by_id_cache().get(tool_id)
+            for tool in self._tools:
+                if tool.id == tool_id:
+                    return tool
 
-        assert name is not None
-        return self._tools_by_name_cache().get(name)
+            raise ToolboxToolNotFoundError(tool_id=tool_id)
+
+        name = str(name)
+        for tool in self._tools:
+            if tool.name == name:
+                return tool
+
+        raise ToolboxToolNotFoundError(name=name)
 
     def find_tools(
         self,
@@ -141,34 +173,85 @@ class ToolsManager(ToolsInterface):
         tag: Optional[
             Union[int, ToolboxTag, List[Union[int, ToolboxTag]]]
         ] = None,
+        is_featured: Optional[bool] = None,
+        is_favorite: Optional[bool] = None,
     ) -> List[ToolboxTool]:
         """Return cached tools matching a single search criterion."""
         criteria_count = sum(
-            value is not None for value in (tool_id, name, tag)
+            value is not None
+            for value in (
+                tool_id,
+                name,
+                tag,
+                is_featured,
+                is_favorite,
+            )
         )
         if criteria_count != 1:
-            raise ValueError(
-                "Exactly one of 'tool_id', 'name', or 'tag' must be provided."
-            )
+            raise ValueError("Exactly one search criterion must be provided.")
 
         if tool_id is not None:
-            tool_ids = set(self._normalize_to_list(tool_id))
+            tool_ids = set(self._normalize_int_list(tool_id))
+            missing_tool_ids = [
+                current_tool_id
+                for current_tool_id in tool_ids
+                if not any(tool.id == current_tool_id for tool in self._tools)
+            ]
+            if missing_tool_ids:
+                raise ToolboxToolNotFoundError(tool_id=missing_tool_ids[0])
+
             return [tool for tool in self._tools if tool.id in tool_ids]
 
         if name is not None:
-            tool_names = set(self._normalize_to_list(name))
+            tool_names = set(self._normalize_str_list(name))
+            missing_tool_names = [
+                current_tool_name
+                for current_tool_name in tool_names
+                if not any(
+                    tool.name == current_tool_name for tool in self._tools
+                )
+            ]
+            if missing_tool_names:
+                raise ToolboxToolNotFoundError(name=missing_tool_names[0])
+
             return [tool for tool in self._tools if tool.name in tool_names]
 
+        if is_featured is not None:
+            return [
+                tool for tool in self._tools if tool.is_featured is is_featured
+            ]
+
+        if is_favorite is not None:
+            return [
+                tool for tool in self._tools if tool.is_favorite is is_favorite
+            ]
+
         tag_ids = self._resolve_tag_ids(tag)
-        matching_tool_ids: Set[int] = set()
+        matching_tag_ids = set(tag_ids)
 
-        for tag_id in tag_ids:
-            matching_tool_ids.update(
-                tool.id
-                for tool in self._tools_by_tag_id_cache().get(tag_id, [])
-            )
+        return [
+            tool
+            for tool in self._tools
+            if any(tag.id in matching_tag_ids for tag in tool.tags)
+        ]
 
-        return [tool for tool in self._tools if tool.id in matching_tool_ids]
+    def set_tool_favorite(
+        self,
+        tool_name: str,
+        is_favorite: bool,
+        *,
+        sync_remote: bool = True,
+    ) -> None:
+        tool = self.tool(name=tool_name)
+        if tool.is_favorite is is_favorite and not sync_remote:
+            return
+
+        tool.is_favorite = is_favorite
+
+        if not sync_remote:
+            return
+
+        self._tools_repository.set_tool_favorite(tool_name, is_favorite)
 
     def tags(
         self,
@@ -183,13 +266,27 @@ class ToolsManager(ToolsInterface):
             return self._tags
 
         if sort_by == SortBy.ID:
-            return self._tags_by_id_sorted_cache()
+            return self._sort_tags(self._tags, sort_by=SortBy.ID)
 
-        raise ValueError(f"Unsupported tag sorting: {sort_by}")
+        raise ToolboxSortingError("tag", sort_by)
 
-    def tag(self, tag_id: int) -> Optional[ToolboxTag]:
+    def tag(self, tag_id: int) -> ToolboxTag:
         """Return one cached Toolbox tag by identifier."""
-        return self._tags_by_id_cache().get(tag_id)
+        for tag in self._tags:
+            if tag.id == tag_id:
+                return tag
+
+        raise ToolboxTagNotFoundError(tag_id=tag_id)
+
+    def _apply_catalog(
+        self,
+        tags: List[ToolboxTag],
+        tools: List[ToolboxTool],
+    ) -> None:
+        self._tags = self._sort_tags(tags, sort_by=SortBy.ALIAS)
+        self._tools = self._sort_tools(tools, sort_by=SortBy.NAME)
+
+        self._assign_tags_to_tools()
 
     def _assign_tags_to_tools(self) -> None:
         """Resolve cached tag identifiers to cached tag models."""
@@ -211,82 +308,6 @@ class ToolsManager(ToolsInterface):
         for tag in self._tags:
             tag.tool_ids = tool_ids_by_tag_id.get(tag.id, [])
 
-    def _invalidate_indexes(self) -> None:
-        """Reset lazily built lookup structures."""
-        self._tags_by_id = None
-        self._tags_by_id_sorted = None
-        self._tools_by_alias_sorted = None
-        self._tools_by_id = None
-        self._tools_by_id_sorted = None
-        self._tools_by_name = None
-        self._tools_by_tag_id = None
-
-    def _tags_by_id_cache(self) -> Dict[int, ToolboxTag]:
-        """Return tag lookup by identifier."""
-        if self._tags_by_id is None:
-            self._tags_by_id = {tag.id: tag for tag in self._tags}
-
-        return self._tags_by_id
-
-    def _tags_by_id_sorted_cache(self) -> List[ToolboxTag]:
-        """Return tags sorted by identifier."""
-        if self._tags_by_id_sorted is None:
-            self._tags_by_id_sorted = self._sort_tags(
-                self._tags,
-                sort_by=SortBy.ID,
-            )
-
-        return self._tags_by_id_sorted
-
-    def _tools_by_alias_sorted_cache(self) -> List[ToolboxTool]:
-        """Return tools sorted by alias."""
-        if self._tools_by_alias_sorted is None:
-            self._tools_by_alias_sorted = self._sort_tools(
-                self._tools,
-                sort_by=SortBy.ALIAS,
-            )
-
-        return self._tools_by_alias_sorted
-
-    def _tools_by_id_cache(self) -> Dict[int, ToolboxTool]:
-        """Return tool lookup by identifier."""
-        if self._tools_by_id is None:
-            self._tools_by_id = {tool.id: tool for tool in self._tools}
-
-        return self._tools_by_id
-
-    def _tools_by_id_sorted_cache(self) -> List[ToolboxTool]:
-        """Return tools sorted by identifier."""
-        if self._tools_by_id_sorted is None:
-            self._tools_by_id_sorted = self._sort_tools(
-                self._tools,
-                sort_by=SortBy.ID,
-            )
-
-        return self._tools_by_id_sorted
-
-    def _tools_by_name_cache(self) -> Dict[str, ToolboxTool]:
-        """Return tool lookup by name."""
-        if self._tools_by_name is None:
-            self._tools_by_name = {tool.name: tool for tool in self._tools}
-
-        return self._tools_by_name
-
-    def _tools_by_tag_id_cache(self) -> Dict[int, List[ToolboxTool]]:
-        """Return tool lookup by tag identifier."""
-        if self._tools_by_tag_id is None:
-            tools_by_tag_id: Dict[int, List[ToolboxTool]] = {
-                tag.id: [] for tag in self._tags
-            }
-
-            for tool in self._tools:
-                for tag in tool.tags:
-                    tools_by_tag_id.setdefault(tag.id, []).append(tool)
-
-            self._tools_by_tag_id = tools_by_tag_id
-
-        return self._tools_by_tag_id
-
     def _resolve_tag_ids(
         self,
         value: Optional[Union[int, ToolboxTag, List[Union[int, ToolboxTag]]]],
@@ -300,17 +321,137 @@ class ToolsManager(ToolsInterface):
 
         for tag_value in tag_values:
             if isinstance(tag_value, ToolboxTag):
-                tag_ids.append(tag_value.id)
-                continue
+                tag_id = tag_value.id
+            else:
+                tag_id = int(tag_value)
 
-            tag_ids.append(int(tag_value))
+            if not any(tag.id == tag_id for tag in self._tags):
+                raise ToolboxTagNotFoundError(tag_id=tag_id)
+
+            tag_ids.append(tag_id)
 
         return tag_ids
+
+    def _reset(self) -> None:
+        if self._catalog_load_task is not None:
+            self._catalog_load_task.cancel()
+            self._catalog_load_task = None
+
+        self._tools = []
+        self._tags = []
+
+    def _load_synchronously(self, *, clear_cache: bool = False) -> None:
+        if clear_cache:
+            self._tools_api.invalidate_cache()
+
+        self._reset()
+
+        self._set_state(ToolsManagerState.LOADING)
+
+        try:
+            self._apply_catalog(
+                self._tags_repository.fetch_tags(),
+                self._tools_repository.fetch_tools(),
+            )
+
+        except ToolboxError as error:
+            logger.error(
+                "Failed to load NextGIS Toolbox catalog: %s",
+                str(error),
+                exc_info=error,
+            )
+            self._reset()
+            self._set_state(ToolsManagerState.ERROR, error)
+
+        except Exception as error:
+            logger.exception(
+                "Failed to load NextGIS Toolbox catalog",
+                exc_info=error,
+            )
+            self._reset()
+
+            error = ToolboxError("Failed to load NextGIS Toolbox catalog.")
+            error.__cause__ = error
+
+            self._set_state(ToolsManagerState.ERROR, error)
+            return
+
+        self._set_state(ToolsManagerState.LOADED)
+
+    def _start_catalog_load(self, *, clear_cache: bool = False) -> None:
+        if self._catalog_load_task is not None:
+            logger.info("Tools catalog load is already in progress")
+            return
+
+        if clear_cache:
+            self._tools_api.invalidate_cache()
+
+        self._reset()
+
+        load_task = LoadToolsTask(
+            tags_repository=self._tags_repository,
+            tools_repository=self._tools_repository,
+            on_finished=self._on_catalog_load_finished,
+        )
+        load_task.progressChanged.connect(self.loading_progress_changed.emit)
+        self._catalog_load_task = load_task
+
+        self._set_state(ToolsManagerState.LOADING)
+
+        plugin = cast("NextgisToolboxInterface", self.parent())
+        plugin.qgis_tasks_manager.addTask(load_task)
+
+    def _on_catalog_load_finished(
+        self,
+        load_task: LoadToolsTask,
+        result: bool,
+    ) -> None:
+        if load_task is not self._catalog_load_task:
+            return
+
+        self._catalog_load_task = None
+
+        if load_task.isCanceled():
+            self._reset()
+            self._set_state(
+                ToolsManagerState.ERROR,
+                ToolboxError("Tools catalog load was canceled."),
+            )
+            return
+
+        elif load_task.error is not None:
+            self._reset()
+            self._set_state(ToolsManagerState.ERROR, load_task.error)
+            return
+
+        elif not result:
+            self._reset()
+            error = ToolboxError("Failed to load tools catalog.")
+            self._set_state(ToolsManagerState.ERROR, error)
+            return
+
+        self._apply_catalog(load_task.tags, load_task.tools)
+        self._set_state(ToolsManagerState.LOADED)
 
     def _normalize_to_list(
         self, value: Any
     ) -> List[Union[int, str, ToolboxTag]]:
         """Normalize scalar or list search values to a list."""
+        if isinstance(value, list):
+            return value
+
+        return [value]
+
+    def _normalize_int_list(self, value: Union[int, List[int]]) -> List[int]:
+        if isinstance(value, list):
+            return value
+
+        return [value]
+
+    def _normalize_str_list(
+        self,
+        value: Union[str, List[str]],
+    ) -> List[str]:
         if isinstance(value, list):
             return value
 
@@ -329,7 +470,7 @@ class ToolsManager(ToolsInterface):
         if sort_by == SortBy.ALIAS:
             return sorted(tags, key=lambda tag: tag.alias)
 
-        raise ValueError(f"Unsupported tag sorting: {sort_by}")
+        raise ToolboxSortingError("tag", sort_by)
 
     def _sort_tools(
         self,
@@ -347,4 +488,17 @@ class ToolsManager(ToolsInterface):
         if sort_by == SortBy.ALIAS:
             return sorted(tools, key=lambda tool: tool.alias)
 
-        raise ValueError(f"Unsupported tool sorting: {sort_by}")
+        raise ToolboxSortingError("tool", sort_by)
+
+    def _set_state(
+        self,
+        state: ToolsManagerState,
+        error: Optional[ToolboxError] = None,
+    ) -> None:
+        if self._state == state and self._error == error:
+            return
+
+        self._state = state
+        self._error = error
+
+        self.state_changed.emit(state)

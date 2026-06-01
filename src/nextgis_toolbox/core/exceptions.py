@@ -21,7 +21,7 @@ from typing import Any, Callable, List, Optional, Tuple
 from qgis.core import QgsApplication
 
 
-class NextgisToolboxExceptionInfoMixin:
+class ToolboxExceptionInfoMixin:
     """Mixin providing common fields and logic for NextGIS Toolbox errors and warnings."""
 
     _error_id: str
@@ -151,7 +151,7 @@ class NextgisToolboxExceptionInfoMixin:
             self.args = (f"{message}\n{note}",)
 
 
-class NextgisToolboxError(NextgisToolboxExceptionInfoMixin, Exception):
+class ToolboxError(ToolboxExceptionInfoMixin, Exception):
     """Base exception for errors in the NextGIS Toolbox.
 
     Inherit from this class to define custom error types for the plugin.
@@ -170,7 +170,7 @@ class NextgisToolboxError(NextgisToolboxExceptionInfoMixin, Exception):
         :param user_message: Message to display to the user.
         :param detail: Additional details about the error.
         """
-        NextgisToolboxExceptionInfoMixin.__init__(
+        ToolboxExceptionInfoMixin.__init__(
             self,
             log_message,
             user_message=user_message,
@@ -179,7 +179,84 @@ class NextgisToolboxError(NextgisToolboxExceptionInfoMixin, Exception):
         Exception.__init__(self, self._log_message)
 
 
-class NextgisToolboxWarning(NextgisToolboxExceptionInfoMixin, UserWarning):
+class ToolboxToolNotFoundError(ToolboxError):
+    def __init__(
+        self,
+        *,
+        tool_id: Optional[int] = None,
+        name: Optional[str] = None,
+    ) -> None:
+        identifier = self._resolve_identifier(tool_id=tool_id, name=name)
+
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "The Toolbox tool was not found."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=f"Tool not found: {identifier}",
+            user_message=default_message,
+            detail=identifier,
+        )
+
+    def _resolve_identifier(
+        self,
+        *,
+        tool_id: Optional[int],
+        name: Optional[str],
+    ) -> str:
+        if tool_id is not None:
+            return f"id={tool_id}"
+
+        if name is not None:
+            return f"name={name}"
+
+        return "identifier is not provided"
+
+
+class ToolboxTagNotFoundError(ToolboxError):
+    def __init__(self, *, tag_id: Optional[int] = None) -> None:
+        identifier = (
+            f"id={tag_id}"
+            if tag_id is not None
+            else "identifier is not provided"
+        )
+
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "The Toolbox tag was not found."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=f"Tag not found: {identifier}",
+            user_message=default_message,
+            detail=identifier,
+        )
+
+
+class ToolboxSortingError(ToolboxError):
+    def __init__(self, entity_name: str, sort_by: Any) -> None:
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Unsupported Toolbox sorting was requested."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=(
+                f"Unsupported {entity_name} sorting requested: {sort_by}"
+            ),
+            user_message=default_message,
+            detail=f"entity={entity_name}, sort_by={sort_by}",
+        )
+
+
+class ToolboxWarning(ToolboxExceptionInfoMixin, UserWarning):
     """Base warning for non-critical issues in the NextGIS Toolbox.
 
     Inherit from this class to define custom warning types for the plugin.
@@ -198,7 +275,7 @@ class NextgisToolboxWarning(NextgisToolboxExceptionInfoMixin, UserWarning):
         :param user_message: Message to display to the user.
         :param detail: Additional details about the error.
         """
-        NextgisToolboxExceptionInfoMixin.__init__(
+        ToolboxExceptionInfoMixin.__init__(
             self,
             log_message,
             user_message=user_message,
@@ -207,7 +284,7 @@ class NextgisToolboxWarning(NextgisToolboxExceptionInfoMixin, UserWarning):
         Exception.__init__(self, self._log_message)
 
 
-class NextgisToolboxReloadAfterUpdateWarning(NextgisToolboxWarning):
+class ToolboxReloadAfterUpdateWarning(ToolboxWarning):
     """Warning raised when the plugin structure has changed after an update.
 
     This warning indicates that the plugin was successfully updated, but due to changes
@@ -228,7 +305,7 @@ class NextgisToolboxReloadAfterUpdateWarning(NextgisToolboxWarning):
         # fmt: on
 
 
-class NextgisToolboxUiLoadError(NextgisToolboxError):
+class ToolboxUiLoadError(ToolboxError):
     """Exception raised when loading a UI file fails.
 
     :param log_message: Log message for debugging.
@@ -261,7 +338,7 @@ class NextgisToolboxUiLoadError(NextgisToolboxError):
         )
 
 
-class NextgisToolboxFileWriteError(NextgisToolboxError):
+class ToolboxFileWriteError(ToolboxError):
     """Exception raised when writing a file fails."""
 
     def __init__(
@@ -291,7 +368,107 @@ class NextgisToolboxFileWriteError(NextgisToolboxError):
         )
 
 
-class NextgisToolboxNetworkError(NextgisToolboxError):
+class ToolboxCacheError(ToolboxError):
+    """Exception raised when working with the local cache fails."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a cache error."""
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Failed to access the local cache."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class NextgisToolboxCacheReadError(ToolboxCacheError):
+    """Exception raised when reading cached data fails."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a cache read error."""
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Failed to read the cached data."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class ToolboxCacheWriteError(ToolboxCacheError):
+    """Exception raised when writing cached data fails."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a cache write error."""
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Failed to write the cached data."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class ToolboxCacheFormatError(ToolboxCacheError):
+    """Exception raised when cached data has an unsupported format."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a cache format error."""
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Cached data has an unsupported format."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class ToolboxNetworkError(ToolboxError):
     """Exception raised when a network request fails."""
 
     def __init__(
@@ -321,7 +498,7 @@ class NextgisToolboxNetworkError(NextgisToolboxError):
         )
 
 
-class NextgisToolboxAuthenticationError(NextgisToolboxNetworkError):
+class ToolboxAuthenticationError(ToolboxNetworkError):
     """Exception raised when API authentication fails."""
 
     def __init__(
@@ -351,7 +528,7 @@ class NextgisToolboxAuthenticationError(NextgisToolboxNetworkError):
         )
 
 
-class NextgisToolboxRequestCanceledError(NextgisToolboxNetworkError):
+class ToolboxRequestCanceledError(ToolboxNetworkError):
     """Exception raised when a network request is canceled."""
 
     def __init__(
@@ -381,7 +558,127 @@ class NextgisToolboxRequestCanceledError(NextgisToolboxNetworkError):
         )
 
 
-class NextgisToolboxProcessingRequiredWarning(NextgisToolboxWarning):
+class ToolboxTaskExecutionError(ToolboxError):
+    """Exception raised when a Toolbox task cannot be executed."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a task execution error.
+
+        :param log_message: Log message for debugging.
+        :param user_message: Message to display to the user.
+        :param detail: Additional details about the error.
+        """
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Failed to execute the Toolbox task."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class ToolboxFileUploadError(ToolboxTaskExecutionError):
+    """Exception raised when an input file upload fails."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a file upload error.
+
+        :param log_message: Log message for debugging.
+        :param user_message: Message to display to the user.
+        :param detail: Additional details about the error.
+        """
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Failed to upload the input file."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class ToolboxTaskFailedError(ToolboxTaskExecutionError):
+    """Exception raised when a Toolbox task finishes with an error."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a task failure error.
+
+        :param log_message: Log message for debugging.
+        :param user_message: Message to display to the user.
+        :param detail: Additional details about the error.
+        """
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "The Toolbox task failed."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class ToolboxTaskTimeoutError(ToolboxTaskExecutionError):
+    """Exception raised when waiting for a Toolbox task times out."""
+
+    def __init__(
+        self,
+        log_message: Optional[str] = None,
+        *,
+        user_message: Optional[str] = None,
+        detail: Optional[str] = None,
+    ) -> None:
+        """Initialize a task timeout error.
+
+        :param log_message: Log message for debugging.
+        :param user_message: Message to display to the user.
+        :param detail: Additional details about the error.
+        """
+        # fmt: off
+        default_message = QgsApplication.translate(
+            "Exceptions",
+            "Waiting for the Toolbox task timed out."
+        )
+        # fmt: on
+
+        super().__init__(
+            log_message=log_message or default_message,
+            user_message=user_message or default_message,
+            detail=detail,
+        )
+
+
+class ToolboxProcessingRequiredWarning(ToolboxWarning):
     """Warning shown when the Processing core plugin is disabled."""
 
     def __init__(self) -> None:

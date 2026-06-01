@@ -14,15 +14,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
+from qgis.core import QgsFeedback
 from qgis.PyQt.QtCore import QObject
 
 from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 from nextgis_toolbox.nextgis_toolbox.tasks.models import (
-    ToolboxResult,
-    ToolboxTask,
+    ToolboxTaskInformation,
 )
 from nextgis_toolbox.nextgis_toolbox.tasks.repository import TasksRepository
 from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
@@ -62,11 +61,9 @@ class TasksManager(TasksInterface):
 
     def load(self) -> None:
         """Load the tasks feature."""
-        pass
 
     def unload(self) -> None:
-        """Unload the tasks feature and clear runtime state."""
-        pass
+        """Unload the tasks feature."""
 
     def submit_task(
         self,
@@ -92,34 +89,19 @@ class TasksManager(TasksInterface):
 
         return task_id
 
-    def retrieve_task(self, task_id: str) -> ToolboxTask:
+    def task_information(
+        self,
+        task_id: str,
+        feedback: Optional[QgsFeedback] = None,
+    ) -> ToolboxTaskInformation:
         """Retrieve Toolbox task information.
 
         :param task_id: Toolbox task identifier.
+        :param feedback: Optional feedback object for progress reporting.
 
         :returns: Toolbox task model.
         """
-        return self._repository.task_information(task_id)
-
-    def get_results(self, task_id: str) -> List[ToolboxResult]:
-        """Retrieve Toolbox task results.
-
-        :param task_id: Toolbox task identifier.
-
-        :returns: Toolbox result models.
-        """
-        return self._repository.get_results(task_id)
-
-    def download_results(
-        self,
-        results: List[ToolboxResult],
-        directory: Path,
-    ) -> List[Path]:
-        """Download multiple Toolbox result files.
-
-        :param results: Toolbox result descriptors.
-        :param directory: Target directory.
-
-        :returns: Saved file paths.
-        """
-        return self._repository.download_results(results, directory)
+        return self._repository.task_information(
+            task_id,
+            feedback=feedback,
+        )

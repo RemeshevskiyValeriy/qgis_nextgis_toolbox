@@ -18,14 +18,21 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from nextgis_toolbox.core.logging import logger
+
 
 class TaskStatus(str, Enum):
     """Normalized task execution status."""
 
-    SUCCESS = "SUCCESS"
-    FAILED = "FAILED"
+    NEW = "NEW"
+    ASSIGNED = "ASSIGNED"
+    ACCEPTED = "ACCEPTED"
+    DENIED = "DENIED"
     STARTED = "STARTED"
-    PENDING = "PENDING"
+    FAILED = "FAILED"
+    SUCCESS = "SUCCESS"
+    CANCELLED = "CANCELLED"
+    TIMEOUT = "TIMEOUT"
     UNKNOWN = "UNKNOWN"
 
     @classmethod
@@ -39,26 +46,26 @@ class TaskStatus(str, Enum):
             if status.value == normalized_value:
                 return status
 
+        logger.warning(f"Received unknown task status value: '{value}'")
+
         return cls.UNKNOWN
 
     def __str__(self) -> str:
         return self.value
 
 
-@dataclass
-class ToolboxResult:
+@dataclass(frozen=True)
+class TaskResult:
     """Descriptor of a single NextGIS Toolbox task result."""
 
     name: str
-    result_type: str
-    value: str
+    value: Any
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "ToolboxResult":
+    def from_json(cls, data: Dict[str, Any]) -> "TaskResult":
         """Build a result model from a JSON payload."""
         return cls(
             name=data["name"],
-            result_type=data["type"],
             value=data["value"],
         )
 
@@ -66,37 +73,39 @@ class ToolboxResult:
         """Serialize the result model to a JSON-compatible payload."""
         return {
             "name": self.name,
-            "type": self.result_type,
             "value": self.value,
         }
 
 
 @dataclass
-class ToolboxTask:
+class ToolboxTaskInformation:
     """Descriptor of a NextGIS Toolbox task."""
 
     tool: str
     status: TaskStatus
-    progress: float
+    progress: Optional[float]
     error: Optional[str]
-    results: List[ToolboxResult]
+    results: List[TaskResult]
     operation: str
-    state: TaskStatus
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any]) -> "ToolboxTask":
+    def from_json(cls, data: Dict[str, Any]) -> "ToolboxTaskInformation":
         """Build a task model from a JSON payload."""
+        raw_progress = data.get("progress")
+        progress = None
+        if raw_progress:
+            progress = float(raw_progress)
+
         return cls(
             tool=data["tool"],
             status=TaskStatus.from_value(data.get("status")),
-            progress=float(data.get("progress", 0.0)),
+            progress=progress,
             error=data.get("error"),
             results=[
-                ToolboxResult.from_json(result_data)
+                TaskResult.from_json(result_data)
                 for result_data in data.get("output", [])
             ],
             operation=data["operation"],
-            state=TaskStatus.from_value(data.get("state")),
         )
 
     def to_json(self) -> Dict[str, Any]:
@@ -108,5 +117,4 @@ class ToolboxTask:
             "error": self.error,
             "output": [result.to_json() for result in self.results],
             "operation": self.operation,
-            "state": str(self.state),
         }

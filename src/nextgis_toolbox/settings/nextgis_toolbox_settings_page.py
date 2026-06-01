@@ -30,8 +30,8 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
-from nextgis_toolbox.core.constants import COMPANY_NAME
-from nextgis_toolbox.core.exceptions import NextgisToolboxUiLoadError
+from nextgis_toolbox.core.constants import COMPANY_NAME, DEFAULT_API_ENDPOINT
+from nextgis_toolbox.core.exceptions import ToolboxUiLoadError
 from nextgis_toolbox.core.logging import logger, update_logging_level
 from nextgis_toolbox.nextgis_toolbox_interface import (
     NextgisToolboxInterface,
@@ -65,12 +65,10 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         """
         settings = NextgisToolboxSettings()
 
+        settings.endpoint = self._widget.endpoint_line_edit.text()
+
         settings.authentication_token = (
             self._widget.nextgis_toolbox_token_line_edit.text()
-        )
-
-        settings.refresh_task_interval = (
-            self._widget.refresh_tasks_interval_spinbox.value()
         )
 
         old_debug_enabled = settings.is_debug_logs_enabled
@@ -91,10 +89,11 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         """Initialize the settings page user interface."""
         self._load_ui()
 
-        self._widget.refresh_tasks_interval_spinbox.setToolTip(
-            self.tr(
-                "Set how often task statuses are refreshed automatically. 0 means never."
-            )
+        self._widget.endpoint_line_edit.setPlaceholderText(
+            DEFAULT_API_ENDPOINT
+        )
+        self._widget.endpoint_line_edit.setToolTip(
+            self.tr("Set the base endpoint for NextGIS Toolbox API.")
         )
 
         layout = QHBoxLayout()
@@ -119,7 +118,7 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         except FileNotFoundError as error:
             message = self.tr("Failed to load settings UI")
             logger.exception(message)
-            raise NextgisToolboxUiLoadError(
+            raise ToolboxUiLoadError(
                 log_message=message,
                 user_message=message,
             ) from error
@@ -128,7 +127,7 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
             log_message = "Settings UI loading returned no widget"
             user_message = self.tr("Failed to load settings UI")
             logger.error(log_message)
-            raise NextgisToolboxUiLoadError(
+            raise ToolboxUiLoadError(
                 log_message=log_message,
                 user_message=user_message,
             )
@@ -140,12 +139,10 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         """Load persisted plugin settings into UI controls."""
         settings = NextgisToolboxSettings()
 
+        self._widget.endpoint_line_edit.setText(settings.endpoint)
+
         self._widget.nextgis_toolbox_token_line_edit.setText(
             settings.authentication_token
-        )
-
-        self._widget.refresh_tasks_interval_spinbox.setValue(
-            settings.refresh_task_interval
         )
 
         self._widget.debug_checkbox.setChecked(settings.is_debug_logs_enabled)

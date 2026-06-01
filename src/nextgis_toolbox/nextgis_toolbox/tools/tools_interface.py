@@ -17,21 +17,45 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from qgis.PyQt.QtCore import QObject, pyqtSlot
+from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
 
 from nextgis_toolbox.nextgis_toolbox.tools.models import (
     SortBy,
     ToolboxTag,
     ToolboxTool,
+    ToolsManagerState,
 )
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
 if TYPE_CHECKING:
+    from nextgis_toolbox.core.exceptions import ToolboxError
     from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
 
 
 class ToolsInterface(QObject, metaclass=QObjectMetaClass):
     """Abstract QObject interface for the tools feature."""
+
+    state_changed = pyqtSignal(object)
+    loading_progress_changed = pyqtSignal(float)
+
+    @property
+    @abstractmethod
+    def state(self) -> ToolsManagerState:
+        """Return the current state of the tools manager."""
+        ...
+
+    @property
+    @abstractmethod
+    def error(self) -> Optional["ToolboxError"]:
+        """Return the current error of the tools manager."""
+        ...
+
+    def api(self) -> "ToolsApi":
+        """Return the API for managing tools and tags.
+
+        :returns: Tools API instance.
+        """
+        ...
 
     def set_api(self, tools_api: "ToolsApi") -> None:
         """Set the API for managing tools and tags.
@@ -42,13 +66,25 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
     @pyqtSlot()
     @abstractmethod
     def load(self) -> None:
-        """Load the tools feature and populate caches."""
+        """Load all components of the tools feature."""
+        ...
+
+    @abstractmethod
+    def refresh(
+        self,
+        *,
+        clear_cache: bool = False,
+    ) -> None:
+        """Refresh the tools catalog using the active runtime mode.
+
+        :param clear_cache: Clear API cache before reloading.
+        """
         ...
 
     @pyqtSlot()
     @abstractmethod
     def unload(self) -> None:
-        """Unload the tools feature and clear runtime state."""
+        """Unload all components of the tools feature."""
         ...
 
     @abstractmethod
@@ -65,7 +101,7 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         *,
         tool_id: Optional[int] = None,
         name: Optional[str] = None,
-    ) -> Optional[ToolboxTool]:
+    ) -> ToolboxTool:
         """Return one cached Toolbox tool by identifier."""
         ...
 
@@ -78,8 +114,21 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         tag: Optional[
             Union[int, ToolboxTag, List[Union[int, ToolboxTag]]]
         ] = None,
+        is_featured: Optional[bool] = None,
+        is_favorite: Optional[bool] = None,
     ) -> List[ToolboxTool]:
         """Return cached tools matching a single search criterion."""
+        ...
+
+    @abstractmethod
+    def set_tool_favorite(
+        self,
+        tool_name: str,
+        is_favorite: bool,
+        *,
+        sync_remote: bool = True,
+    ) -> None:
+        """Update a cached tool favorite state and optionally sync it."""
         ...
 
     @abstractmethod
@@ -91,6 +140,6 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         ...
 
     @abstractmethod
-    def tag(self, tag_id: int) -> Optional[ToolboxTag]:
+    def tag(self, tag_id: int) -> ToolboxTag:
         """Return one cached Toolbox tag by identifier."""
         ...

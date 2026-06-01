@@ -18,7 +18,7 @@ from abc import abstractmethod
 from typing import Optional
 
 from qgis.core import Qgis
-from qgis.PyQt.QtCore import QObject
+from qgis.PyQt.QtCore import QObject, pyqtSignal
 
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
@@ -29,6 +29,8 @@ class NotifierInterface(QObject, metaclass=QObjectMetaClass):
     This interface defines methods for presenting messages, as well as
     dismissing individual or all messages.
     """
+
+    report_problem = pyqtSignal()
 
     @abstractmethod
     def display_message(
@@ -55,17 +57,4 @@ class NotifierInterface(QObject, metaclass=QObjectMetaClass):
         :param error: The exception to display.
         :return: An identifier for the displayed message.
         """
-        ...
-
-    @abstractmethod
-    def dismiss_message(self, message_id: str) -> None:
-        """Dismiss a specific message by its identifier.
-
-        :param message_id: The identifier of the message to dismiss.
-        """
-        ...
-
-    @abstractmethod
-    def dismiss_all(self) -> None:
-        """Dismiss all currently displayed messages."""
         ...

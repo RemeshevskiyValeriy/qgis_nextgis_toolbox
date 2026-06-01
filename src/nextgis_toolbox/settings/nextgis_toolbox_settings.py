@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
+import os
 from enum import Enum
 from typing import Optional
 
@@ -36,12 +37,14 @@ class AuthenticationType(str, Enum):
 class NextgisToolboxSettings:
     """Centralized settings handler for the NextGIS Toolbox."""
 
+    ENV_API_ENDPOINT = "NEXTGIS_TOOLBOX_ENDPOINT"
+    ENV_AUTHENTICATION_TYPE = "NEXTGIS_TOOLBOX_AUTHENTICATION_TYPE"
+    ENV_AUTHENTICATION_TOKEN = "NEXTGIS_TOOLBOX_AUTHENTICATION_TOKEN"
+
     KEY_API_ENDPOINT = f"{PLUGIN_SETTINGS_GROUP}/api/endpoint"
     KEY_AUTHENTICATION_TYPE = f"{PLUGIN_SETTINGS_GROUP}/authentication/type"
     KEY_AUTHENTICATION_TOKEN = f"{PLUGIN_SETTINGS_GROUP}/authentication/token"
-    KEY_REFRESH_TASK_INTERVAL = (
-        f"{PLUGIN_SETTINGS_GROUP}/tasks/refreshTaskInterval"
-    )
+
     KEY_IS_DEBUG_LOGS_ENABLED = (
         f"{PLUGIN_SETTINGS_GROUP}/other/debugLogsEnabled"
     )
@@ -49,6 +52,8 @@ class NextgisToolboxSettings:
     KEY_DID_LAST_LAUNCH_FAIL = (
         f"{PLUGIN_SETTINGS_GROUP}/other/didLastLaunchFail"
     )
+
+    DEFAULT_AUTHENTICATION_TYPE = AuthenticationType.TOKEN
 
     _settings: QgsSettings
 
@@ -58,6 +63,10 @@ class NextgisToolboxSettings:
     @property
     def endpoint(self) -> str:
         """Return saved NextGIS Toolbox API endpoint."""
+        env_endpoint = os.getenv(self.ENV_API_ENDPOINT, "").strip()
+        if env_endpoint:
+            return env_endpoint
+
         endpoint = self._settings.value(
             self.KEY_API_ENDPOINT,
             defaultValue=DEFAULT_API_ENDPOINT,
@@ -73,17 +82,24 @@ class NextgisToolboxSettings:
     @property
     def authentication_type(self) -> AuthenticationType:
         """Return saved NextGIS Toolbox authentication type."""
-        raw_authentication_type = self._settings.value(
-            self.KEY_AUTHENTICATION_TYPE,
-            defaultValue="",
-            type=str,
-        )
+        env_authentication_type = os.getenv(
+            self.ENV_AUTHENTICATION_TYPE,
+            "",
+        ).strip()
+        if env_authentication_type:
+            raw_authentication_type = env_authentication_type
+        else:
+            raw_authentication_type = self._settings.value(
+                self.KEY_AUTHENTICATION_TYPE,
+                defaultValue="",
+                type=str,
+            )
 
         authentication_type = None
         if raw_authentication_type in AuthenticationType.__members__:
             authentication_type = AuthenticationType(raw_authentication_type)
 
-        return authentication_type or AuthenticationType.TOKEN
+        return authentication_type or self.DEFAULT_AUTHENTICATION_TYPE
 
     @authentication_type.setter
     def authentication_type(self, value: AuthenticationType) -> None:
@@ -93,8 +109,25 @@ class NextgisToolboxSettings:
         )
 
     @property
+    def real_authentication_type(self) -> AuthenticationType:
+        """Return the effective authentication type, considering the presence of a token."""
+        settings_type = self.authentication_type
+        token = self.authentication_token
+        if settings_type == AuthenticationType.TOKEN and not token:
+            return AuthenticationType.NONE
+
+        return settings_type
+
+    @property
     def authentication_token(self) -> str:
         """Return saved NextGIS Toolbox token."""
+        env_authentication_token = os.getenv(
+            self.ENV_AUTHENTICATION_TOKEN,
+            "",
+        ).strip()
+        if env_authentication_token:
+            return env_authentication_token
+
         return self._settings.value(
             self.KEY_AUTHENTICATION_TOKEN,
             defaultValue="",
@@ -110,20 +143,9 @@ class NextgisToolboxSettings:
         )
 
     @property
-    def refresh_task_interval(self) -> int:
-        """Return task auto-refresh interval in seconds."""
-        return self._settings.value(
-            self.KEY_REFRESH_TASK_INTERVAL,
-            defaultValue=0,
-            type=int,
-        )
-
-    @refresh_task_interval.setter
-    def refresh_task_interval(self, value: int) -> None:
-        self._settings.setValue(
-            self.KEY_REFRESH_TASK_INTERVAL,
-            value,
-        )
+    def cache_ttl_hours(self) -> int:
+        """Return the configured cache TTL in hours."""
+        return 24
 
     @property
     def is_debug_logs_enabled(self) -> bool:

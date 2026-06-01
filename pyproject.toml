@@ -1,6 +1,6 @@
 [project]
 name = "nextgis_toolbox"
-version = "1.0.2"
+version = "1.0.0"
 readme = "README.md"
 license = { file = "LICENSE" }
 
@@ -14,9 +14,9 @@ license = { file = "LICENSE" }
 ui-files = ["src/nextgis_toolbox/ui/*.ui"]
 compile = false
 
-[tool.qgspb.translations]
-ts-files = ["src/nextgis_toolbox/i18n/*.ts"]
-no-obsolete = true
+# [tool.qgspb.translations]
+# ts-files = ["src/nextgis_toolbox/i18n/*.ts"]
+# no-obsolete = true
 
 
 [project.optional-dependencies]

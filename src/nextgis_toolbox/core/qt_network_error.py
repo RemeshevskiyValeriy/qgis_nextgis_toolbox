@@ -20,6 +20,8 @@ from typing import Optional
 
 from qgis.PyQt.QtNetwork import QNetworkReply
 
+from nextgis_toolbox.core.exceptions import ToolboxError
+
 
 @dataclass
 class QtNetworkErrorInfo:
@@ -34,6 +36,16 @@ class QtNetworkErrorInfo:
     code: QNetworkReply.NetworkError
     constant: str
     description: str
+
+    def add_exception_notes(self, error: ToolboxError) -> None:
+        """
+        Add network error details as notes to a NgConnectException.
+
+        :param error: The exception to which notes will be added.
+        :type error: ToolboxError
+        """
+        error.add_note(f"Network error: {self.constant}")
+        error.add_note(f"Error description: {self.description}")
 
 
 class QtNetworkError(Enum):

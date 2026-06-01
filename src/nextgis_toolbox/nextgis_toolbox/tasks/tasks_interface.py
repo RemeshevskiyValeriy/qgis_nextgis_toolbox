@@ -15,15 +15,12 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from abc import abstractmethod
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from qgis.core import QgsFeedback
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 
-from nextgis_toolbox.nextgis_toolbox.tasks.models import (
-    ToolboxResult,
-    ToolboxTask,
-)
+from nextgis_toolbox.nextgis_toolbox.tasks.models import ToolboxTaskInformation
 from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
 if TYPE_CHECKING:
@@ -47,6 +44,7 @@ class TasksInterface(QObject, metaclass=QObjectMetaClass):
 
         :param tasks_api: API for managing tasks.
         """
+        ...
 
     @abstractmethod
     def load(self) -> None:
@@ -76,36 +74,16 @@ class TasksInterface(QObject, metaclass=QObjectMetaClass):
         ...
 
     @abstractmethod
-    def retrieve_task(self, task_id: str) -> ToolboxTask:
+    def task_information(
+        self,
+        task_id: str,
+        feedback: Optional[QgsFeedback] = None,
+    ) -> ToolboxTaskInformation:
         """Retrieve Toolbox task information.
 
         :param task_id: Toolbox task identifier.
+        :param feedback: Optional feedback object for progress reporting.
 
         :returns: Toolbox task model.
-        """
-        ...
-
-    @abstractmethod
-    def get_results(self, task_id: str) -> List[ToolboxResult]:
-        """Retrieve Toolbox task results.
-
-        :param task_id: Toolbox task identifier.
-
-        :returns: Toolbox result models.
-        """
-        ...
-
-    @abstractmethod
-    def download_results(
-        self,
-        results: List[ToolboxResult],
-        directory: Path,
-    ) -> List[Path]:
-        """Download multiple Toolbox result files.
-
-        :param results: Toolbox result descriptors.
-        :param directory: Target directory.
-
-        :returns: Saved file paths.
         """
         ...

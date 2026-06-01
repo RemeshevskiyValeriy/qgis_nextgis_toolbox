@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, Optional
+
+from qgis.core import QgsFeedback
 
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 from nextgis_toolbox.nextgis_toolbox.tasks.models import (
-    ToolboxResult,
-    ToolboxTask,
+    ToolboxTaskInformation,
 )
 
 
@@ -64,53 +64,25 @@ class TasksRepository:
         :returns: Created task identifier.
         """
         logger.debug(f"Submitting task for tool '{tool_name}'")
-        response_data = self._api.submit_task(
+        return self._api.submit_task(
             tool_name=tool_name,
             inputs=inputs,
             emailing=emailing,
         )
 
-        return response_data["task_id"]
-
-    def task_information(self, task_id: str) -> ToolboxTask:
+    def task_information(
+        self,
+        task_id: str,
+        feedback: Optional[QgsFeedback] = None,
+    ) -> ToolboxTaskInformation:
         """Retrieve a task model from the API.
 
         :param task_id: Toolbox task identifier.
+        :param feedback: Optional feedback object for progress reporting.
 
         :returns: Toolbox task model.
         """
         logger.debug(f"Fetching task information for '{task_id}'")
-        return ToolboxTask.from_json(self._api.task_information(task_id))
-
-    def get_results(self, task_id: str) -> List[ToolboxResult]:
-        """Retrieve result models for a task.
-
-        :param task_id: Toolbox task identifier.
-
-        :returns: Toolbox result models.
-        """
-        return self.task_information(task_id).results
-
-    def download_results(
-        self,
-        results: List[ToolboxResult],
-        directory: Path,
-    ) -> List[Path]:
-        """Download task result files to the target directory.
-
-        :param results: Toolbox result descriptors.
-        :param directory: Target directory.
-
-        :returns: Saved file paths.
-        """
-        downloaded_paths: List[Path] = []
-
-        for result in results:
-            logger.debug(
-                f"Downloading task result '{result.name}' to '{directory}'"
-            )
-            downloaded_paths.append(
-                self._api.client.download(result.value, directory)
-            )
-
-        return downloaded_paths
+        return ToolboxTaskInformation.from_json(
+            self._api.task_information(task_id, feedback=feedback)
+        )

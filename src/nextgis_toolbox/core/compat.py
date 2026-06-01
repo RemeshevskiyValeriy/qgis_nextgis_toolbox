@@ -20,6 +20,7 @@ from qgis.core import (
     Qgis,
     QgsFeature,
     QgsFeatureRequest,
+    QgsFeedback,
     QgsGeometry,
     QgsMapLayerProxyModel,
     QgsMapLayerType,
@@ -179,6 +180,23 @@ else:
     FieldType.QDateTime.is_monkey_patched = True
     FieldType.Bool = QVariant.Type.Bool
     FieldType.Bool.is_monkey_patched = True
+
+
+def create_scaled_feedback(
+    feedback: QgsFeedback, start_percentage: float, end_percentage: float
+) -> QgsFeedback:
+    scaled_feedback = QgsFeedback()
+    if feedback is not None:
+        ratio = (end_percentage - start_percentage) / 100.0
+        scaled_feedback.progressChanged.connect(
+            lambda progress: feedback.setProgress(
+                start_percentage + progress * ratio
+            )
+        )
+        feedback.canceled.connect(scaled_feedback.cancel)
+
+    return scaled_feedback
+
 
 try:
     from packaging import version

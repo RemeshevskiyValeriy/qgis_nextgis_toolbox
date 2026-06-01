@@ -154,7 +154,11 @@ class AboutDialog(QDialog, Ui_AboutDialogBase):
     COMPONENT_BUTTON_ICON_SIZE = 16
     COMPONENT_BUTTON_SIZE = 22
 
-    def __init__(self, package_name: str, parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        package_name: str,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent)
         self.setupUi(self)
         self.__package_name = package_name

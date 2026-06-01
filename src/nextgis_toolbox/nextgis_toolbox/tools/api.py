@@ -50,6 +50,10 @@ class ToolsApi:
         response_data = self._client.get("tags/")
         return response_data["data"]
 
+    def invalidate_cache(self) -> None:
+        """Invalidate cached tool payloads."""
+        self._client.invalidate_cache()
+
     def fetch_tool(
         self,
         tool_name: str,
@@ -60,4 +64,33 @@ class ToolsApi:
 
         :returns: Raw tool dictionary.
         """
-        return self._client.get(f"tools/{tool_name}")
+        path = f"tools/{tool_name}"
+        return self._client.get(path, cache_key=path)
+
+    def fetch_tool_presets(self, tool_name: str) -> List[Dict[str, Any]]:
+        """Fetch raw tool presets.
+
+        :param tool_name: Toolbox tool identifier.
+
+        :returns: List of raw tool preset dictionaries.
+        """
+        path = f"tools/{tool_name}/presets"
+        response_data = self._client.get(path, cache_key=path)
+        return response_data["items"]
+
+    def set_tool_favorite(
+        self, tool_name: str, is_favorite: bool
+    ) -> Dict[str, Any]:
+        """Persist a favorite state for the current user.
+
+        :param tool_name: Toolbox tool identifier.
+        :param is_favorite: Requested favorite state.
+
+        :returns: Raw update response.
+        """
+        result = self._client.post(
+            f"tools/{tool_name}/favorite",
+            {"new_value": int(is_favorite)},
+        )
+        self._client.invalidate_cache_entry(f"tools/{tool_name}")
+        return result

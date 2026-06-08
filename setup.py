@@ -277,7 +277,7 @@ class QgisPluginBuilder:
             return
 
         metadata_path = plugin_path / "metadata.txt"
-        assert metadata_path.exists()
+        assert metadata_path.exists()  # nosec B101
 
         metadata = ConfigParser()
         with open(metadata_path, encoding="utf-8") as f:
@@ -389,7 +389,7 @@ class QgisPluginBuilder:
         metadata = ConfigParser()
         with open(metadata_path, encoding="utf-8") as f:
             metadata.read_file(f)
-        assert metadata.get("general", "version") == project_version
+        assert metadata.get("general", "version") == project_version  # nosec B101
 
         build_path = Path(project_name) / metadata_path.name
 
@@ -421,7 +421,7 @@ class QgisPluginBuilder:
 
         license_setting = self.project_settings["license"]
         license_file = license_setting["file"]
-        assert isinstance(license_file, str)
+        assert isinstance(license_file, str)  # nosec B101
 
         project_name: str = self.project_settings["name"]
 
@@ -536,7 +536,7 @@ class QgisPluginBuilder:
         return result
 
     def __update_generated_file(self, file_path: Path) -> None:
-        assert file_path.suffix == ".py"
+        assert file_path.suffix == ".py"  # nosec B101
         content = file_path.read_text(encoding="utf-8")
         file_path.write_text(content.replace("from PyQt5", "from qgis.PyQt"))
 
@@ -568,7 +568,7 @@ class QgisPluginBuilder:
 
         elif system == "Windows":
             appdata = os.getenv("APPDATA")
-            assert appdata is not None
+            assert appdata is not None  # nosec B101
             profiles_path = Path(appdata) / qgis_profiles
 
         elif system == "Darwin":  # macOS

@@ -32,7 +32,7 @@ from nextgis_toolbox.settings.nextgis_toolbox_settings import (
 if TYPE_CHECKING:
     from qgis.gui import QgisInterface
 
-    assert isinstance(iface, QgisInterface)
+    assert isinstance(iface, QgisInterface)  # nosec B101
 
 SUCCESS_LEVEL = logging.INFO + 1
 logging.addLevelName(SUCCESS_LEVEL, "SUCCESS")
@@ -137,7 +137,7 @@ class QgisLoggerHandler(logging.Handler):
         message_log = QgsApplication.messageLog()
         if record.levelno == logging.DEBUG:
             message = f"[DEBUG]    {message}"
-        assert message_log is not None
+        assert message_log is not None  # nosec B101
 
         message_log.logMessage(self._process_html(message), record.name, level)
 
@@ -235,7 +235,7 @@ def extract_plugin_logs() -> str:
     """
     log_viewer = iface.mainWindow().logViewer()
     tab_widget: QTabWidget = log_viewer.findChild(QTabWidget)
-    assert tab_widget is not None
+    assert tab_widget is not None  # nosec B101
 
     text_edit: Optional[QPlainTextEdit] = None
     for index in range(tab_widget.count()):

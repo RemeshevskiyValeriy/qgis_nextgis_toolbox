@@ -182,7 +182,7 @@ class AboutDialog(QDialog, Ui_AboutDialogBase):
 
     def __fill_headers(self, metadata: Dict[str, Optional[str]]) -> None:
         plugin_name = metadata["plugin_name"]
-        assert isinstance(plugin_name, str)
+        assert isinstance(plugin_name, str)  # nosec B101
         if "NextGIS" not in plugin_name:
             plugin_name += self.tr(" by NextGIS")
 
@@ -316,10 +316,10 @@ class AboutDialog(QDialog, Ui_AboutDialogBase):
         if None in (title, description, license_url, project_url):
             return None
 
-        assert title is not None
-        assert description is not None
-        assert license_url is not None
-        assert project_url is not None
+        assert title is not None  # nosec B101
+        assert description is not None  # nosec B101
+        assert license_url is not None  # nosec B101
+        assert project_url is not None  # nosec B101
 
         version = self.__component_text(component_data, "version")
 
@@ -452,7 +452,7 @@ class AboutDialog(QDialog, Ui_AboutDialogBase):
             return value
 
         about = metadata_value("about")
-        assert about is not None
+        assert about is not None  # nosec B101
         for about_stop_phrase in (
             "Разработан",
             "Developed by",

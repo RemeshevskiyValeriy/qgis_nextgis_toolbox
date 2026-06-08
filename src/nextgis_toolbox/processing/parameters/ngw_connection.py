@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 NGW_URL_SUFFIX = "_url"
 NGW_LOGIN_SUFFIX = "_login"
-NGW_PASSWORD_SUFFIX = "_password"
+NGW_PASSWORD_SUFFIX = "_password"  # pragma: allowlist secret
 
 
 @dataclass(frozen=True)

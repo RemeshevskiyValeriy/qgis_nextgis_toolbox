@@ -17,15 +17,22 @@
 from typing import TYPE_CHECKING, Optional
 
 from processing import execAlgorithmDialog
+from qgis.core import Qgis
 from qgis.PyQt.QtCore import QObject
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
+from nextgis_toolbox.core.compat import QGIS_3_40
 from nextgis_toolbox.processing.ui.algorithm_dialog_manager import (
     AlgorithmDialogManager,
 )
-from nextgis_toolbox.processing.ui.favorite_tools_sync import (
-    FavoriteToolsSync,
-)
+
+if Qgis.versionInt() >= QGIS_3_40:
+    from nextgis_toolbox.processing.ui.favorite_tools_sync import (
+        FavoriteToolsSync,
+    )
+else:
+    FavoriteToolsSync = None
+
 from nextgis_toolbox.processing.ui.menu_bar_actions_integrator import (
     ToolboxMenuBarIntegrator,
 )
@@ -98,12 +105,13 @@ class ToolboxProviderUi(QObject):
             start_tool_callback=self._start_tool,
             parent=self,
         )
-        self._favorite_tool_sync = FavoriteToolsSync(
-            api_client=self._api_client,
-            tools_manager=self._tools_manager,
-            provider_id=self._provider.id(),
-            parent=self,
-        )
+        if FavoriteToolsSync is not None:
+            self._favorite_tool_sync = FavoriteToolsSync(
+                api_client=self._api_client,
+                tools_manager=self._tools_manager,
+                provider_id=self._provider.id(),
+                parent=self,
+            )
 
         self._tools_manager.state_changed.connect(
             self._on_runtime_state_changed
@@ -118,8 +126,9 @@ class ToolboxProviderUi(QObject):
             return
         self._is_loaded = False
 
-        self._favorite_tool_sync.stop()
-        self._favorite_tool_sync.deleteLater()
+        if self._favorite_tool_sync is not None:
+            self._favorite_tool_sync.stop()
+            self._favorite_tool_sync.deleteLater()
 
         self._panel_actions_integrator.unload()
         self._panel_actions_integrator.deleteLater()
@@ -167,10 +176,11 @@ class ToolboxProviderUi(QObject):
         self._panel_actions_integrator.refresh()
 
     def _on_runtime_state_changed(self, state: ToolsManagerState) -> None:
-        if state == ToolsManagerState.LOADED:
-            self._favorite_tool_sync.start()
-        else:
-            self._favorite_tool_sync.stop()
+        if self._favorite_tool_sync is not None:
+            if state == ToolsManagerState.LOADED:
+                self._favorite_tool_sync.start()
+            else:
+                self._favorite_tool_sync.stop()
 
         self.refresh_actions()
 

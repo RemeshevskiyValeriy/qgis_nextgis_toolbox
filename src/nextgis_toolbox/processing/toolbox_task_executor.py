@@ -40,6 +40,7 @@ from qgis.PyQt.QtCore import QCoreApplication, QThread, QUrl
 from qgis.PyQt.QtWidgets import QPushButton, QWidget
 
 from nextgis_toolbox.api.client import ToolboxApiClient
+from nextgis_toolbox.core.compat import QGIS_3_36
 from nextgis_toolbox.core.exceptions import (
     ToolboxError,
     ToolboxFileUploadError,
@@ -890,10 +891,14 @@ class ToolboxTaskExecutor:
         text_suffix = "\n\n".join(text_suffix_parts)
         html_suffix = "<br><br>".join(html_suffix_parts)
 
-        feedback.pushFormattedMessage(
-            prefix + "<br>" + html_suffix,
-            prefix + "\n" + text_suffix,
-        )
+        if Qgis.versionInt() >= QGIS_3_36:
+            feedback.pushFormattedMessage(
+                prefix + "<br>" + html_suffix,
+                prefix + "\n" + text_suffix,
+            )
+        else:
+            feedback.pushInfo(prefix)
+            feedback.pushInfo(text_suffix)
 
     def _prepare_processing_results(
         self,

@@ -24,6 +24,7 @@ from pathlib import Path
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Callable, Dict, Optional, Sequence, Tuple
 
+import qgis.gui
 from qgis.core import QgsApplication, QgsTask, QgsTaskManager
 from qgis.PyQt import sip
 from qgis.PyQt.QtCore import QBuffer, QByteArray, QIODevice, Qt, QUrl
@@ -40,9 +41,13 @@ from nextgis_toolbox.processing.toolbox_algorithm import (
     ToolboxAlgorithm,
 )
 from nextgis_toolbox.processing.ui.compat import AlgorithmDialog
-from nextgis_toolbox.processing.ui.help_image_preview_dialog import (
-    HelpImagePreviewDialog,
-)
+
+if hasattr(qgis.gui, "QgsExternalResourceWidget"):
+    from nextgis_toolbox.processing.ui.help_image_preview_dialog import (
+        HelpImagePreviewDialog,
+    )
+else:
+    HelpImagePreviewDialog = None
 
 from .common import AlgorithmDialogPatch
 from .dialog_runtime import DialogWidgetAccessor
@@ -230,6 +235,9 @@ class HelpAnchorClickPatch(AlgorithmDialogPatch):
     def _show_help_image_preview_dialog(self, image_path: str) -> None:
         image_file = Path(image_path)
         if not image_file.is_file():
+            return
+
+        if HelpImagePreviewDialog is None:
             return
 
         dialog = HelpImagePreviewDialog(

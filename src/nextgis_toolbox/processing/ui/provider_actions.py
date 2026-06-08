@@ -19,7 +19,6 @@ from typing import Optional
 from qgis.PyQt.QtCore import QCoreApplication, QUrl
 from qgis.PyQt.QtGui import QDesktopServices, QIcon
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.nextgis_toolbox_interface import (
     NextgisToolboxInterface,
 )
@@ -27,6 +26,7 @@ from nextgis_toolbox.processing.toolbox_algorithm import (
     ToolboxAlgorithm,
 )
 from nextgis_toolbox.processing.ui.compat import ProcessingToolbox
+from nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.ui.icon import plugin_icon, qgis_icon
 
 

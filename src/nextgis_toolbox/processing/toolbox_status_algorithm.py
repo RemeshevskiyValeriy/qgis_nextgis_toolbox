@@ -25,8 +25,8 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication
 
 from nextgis_toolbox.core.exceptions import ToolboxError
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.nextgis_toolbox_interface import NextgisToolboxInterface
+from nextgis_toolbox.tools.models import ToolsManagerState
 
 
 class ToolboxStatusAlgorithm(QgsProcessingAlgorithm):

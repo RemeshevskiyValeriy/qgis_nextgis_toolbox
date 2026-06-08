@@ -19,14 +19,14 @@ from typing import Optional, Set
 from qgis.gui import QgsGui, QgsProcessingFavoriteAlgorithmManager
 from qgis.PyQt.QtCore import QObject, pyqtSlot
 
+from nextgis_toolbox.api.client import ToolboxApiClient
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
-    ToolsInterface,
-)
 from nextgis_toolbox.processing.utils import toolbox_algorithm_id
 from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
+)
+from nextgis_toolbox.tools.tools_interface import (
+    ToolsInterface,
 )
 
 

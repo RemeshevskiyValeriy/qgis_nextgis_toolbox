@@ -39,6 +39,7 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication, QThread, QUrl
 from qgis.PyQt.QtWidgets import QPushButton, QWidget
 
+from nextgis_toolbox.api.client import ToolboxApiClient
 from nextgis_toolbox.core.exceptions import (
     ToolboxError,
     ToolboxFileUploadError,
@@ -49,19 +50,6 @@ from nextgis_toolbox.core.exceptions import (
 )
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.core.utils import set_clipboard_data
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.tasks.models import (
-    TaskResult,
-    TaskStatus,
-    ToolboxTaskInformation,
-)
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    InputParameterType,
-    OutputParameterType,
-    ToolboxTool,
-    ToolInputParameter,
-    ToolOutputParameter,
-)
 from nextgis_toolbox.nextgis_toolbox_interface import (
     NextgisToolboxInterface,
 )
@@ -76,6 +64,18 @@ from nextgis_toolbox.processing.task_polling_policy import (
     TaskPollingPolicy,
 )
 from nextgis_toolbox.shared.filesystem import reveal_in_file_manager
+from nextgis_toolbox.tasks.models import (
+    TaskResult,
+    TaskStatus,
+    ToolboxTaskInformation,
+)
+from nextgis_toolbox.tools.models import (
+    InputParameterType,
+    OutputParameterType,
+    ToolboxTool,
+    ToolInputParameter,
+    ToolOutputParameter,
+)
 
 _PENDING_STATUSES = (
     TaskStatus.NEW,

@@ -48,7 +48,7 @@ from .common import AlgorithmDialogPatch
 from .dialog_runtime import DialogWidgetAccessor
 
 if TYPE_CHECKING:
-    from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
+    from nextgis_toolbox.api.client import ToolboxApiClient
 
 TOOLBOX_HELP_IMAGES_TASK_ATTRIBUTE = "_nextgis_toolbox_help_images_task"
 TOOLBOX_HELP_IMAGES_DIRECTORY_ATTRIBUTE = (

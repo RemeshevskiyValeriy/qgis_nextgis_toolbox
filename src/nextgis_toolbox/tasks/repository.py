@@ -14,56 +14,48 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
-from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Dict, Optional
 
 from qgis.core import QgsFeedback
-from qgis.PyQt.QtCore import QObject, pyqtSignal
 
-from nextgis_toolbox.nextgis_toolbox.tasks.models import ToolboxTaskInformation
-from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
+from nextgis_toolbox.core.logging import logger
+from nextgis_toolbox.tasks.api import TasksApi
+from nextgis_toolbox.tasks.models import (
+    ToolboxTaskInformation,
+)
 
-if TYPE_CHECKING:
-    from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
 
+class TasksRepository:
+    """Repository for Toolbox task models and result files."""
 
-class TasksInterface(QObject, metaclass=QObjectMetaClass):
-    """Abstract QObject interface for the tasks feature."""
+    def __init__(self, api: TasksApi) -> None:
+        """Initialize repository.
 
-    task_created = pyqtSignal(str)
+        :param api: Tasks API gateway.
+        """
+        self._api = api
 
     def api(self) -> "TasksApi":
-        """Return the API for managing tasks.
+        """Return the API gateway for managing tasks.
 
-        :returns: Tasks API instance.
+        :returns: Tasks API gateway.
         """
-        ...
+        return self._api
 
-    def set_api(self, tasks_api: "TasksApi") -> None:
-        """Set the API for managing tasks.
+    def set_api(self, api: TasksApi) -> None:
+        """Set the API gateway for managing tasks.
 
-        :param tasks_api: API for managing tasks.
+        :param api: Tasks API gateway.
         """
-        ...
+        self._api = api
 
-    @abstractmethod
-    def load(self) -> None:
-        """Load the tasks feature."""
-        ...
-
-    @abstractmethod
-    def unload(self) -> None:
-        """Unload the tasks feature and clear runtime state."""
-        ...
-
-    @abstractmethod
     def submit_task(
         self,
         tool_name: str,
         inputs: Dict[str, Any],
         emailing: bool = False,
     ) -> str:
-        """Submit Toolbox task.
+        """Submit task and return created task identifier.
 
         :param tool_name: Toolbox tool identifier.
         :param inputs: Tool input values.
@@ -71,19 +63,26 @@ class TasksInterface(QObject, metaclass=QObjectMetaClass):
 
         :returns: Created task identifier.
         """
-        ...
+        logger.debug(f"Submitting task for tool '{tool_name}'")
+        return self._api.submit_task(
+            tool_name=tool_name,
+            inputs=inputs,
+            emailing=emailing,
+        )
 
-    @abstractmethod
     def task_information(
         self,
         task_id: str,
         feedback: Optional[QgsFeedback] = None,
     ) -> ToolboxTaskInformation:
-        """Retrieve Toolbox task information.
+        """Retrieve a task model from the API.
 
         :param task_id: Toolbox task identifier.
         :param feedback: Optional feedback object for progress reporting.
 
         :returns: Toolbox task model.
         """
-        ...
+        logger.debug(f"Fetching task information for '{task_id}'")
+        return ToolboxTaskInformation.from_json(
+            self._api.task_information(task_id, feedback=feedback)
+        )

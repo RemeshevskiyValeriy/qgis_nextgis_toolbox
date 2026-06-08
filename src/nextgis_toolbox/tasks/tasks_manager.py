@@ -19,12 +19,12 @@ from typing import Any, Dict, Optional
 from qgis.core import QgsFeedback
 from qgis.PyQt.QtCore import QObject
 
-from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
-from nextgis_toolbox.nextgis_toolbox.tasks.models import (
+from nextgis_toolbox.tasks.api import TasksApi
+from nextgis_toolbox.tasks.models import (
     ToolboxTaskInformation,
 )
-from nextgis_toolbox.nextgis_toolbox.tasks.repository import TasksRepository
-from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
+from nextgis_toolbox.tasks.repository import TasksRepository
+from nextgis_toolbox.tasks.tasks_interface import (
     TasksInterface,
 )
 

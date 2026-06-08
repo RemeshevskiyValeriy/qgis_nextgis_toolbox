@@ -19,12 +19,12 @@ from typing import Any, Callable, Dict, Optional, cast
 
 from qgis.core import QgsProcessingAlgorithm, QgsProcessingContext
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    ToolInputParameter,
-    ToolOutputParameter,
-)
 from nextgis_toolbox.processing.parameters.registry import (
     ProcessingParameterRegistry,
+)
+from nextgis_toolbox.tools.models import (
+    ToolInputParameter,
+    ToolOutputParameter,
 )
 
 ParameterValueResolver = Callable[

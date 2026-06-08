@@ -26,8 +26,8 @@ from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import QBuffer, QByteArray, QIODevice, Qt
 from qgis.PyQt.QtGui import QImage
 
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolboxTool
+from nextgis_toolbox.api.client import ToolboxApiClient
+from nextgis_toolbox.tools.models import ToolboxTool
 
 HELP_IMAGE_LOADING_SOURCE = ":images/themes/default/downloading_svg.svg"
 

@@ -31,18 +31,18 @@ from nextgis_toolbox.ui.catalog_refresh_progress_manager import (
 if TYPE_CHECKING:
     from qgis.gui import QgisInterface
 
-    from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-    from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
-        TasksInterface,
-    )
-    from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
-        ToolsInterface,
-    )
+    from nextgis_toolbox.api.client import ToolboxApiClient
     from nextgis_toolbox.notifier.notifier_interface import (
         NotifierInterface,
     )
     from nextgis_toolbox.processing.nextgis_toolbox_processing_provider import (
         NextgisToolboxProcessingProvider,
+    )
+    from nextgis_toolbox.tasks.tasks_interface import (
+        TasksInterface,
+    )
+    from nextgis_toolbox.tools.tools_interface import (
+        ToolsInterface,
     )
 
 IS_DESKTOP_PLATFORM = QgsApplication.platform() == "desktop"

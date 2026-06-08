@@ -22,11 +22,6 @@ from qgis.PyQt.QtCore import pyqtSignal
 from nextgis_toolbox.core.constants import PACKAGE_NAME, PLUGIN_NAME
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.core.utils import PluginRuntimeProfiler
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    InputParameterType,
-    OutputParameterType,
-    ToolsManagerState,
-)
 from nextgis_toolbox.nextgis_toolbox_interface import NextgisToolboxInterface
 from nextgis_toolbox.processing.parameters import (
     ProcessingParameterRegistry,
@@ -46,6 +41,11 @@ from nextgis_toolbox.processing.ui.compat import IS_DESKTOP_PLATFORM
 from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
 )
+from nextgis_toolbox.tools.models import (
+    InputParameterType,
+    OutputParameterType,
+    ToolsManagerState,
+)
 
 if TYPE_CHECKING or IS_DESKTOP_PLATFORM:
     from qgis.PyQt.QtGui import QIcon
@@ -61,11 +61,11 @@ else:
 
 
 if TYPE_CHECKING:
-    from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
+    from nextgis_toolbox.tasks.tasks_interface import (
         TasksInterface,
     )
-    from nextgis_toolbox.nextgis_toolbox.tools.models import ToolboxTool
-    from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
+    from nextgis_toolbox.tools.models import ToolboxTool
+    from nextgis_toolbox.tools.tools_interface import (
         ToolsInterface,
     )
 

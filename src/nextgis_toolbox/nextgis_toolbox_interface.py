@@ -68,18 +68,18 @@ from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 from nextgis_toolbox.ui.icon import plugin_icon
 
 if TYPE_CHECKING:
-    from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-    from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
-        TasksInterface,
-    )
-    from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
-        ToolsInterface,
-    )
+    from nextgis_toolbox.api.client import ToolboxApiClient
     from nextgis_toolbox.notifier.notifier_interface import (
         NotifierInterface,
     )
     from nextgis_toolbox.processing.nextgis_toolbox_processing_provider import (
         NextgisToolboxProcessingProvider,
+    )
+    from nextgis_toolbox.tasks.tasks_interface import (
+        TasksInterface,
+    )
+    from nextgis_toolbox.tools.tools_interface import (
+        ToolsInterface,
     )
 
 

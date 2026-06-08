@@ -20,13 +20,13 @@ from qgis.core import QgsFeedback
 
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.core.utils import PluginRuntimeProfiler
-from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    ToolboxTag,
-    ToolboxTool,
-)
 from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     NextgisToolboxSettings,
+)
+from nextgis_toolbox.tools.api import ToolsApi
+from nextgis_toolbox.tools.models import (
+    ToolboxTag,
+    ToolboxTool,
 )
 
 

@@ -20,7 +20,6 @@ from processing import execAlgorithmDialog
 from qgis.PyQt.QtCore import QObject
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.processing.ui.algorithm_dialog_manager import (
     AlgorithmDialogManager,
 )
@@ -33,17 +32,18 @@ from nextgis_toolbox.processing.ui.menu_bar_actions_integrator import (
 from nextgis_toolbox.processing.ui.panel_actions_integrator import (
     PanelActionsIntegrator,
 )
+from nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.ui.icon import plugin_icon
 
 if TYPE_CHECKING:
     from qgis.gui import QgisInterface
 
-    from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-    from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
-        ToolsInterface,
-    )
+    from nextgis_toolbox.api.client import ToolboxApiClient
     from nextgis_toolbox.processing.nextgis_toolbox_processing_provider import (
         NextgisToolboxProcessingProvider,
+    )
+    from nextgis_toolbox.tools.tools_interface import (
+        ToolsInterface,
     )
 
 

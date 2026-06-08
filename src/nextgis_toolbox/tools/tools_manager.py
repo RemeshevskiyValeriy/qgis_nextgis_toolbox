@@ -25,21 +25,21 @@ from nextgis_toolbox.core.exceptions import (
     ToolboxToolNotFoundError,
 )
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
-from nextgis_toolbox.nextgis_toolbox.tools.load_tools_task import (
+from nextgis_toolbox.tools.api import ToolsApi
+from nextgis_toolbox.tools.load_tools_task import (
     LoadToolsTask,
 )
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
+from nextgis_toolbox.tools.models import (
     SortBy,
     ToolboxTag,
     ToolboxTool,
     ToolsManagerState,
 )
-from nextgis_toolbox.nextgis_toolbox.tools.repository import (
+from nextgis_toolbox.tools.repository import (
     TagsRepository,
     ToolsRepository,
 )
-from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
+from nextgis_toolbox.tools.tools_interface import (
     ToolsInterface,
 )
 

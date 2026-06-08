@@ -18,12 +18,6 @@ from typing import Any, Dict, List, Optional
 
 from qgis.core import QgsProcessingAlgorithm, QgsProcessingContext
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    InputParameterType,
-    OutputParameterType,
-    ToolInputParameter,
-    ToolOutputParameter,
-)
 from nextgis_toolbox.processing.parameters.common import (
     InputParameterAdapter,
     InputParameterRepresentation,
@@ -33,6 +27,12 @@ from nextgis_toolbox.processing.parameters.common import (
 )
 from nextgis_toolbox.processing.parameters.factories import (
     BuiltinParameterAdapterFactory,
+)
+from nextgis_toolbox.tools.models import (
+    InputParameterType,
+    OutputParameterType,
+    ToolInputParameter,
+    ToolOutputParameter,
 )
 
 

@@ -20,24 +20,14 @@ from qgis.core import Qgis, QgsApplication, QgsTaskManager
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import pyqtSlot
 
-from nextgis_toolbox.core.exceptions import ToolboxError
-from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.core.utils import assert_not_none
-from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
+from nextgis_toolbox.api.authentication import (
     ToolboxAuthentication,
     ToolboxTokenAuthentication,
 )
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.tasks.api import TasksApi
-from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
-    TasksInterface,
-)
-from nextgis_toolbox.nextgis_toolbox.tasks.tasks_manager import TasksManager
-from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
-from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
-    ToolsInterface,
-)
-from nextgis_toolbox.nextgis_toolbox.tools.tools_manager import ToolsManager
+from nextgis_toolbox.api.client import ToolboxApiClient
+from nextgis_toolbox.core.exceptions import ToolboxError
+from nextgis_toolbox.core.logging import logger
+from nextgis_toolbox.core.utils import assert_not_none
 from nextgis_toolbox.nextgis_toolbox_interface import (
     NextgisToolboxInterface,
 )
@@ -48,6 +38,16 @@ from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
     NextgisToolboxSettings,
 )
+from nextgis_toolbox.tasks.api import TasksApi
+from nextgis_toolbox.tasks.tasks_interface import (
+    TasksInterface,
+)
+from nextgis_toolbox.tasks.tasks_manager import TasksManager
+from nextgis_toolbox.tools.api import ToolsApi
+from nextgis_toolbox.tools.tools_interface import (
+    ToolsInterface,
+)
+from nextgis_toolbox.tools.tools_manager import ToolsManager
 from nextgis_toolbox.ui.plugin_ui_manager import PluginUiManager
 
 

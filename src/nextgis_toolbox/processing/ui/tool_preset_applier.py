@@ -21,7 +21,6 @@ from typing import Any, Dict, Optional, cast
 from qgis.core import QgsProcessingParameterDefinition
 
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolPreset
 from nextgis_toolbox.processing.parameters import (
     PresetPreparationContext,
 )
@@ -35,6 +34,7 @@ from nextgis_toolbox.processing.ui.compat import (
     AlgorithmDialog,
     ParametersPanel,
 )
+from nextgis_toolbox.tools.models import ToolPreset
 
 
 class ToolPresetApplier:

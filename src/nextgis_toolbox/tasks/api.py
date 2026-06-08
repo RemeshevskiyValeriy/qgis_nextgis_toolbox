@@ -20,8 +20,8 @@ from urllib.parse import urljoin
 from qgis.core import QgsFeedback
 from qgis.PyQt.QtCore import QUrl, QUrlQuery
 
+from nextgis_toolbox.api.client import ToolboxApiClient
 from nextgis_toolbox.core.exceptions import ToolboxTaskExecutionError
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
 
 
 class TasksApi:

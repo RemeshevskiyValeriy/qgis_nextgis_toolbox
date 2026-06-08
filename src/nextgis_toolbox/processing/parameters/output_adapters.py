@@ -22,14 +22,14 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QCoreApplication
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    OutputParameterType,
-    ToolOutputParameter,
-)
 from nextgis_toolbox.processing.parameters.common import (
     OutputParameterAdapter,
     OutputParameterRepresentation,
     apply_parameter_help,
+)
+from nextgis_toolbox.tools.models import (
+    OutputParameterType,
+    ToolOutputParameter,
 )
 
 if TYPE_CHECKING:

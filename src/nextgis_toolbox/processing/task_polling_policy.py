@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Optional
 
-from nextgis_toolbox.nextgis_toolbox.tasks.models import TaskStatus
+from nextgis_toolbox.tasks.models import TaskStatus
 
 RandomUniform = Callable[[float, float], float]
 

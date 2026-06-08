@@ -22,11 +22,11 @@ from nextgis_toolbox.core.compat import create_scaled_feedback
 from nextgis_toolbox.core.exceptions import ToolboxError
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.core.utils import PluginRuntimeProfiler
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
+from nextgis_toolbox.tools.models import (
     ToolboxTag,
     ToolboxTool,
 )
-from nextgis_toolbox.nextgis_toolbox.tools.repository import (
+from nextgis_toolbox.tools.repository import (
     TagsRepository,
     ToolsRepository,
 )

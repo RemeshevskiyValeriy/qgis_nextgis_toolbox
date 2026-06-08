@@ -26,13 +26,13 @@ from qgis.PyQt.QtWidgets import (
 )
 
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolPreset
 from nextgis_toolbox.processing.toolbox_algorithm import (
     ToolboxAlgorithm,
 )
 from nextgis_toolbox.processing.ui.compat import AlgorithmDialog
 from nextgis_toolbox.processing.ui.demo_button import DemoButton
 from nextgis_toolbox.processing.ui.tool_preset_applier import ToolPresetApplier
+from nextgis_toolbox.tools.models import ToolPreset
 
 from .common import AlgorithmDialogPatch
 from .dialog_runtime import DialogRuntimeController

@@ -33,15 +33,8 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 
+from nextgis_toolbox.api.client import ToolboxApiClient
 from nextgis_toolbox.core.utils import PluginRuntimeProfiler
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.tasks.tasks_interface import (
-    TasksInterface,
-)
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    OutputParameterType,
-    ToolboxTool,
-)
 from nextgis_toolbox.nextgis_toolbox_interface import (
     NextgisToolboxInterface,
 )
@@ -64,6 +57,13 @@ from nextgis_toolbox.processing.tool_content_formatter import (
 )
 from nextgis_toolbox.processing.toolbox_task_executor import (
     ToolboxTaskExecutor,
+)
+from nextgis_toolbox.tasks.tasks_interface import (
+    TasksInterface,
+)
+from nextgis_toolbox.tools.models import (
+    OutputParameterType,
+    ToolboxTool,
 )
 from nextgis_toolbox.ui.icon import plugin_icon
 

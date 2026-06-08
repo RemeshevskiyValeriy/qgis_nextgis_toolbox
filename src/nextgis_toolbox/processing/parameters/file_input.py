@@ -26,15 +26,15 @@ from qgis.core import (
 )
 
 from nextgis_toolbox.core.logging import logger
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
-    InputParameterType,
-    ToolInputParameter,
-)
 from nextgis_toolbox.processing.parameters.common import (
     InputParameterAdapter,
     InputParameterRepresentation,
     PresetPreparationContext,
     apply_parameter_help,
+)
+from nextgis_toolbox.tools.models import (
+    InputParameterType,
+    ToolInputParameter,
 )
 
 if TYPE_CHECKING:

@@ -16,7 +16,7 @@
 
 from typing import Any, Dict, List
 
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
+from nextgis_toolbox.api.client import ToolboxApiClient
 
 
 class ToolsApi:

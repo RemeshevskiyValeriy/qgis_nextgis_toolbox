@@ -20,17 +20,17 @@ from typing import TYPE_CHECKING, Optional
 from qgis.core import Qgis
 from qgis.PyQt.QtCore import QObject, QTimer, pyqtSlot
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.notifier.message_bar_notifier import MessageBarNotifier
+from nextgis_toolbox.tools.models import ToolsManagerState
 
 if TYPE_CHECKING:
     from qgis.gui import QgisInterface
 
-    from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
-        ToolsInterface,
-    )
     from nextgis_toolbox.notifier.notifier_interface import (
         NotifierInterface,
+    )
+    from nextgis_toolbox.tools.tools_interface import (
+        ToolsInterface,
     )
 
 from nextgis_toolbox.processing.ui.compat import IS_DESKTOP_PLATFORM

@@ -25,15 +25,15 @@ from qgis.PyQt.QtCore import QObject
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMainWindow, QMenu
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
+from nextgis_toolbox.processing.utils import toolbox_algorithm_id
+from nextgis_toolbox.tools.models import (
     ToolboxTag,
     ToolboxTool,
     ToolsManagerState,
 )
-from nextgis_toolbox.nextgis_toolbox.tools.tools_interface import (
+from nextgis_toolbox.tools.tools_interface import (
     ToolsInterface,
 )
-from nextgis_toolbox.processing.utils import toolbox_algorithm_id
 from nextgis_toolbox.ui.icon import (
     plugin_icon,
     qgis_icon,

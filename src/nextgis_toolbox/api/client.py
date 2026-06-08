@@ -40,6 +40,10 @@ from qgis.PyQt.QtNetwork import (
     QNetworkRequest,
 )
 
+from nextgis_toolbox.api.authentication import (
+    ToolboxAuthentication,
+)
+from nextgis_toolbox.api.cache_manager import CacheManager
 from nextgis_toolbox.core import utils
 from nextgis_toolbox.core.constants import DEFAULT_API_ENDPOINT
 from nextgis_toolbox.core.exceptions import (
@@ -55,10 +59,6 @@ from nextgis_toolbox.core.qt_network_error import (
     QtNetworkError,
 )
 from nextgis_toolbox.core.utils import assert_not_none
-from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
-    ToolboxAuthentication,
-)
-from nextgis_toolbox.nextgis_toolbox.sdk.cache_manager import CacheManager
 from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
 )

@@ -19,17 +19,17 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 from qgis.PyQt.QtCore import QObject, pyqtSignal, pyqtSlot
 
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
+from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
+from nextgis_toolbox.tools.models import (
     SortBy,
     ToolboxTag,
     ToolboxTool,
     ToolsManagerState,
 )
-from nextgis_toolbox.shared.qobject_metaclass import QObjectMetaClass
 
 if TYPE_CHECKING:
     from nextgis_toolbox.core.exceptions import ToolboxError
-    from nextgis_toolbox.nextgis_toolbox.tools.api import ToolsApi
+    from nextgis_toolbox.tools.api import ToolsApi
 
 
 class ToolsInterface(QObject, metaclass=QObjectMetaClass):

@@ -25,8 +25,8 @@ from qgis.core import (
     QgsProcessingParameterDefinition,
 )
 
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
-from nextgis_toolbox.nextgis_toolbox.tools.models import (
+from nextgis_toolbox.api.client import ToolboxApiClient
+from nextgis_toolbox.tools.models import (
     ToolInputParameter,
     ToolOutputParameter,
 )

@@ -72,6 +72,25 @@ def _create_plugin_ui_manager(manager_module, qgis_iface):
     )
 
 
+def test_processing_ui_compat_imports_algorithm_dialog_class(qgis_app) -> None:
+    del qgis_app
+
+    _prepare_plugin_import_path()
+    compat_module = importlib.import_module(
+        "nextgis_toolbox.processing.ui.compat"
+    )
+
+    if not compat_module.IS_DESKTOP_PLATFORM:
+        assert compat_module.AlgorithmDialog is object
+        return
+
+    assert compat_module.AlgorithmDialog is not object
+    assert compat_module.AlgorithmDialog.__name__ in (
+        "AlgorithmDialog",
+        "AlgorithmWidget",
+    )
+
+
 def test_progress_manager_first_loading_resets_progress_state(
     qgis_iface,
     qgis_app,

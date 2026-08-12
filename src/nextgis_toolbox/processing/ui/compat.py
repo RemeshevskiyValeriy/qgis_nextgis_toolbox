@@ -21,7 +21,12 @@ from qgis.core import QgsApplication
 IS_DESKTOP_PLATFORM = QgsApplication.platform() == "desktop"
 
 if TYPE_CHECKING or IS_DESKTOP_PLATFORM:
-    from processing.gui.AlgorithmDialog import AlgorithmDialog
+    try:
+        from processing.gui.AlgorithmDialog import AlgorithmDialog
+    except ModuleNotFoundError:
+        from processing.gui.algorithm_widget import (
+            AlgorithmWidget as AlgorithmDialog,
+        )
     from processing.gui.ParametersPanel import ParametersPanel
     from processing.gui.ProcessingToolbox import ProcessingToolbox
     from processing.gui.ProviderActions import (

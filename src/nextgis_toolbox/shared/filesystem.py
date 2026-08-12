@@ -40,19 +40,31 @@ def reveal_in_file_manager(file_path: Path) -> None:
 def _reveal_in_windows(path: Path) -> None:
     # Use Windows Explorer. '/select,' highlights the file in its folder.
     if path.is_dir():
-        subprocess.Popen(["explorer", str(path)], close_fds=True)
+        subprocess.Popen(  # nosec B603,B607
+            ["explorer", str(path)],
+            close_fds=True,
+        )
         return
 
-    subprocess.Popen(["explorer", "/select,", str(path)], close_fds=True)
+    subprocess.Popen(  # nosec B603,B607
+        ["explorer", "/select,", str(path)],
+        close_fds=True,
+    )
 
 
 def _reveal_in_macos(path: Path) -> None:
     # Use Finder. '-R' reveals the file.
     if path.is_dir():
-        subprocess.Popen(["/usr/bin/open", str(path)], close_fds=True)
+        subprocess.Popen(  # nosec B603
+            ["/usr/bin/open", str(path)],
+            close_fds=True,
+        )
         return
 
-    subprocess.Popen(["/usr/bin/open", "-R", str(path)], close_fds=True)
+    subprocess.Popen(  # nosec B603
+        ["/usr/bin/open", "-R", str(path)],
+        close_fds=True,
+    )
 
 
 def _reveal_in_linux(path: Path) -> None:
@@ -62,4 +74,7 @@ def _reveal_in_linux(path: Path) -> None:
 
 def _open_base_directory_with_xdg(path: Path) -> None:
     directory = path if path.is_dir() else path.parent
-    subprocess.Popen(["xdg-open", str(directory)], close_fds=True)
+    subprocess.Popen(  # nosec B603,B607
+        ["xdg-open", str(directory)],
+        close_fds=True,
+    )

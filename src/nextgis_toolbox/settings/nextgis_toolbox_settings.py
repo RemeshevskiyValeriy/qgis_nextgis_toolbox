@@ -28,7 +28,7 @@ from nextgis_toolbox.core.constants import (
 
 class AuthenticationType(str, Enum):
     NONE = "none"
-    TOKEN = "token"
+    TOKEN = "token"  # nosec B105
 
     def __str__(self) -> str:
         return self.value
@@ -39,7 +39,7 @@ class NextgisToolboxSettings:
 
     ENV_API_ENDPOINT = "NEXTGIS_TOOLBOX_ENDPOINT"
     ENV_AUTHENTICATION_TYPE = "NEXTGIS_TOOLBOX_AUTHENTICATION_TYPE"
-    ENV_AUTHENTICATION_TOKEN = "NEXTGIS_TOOLBOX_AUTHENTICATION_TOKEN"
+    ENV_AUTHENTICATION_TOKEN = "NEXTGIS_TOOLBOX_AUTHENTICATION_TOKEN"  # nosec B105
 
     KEY_API_ENDPOINT = f"{PLUGIN_SETTINGS_GROUP}/api/endpoint"
     KEY_AUTHENTICATION_TYPE = f"{PLUGIN_SETTINGS_GROUP}/authentication/type"

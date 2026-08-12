@@ -19,6 +19,11 @@ from unittest.mock import Mock
 
 import pytest
 
+from nextgis_toolbox.core.exceptions import (
+    ToolboxSortingError,
+    ToolboxTagNotFoundError,
+    ToolboxToolNotFoundError,
+)
 from nextgis_toolbox.tools.models import (
     SortBy,
     ToolboxTag,

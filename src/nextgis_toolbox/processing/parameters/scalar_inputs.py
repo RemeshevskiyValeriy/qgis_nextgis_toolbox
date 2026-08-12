@@ -29,9 +29,9 @@ from typing import (
 from qgis.core import (
     QgsProcessingAlgorithm,
     QgsProcessingContext,
+    QgsProcessingParameterBoolean,
     QgsProcessingParameterColor,
     QgsProcessingParameterCrs,
-    QgsProcessingParameterBoolean,
     QgsProcessingParameterDateTime,
     QgsProcessingParameterDefinition,
     QgsProcessingParameterExtent,

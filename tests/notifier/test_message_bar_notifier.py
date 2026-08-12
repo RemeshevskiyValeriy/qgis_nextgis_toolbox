@@ -55,9 +55,10 @@ def test_message_bar_notifier_queues_messages_from_worker_thread(
 
     assert worker.is_alive() is False
     assert len(items) == 1
-    assert items[0].property(MESSAGE_BAR_MESSAGE_ID_PROPERTY) == result[
-        "message_id"
-    ]
+    assert (
+        items[0].property(MESSAGE_BAR_MESSAGE_ID_PROPERTY)
+        == result["message_id"]
+    )
     assert [
         button.text() for button in items[0].findChildren(QPushButton)
     ] == ["Action"]

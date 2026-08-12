@@ -21,9 +21,6 @@ from unittest.mock import Mock
 
 import qgis.utils
 from qgis.core import QgsApplication
-from qgis.PyQt.QtWidgets import QAction, QMenu
-
-from nextgis_toolbox.tools.models import ToolsManagerState
 
 
 def _import_plugin_module():

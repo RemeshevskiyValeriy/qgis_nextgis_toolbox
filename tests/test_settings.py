@@ -60,9 +60,7 @@ def test_settings_disable_experimental_qgis_integration_by_default(
     del qgis_app
 
     settings = NextgisToolboxSettings()
-    QgsSettings().remove(
-        settings.KEY_IS_EXPERIMENTAL_QGIS_INTEGRATION_ENABLED
-    )
+    QgsSettings().remove(settings.KEY_IS_EXPERIMENTAL_QGIS_INTEGRATION_ENABLED)
 
     assert settings.is_experimental_qgis_integration_enabled is False
 

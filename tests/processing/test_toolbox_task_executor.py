@@ -29,25 +29,25 @@ from nextgis_toolbox.core.exceptions import (
     ToolboxTaskFailedError,
     ToolboxTaskTimeoutError,
 )
+from nextgis_toolbox.processing.task_polling_policy import (
+    TaskExecutionSnapshot,
+    TaskExecutionState,
+    TaskPollingPolicy,
+)
+from nextgis_toolbox.processing.toolbox_task_executor import (
+    ToolboxTaskExecutor,
+)
 from nextgis_toolbox.tasks.models import (
-    TaskStatus,
     TaskResult,
+    TaskStatus,
     ToolboxTaskInformation,
 )
 from nextgis_toolbox.tools.models import (
     InputParameterType,
     OutputParameterType,
+    ToolboxTool,
     ToolInputParameter,
     ToolOutputParameter,
-    ToolboxTool,
-)
-from nextgis_toolbox.processing.toolbox_task_executor import (
-    ToolboxTaskExecutor,
-)
-from nextgis_toolbox.processing.task_polling_policy import (
-    TaskExecutionSnapshot,
-    TaskExecutionState,
-    TaskPollingPolicy,
 )
 
 
@@ -735,8 +735,7 @@ def test_result_destination_path_infers_extension_for_placeholder_name() -> (
     )
 
     assert destination_path == (
-        executor._temporary_download_directory("task-1")
-        / "result_file.gpkg"
+        executor._temporary_download_directory("task-1") / "result_file.gpkg"
     )
 
 
@@ -769,13 +768,13 @@ def test_result_destination_path_treats_zip_alias_as_zip_archive() -> None:
     )
 
     assert destination_path == (
-        executor._temporary_download_directory("task-1")
-        / "geometry.zip"
+        executor._temporary_download_directory("task-1") / "geometry.zip"
     )
 
 
-def test_result_destination_path_treats_russian_zip_alias_as_zip_archive(
-    ) -> None:
+def test_result_destination_path_treats_russian_zip_alias_as_zip_archive() -> (
+    None
+):
     tool = make_tool(
         make_parameter("source", "string"),
         outputs=[
@@ -804,13 +803,13 @@ def test_result_destination_path_treats_russian_zip_alias_as_zip_archive(
     )
 
     assert destination_path == (
-        executor._temporary_download_directory("task-1")
-        / "geometry.zip"
+        executor._temporary_download_directory("task-1") / "geometry.zip"
     )
 
 
-def test_result_destination_path_treats_english_zip_archive_alias_as_zip(
-    ) -> None:
+def test_result_destination_path_treats_english_zip_archive_alias_as_zip() -> (
+    None
+):
     tool = make_tool(
         make_parameter("source", "string"),
         outputs=[
@@ -839,8 +838,7 @@ def test_result_destination_path_treats_english_zip_archive_alias_as_zip(
     )
 
     assert destination_path == (
-        executor._temporary_download_directory("task-1")
-        / "geometry.zip"
+        executor._temporary_download_directory("task-1") / "geometry.zip"
     )
 
 
@@ -1093,11 +1091,10 @@ def test_execute_shows_single_warning_when_outputs_are_not_added(
     assert len(notifier.messages) == 1
     assert notifier.messages[0]["duration"] == 0
     assert notifier.messages[0]["level"] == Qgis.MessageLevel.Warning
-    assert "Downloaded 1 output file(s)." in notifier.messages[0][
-        "message"
-    ]
-    assert "Some output files were not added to the project" in (
-        notifier.messages[0]["message"]
+    assert "Downloaded 1 output file(s)." in notifier.messages[0]["message"]
+    assert (
+        "Some output files were not added to the project"
+        in (notifier.messages[0]["message"])
     )
     assert any(
         "Some output files were not added to the project" in info

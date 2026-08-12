@@ -147,7 +147,9 @@ def test_cache_manager_removes_stale_metadata_when_blob_is_missing(
     )
     stored_payload = json.loads(cache_file.read_text(encoding="utf-8"))
     blob_path = stored_payload["entries"]["help-images/demo.png"]["blob_path"]
-    (tmp_path / "NGToolbox" / "cache" / "default" / "cache-id" / blob_path).unlink()
+    (
+        tmp_path / "NGToolbox" / "cache" / "default" / "cache-id" / blob_path
+    ).unlink()
 
     assert manager.get_path("help-images/demo.png") is None
 

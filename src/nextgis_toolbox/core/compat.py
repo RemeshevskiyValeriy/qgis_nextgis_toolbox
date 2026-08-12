@@ -169,7 +169,7 @@ else:
 if Qgis.versionInt() >= QGIS_3_38 or TYPE_CHECKING:
     FieldType = QMetaType.Type
 else:
-    FieldType = QVariant.Type
+    FieldType = getattr(QVariant, "Type", QVariant)
     FieldType.QString = QVariant.Type.String
     FieldType.QString.is_monkey_patched = True
     FieldType.QDate = QVariant.Type.Date

@@ -22,7 +22,6 @@ from unittest.mock import Mock
 import qgis.utils
 from qgis.core import QgsApplication
 
-from nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.processing.parameters import (
     create_default_parameter_registry,
 )
@@ -30,6 +29,7 @@ from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
     NextgisToolboxSettings,
 )
+from nextgis_toolbox.tools.models import ToolsManagerState
 
 
 def _import_processing_modules():
@@ -72,9 +72,7 @@ def _create_algorithm():
     algorithm_module = importlib.import_module(
         "nextgis_toolbox.processing.toolbox_algorithm"
     )
-    models_module = importlib.import_module(
-        "nextgis_toolbox.tools.models"
-    )
+    models_module = importlib.import_module("nextgis_toolbox.tools.models")
 
     tool = models_module.ToolboxTool(
         alias="Demo Tool",

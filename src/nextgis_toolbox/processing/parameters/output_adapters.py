@@ -24,7 +24,6 @@ from qgis.core import (
 )
 from qgis.PyQt.QtCore import QCoreApplication
 
-from nextgis_toolbox.core.compat import ProcessingSourceType
 from nextgis_toolbox.processing.parameters.common import (
     OutputParameterAdapter,
     OutputParameterRepresentation,
@@ -117,9 +116,9 @@ class FileOutputAdapter(OutputParameterAdapter):
         if semantic is not None:
             style_type = None
             if semantic.kind == "style":
-                style_type = str(
-                    semantic.constraints.get("style_type") or ""
-                ) or None
+                style_type = (
+                    str(semantic.constraints.get("style_type") or "") or None
+                )
             file_filter = build_semantic_file_filter(
                 semantic.constraints,
                 style_type=style_type,

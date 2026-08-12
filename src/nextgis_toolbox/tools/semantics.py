@@ -122,9 +122,7 @@ class ToolSemanticsCatalog:
         resource_path: Optional[Path] = None,
     ) -> None:
         self._overlays = overlays
-        self._resource_path = (
-            resource_path or self.default_resource_path()
-        )
+        self._resource_path = resource_path or self.default_resource_path()
 
     @staticmethod
     def default_resource_path() -> Path:
@@ -196,7 +194,5 @@ class ToolSemanticsCatalog:
             self._overlays = {}
             return self._overlays
 
-        self._overlays = json.loads(
-            self._resource_path.read_text("utf-8")
-        )
+        self._overlays = json.loads(self._resource_path.read_text("utf-8"))
         return self._overlays

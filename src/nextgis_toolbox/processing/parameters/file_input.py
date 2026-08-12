@@ -27,7 +27,6 @@ from qgis.core import (
     QgsProcessingParameterRasterLayer,
 )
 
-from nextgis_toolbox.core.compat import ProcessingSourceType
 from nextgis_toolbox.core.logging import logger
 from nextgis_toolbox.processing.parameters.common import (
     InputParameterAdapter,

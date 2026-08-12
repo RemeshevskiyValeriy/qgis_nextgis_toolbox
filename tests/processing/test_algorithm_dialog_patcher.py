@@ -27,8 +27,8 @@ from qgis.PyQt.QtTest import QTest
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QDialogButtonBox,
-    QMessageBox,
     QMenu,
+    QMessageBox,
     QProgressBar,
     QPushButton,
     QSizePolicy,
@@ -39,13 +39,12 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
-from nextgis_toolbox.processing.parameters.controls import (
-    ADD_RESULTS_TO_PROJECT_PARAMETER_NAME,
-)
-
 from nextgis_toolbox.api.client import ToolboxApiClient
 from nextgis_toolbox.processing.parameters import (
     create_default_parameter_registry,
+)
+from nextgis_toolbox.processing.parameters.controls import (
+    ADD_RESULTS_TO_PROJECT_PARAMETER_NAME,
 )
 
 
@@ -130,9 +129,7 @@ def _parameter(
     required: bool = True,
     choices=None,
 ):
-    models_module = importlib.import_module(
-        "nextgis_toolbox.tools.models"
-    )
+    models_module = importlib.import_module("nextgis_toolbox.tools.models")
     return models_module.ToolInputParameter(
         name=name,
         parameter_type=models_module.InputParameterType.from_json(
@@ -151,9 +148,7 @@ def _output_parameter(
     *,
     required: bool = True,
 ):
-    models_module = importlib.import_module(
-        "nextgis_toolbox.tools.models"
-    )
+    models_module = importlib.import_module("nextgis_toolbox.tools.models")
     return models_module.ToolOutputParameter(
         name=name,
         parameter_type=models_module.OutputParameterType.from_json(
@@ -178,9 +173,7 @@ def _create_algorithm(
     algorithm_module = importlib.import_module(
         "nextgis_toolbox.processing.nextgis_toolbox_algorithm"
     )
-    models_module = importlib.import_module(
-        "nextgis_toolbox.tools.models"
-    )
+    models_module = importlib.import_module("nextgis_toolbox.tools.models")
 
     presets = []
     if with_preset:
@@ -260,9 +253,7 @@ class FakeAlgorithmDialog(QWidget):
         self._cancel_button.setObjectName("buttonCancel")
         self._cancel_button.clicked.connect(self._record_cancel_click)
         self._parameters = None
-        self._reorder_action_buttons_on_reset = (
-            reorder_action_buttons_on_reset
-        )
+        self._reorder_action_buttons_on_reset = reorder_action_buttons_on_reset
 
         parameters_tab = QWidget(self)
         parameters_layout = QVBoxLayout(parameters_tab)
@@ -600,7 +591,7 @@ def test_demo_button_clicks_are_not_swallowed_while_loading(
     demo_button.resize(120, 32)
     demo_button.show()
 
-    applied_markers: List[str] = []
+    applied_markers = []
     demo_button.apply_preset.connect(lambda: applied_markers.append("x"))
 
     demo_button.start()
@@ -688,9 +679,11 @@ def test_dialog_runtime_expands_existing_message_bar_items(qgis_app) -> None:
         patches=(
             dialog_runtime_module.DialogRuntimePatch(
                 runtime_controller=dialog_runtime_module.DialogRuntimeController(
-                    notifier_factory=lambda message_bar: notifier_module.MessageBarNotifier(
-                        message_bar,
-                        expanding=True,
+                    notifier_factory=lambda message_bar: (
+                        notifier_module.MessageBarNotifier(
+                            message_bar,
+                            expanding=True,
+                        )
                     )
                 )
             ),
@@ -730,9 +723,11 @@ def test_dialog_runtime_expands_notifier_created_message_items(
         patches=(
             dialog_runtime_module.DialogRuntimePatch(
                 runtime_controller=dialog_runtime_module.DialogRuntimeController(
-                    notifier_factory=lambda message_bar: notifier_module.MessageBarNotifier(
-                        message_bar,
-                        expanding=True,
+                    notifier_factory=lambda message_bar: (
+                        notifier_module.MessageBarNotifier(
+                            message_bar,
+                            expanding=True,
+                        )
                     )
                 )
             ),
@@ -901,7 +896,9 @@ def test_advanced_button_patch_hides_toolbox_sdk_action(qgis_app) -> None:
 
     patch.apply(dialog, algorithm)
 
-    action_texts = [action.text() for action in menu.actions() if action.text()]
+    action_texts = [
+        action.text() for action in menu.actions() if action.text()
+    ]
 
     assert "Open Tool in Browser" in action_texts
     assert "Copy as Toolbox SDK code" not in action_texts
@@ -972,7 +969,7 @@ def test_tool_preset_applier_downloads_and_converts_values(
             "connection": {
                 "url": "https://demo.nextgis.com",
                 "login": "demo-user",
-                "password": "demo-pass",
+                "password": "demo-pass",  # pragma: allowlist secret
             },
         },
     )
@@ -1070,9 +1067,9 @@ def test_tool_preset_applier_enables_add_to_project_control(qgis_app) -> None:
 
     assert applied is True
     assert (
-        dialog.mainWidget().wrappers[
-            ADD_RESULTS_TO_PROJECT_PARAMETER_NAME
-        ].value
+        dialog.mainWidget()
+        .wrappers[ADD_RESULTS_TO_PROJECT_PARAMETER_NAME]
+        .value
         is True
     )
 
@@ -1666,10 +1663,12 @@ def test_wrap_help_image_links_uses_original_image_url(qgis_app) -> None:
     )
     rendered_source = "data:image/png;base64,Zm9v"
 
-    wrapped_html = help_patches_module.HelpImageTaskSupport().wrap_help_image_links(
-        f'<p><img src="{rendered_source}" style="display:block;"></p>',
-        (help_image,),
-        {help_image.placeholder: rendered_source},
+    wrapped_html = (
+        help_patches_module.HelpImageTaskSupport().wrap_help_image_links(
+            f'<p><img src="{rendered_source}" style="display:block;"></p>',
+            (help_image,),
+            {help_image.placeholder: rendered_source},
+        )
     )
 
     assert '<a href="https://example.com/help.png"><img' in wrapped_html

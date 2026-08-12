@@ -312,9 +312,7 @@ def test_dialog_manager_retries_until_dialog_is_found(
     matching_algorithm.name.return_value = "demo-tool"
     matching_dialog = Mock()
     matching_dialog.algorithm.return_value = matching_algorithm
-    manager._find_algorithm_dialogs = Mock(
-        side_effect=[[], [matching_dialog]]
-    )
+    manager._find_algorithm_dialogs = Mock(side_effect=[[], [matching_dialog]])
 
     manager.on_algorithm_instance_created(matching_algorithm)
 

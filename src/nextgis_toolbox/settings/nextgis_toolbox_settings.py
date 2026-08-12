@@ -49,8 +49,7 @@ class NextgisToolboxSettings:
         f"{PLUGIN_SETTINGS_GROUP}/other/debugLogsEnabled"
     )
     KEY_IS_EXPERIMENTAL_QGIS_INTEGRATION_ENABLED = (
-        f"{PLUGIN_SETTINGS_GROUP}/other/"
-        "isExperimentalQgisIntegrationEnabled"
+        f"{PLUGIN_SETTINGS_GROUP}/other/isExperimentalQgisIntegrationEnabled"
     )
     KEY_IS_DEVELOPER_MODE = f"{PLUGIN_SETTINGS_GROUP}/other/isDeveloperMode"
     KEY_DID_LAST_LAUNCH_FAIL = (

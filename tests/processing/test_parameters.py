@@ -27,11 +27,20 @@ from qgis.core import (
     QgsProcessingParameterFile,
     QgsProcessingParameterFileDestination,
     QgsProcessingParameterRasterDestination,
-    QgsProcessingParameterRasterLayer,
     QgsProcessingParameterString,
     QgsProcessingParameterVectorDestination,
 )
 
+from nextgis_toolbox.processing.parameters import (
+    create_default_parameter_registry,
+)
+from nextgis_toolbox.processing.parameters.common import (
+    apply_parameter_help,
+)
+from nextgis_toolbox.processing.parameters.resolvers import (
+    AlgorithmOutputDestinationResolver,
+    AlgorithmParameterResolver,
+)
 from nextgis_toolbox.tools.models import (
     InputParameterType,
     OutputParameterType,
@@ -43,19 +52,11 @@ from nextgis_toolbox.tools.semantics import (
     ToolOutputSemantic,
     ToolSemanticRelation,
 )
-from nextgis_toolbox.processing.parameters import (
-    create_default_parameter_registry,
-)
-from nextgis_toolbox.processing.parameters.common import (
-    apply_parameter_help,
-)
-from nextgis_toolbox.processing.parameters.resolvers import (
-    AlgorithmOutputDestinationResolver,
-    AlgorithmParameterResolver,
-)
 
 
-def test_input_parameter_label_prefers_alias_then_description_then_name() -> None:
+def test_input_parameter_label_prefers_alias_then_description_then_name() -> (
+    None
+):
     aliased_parameter = ToolInputParameter(
         name="source",
         parameter_type=InputParameterType.STRING,
@@ -135,9 +136,7 @@ def test_ngw_connection_representation_expands_into_three_fields(
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_input_representation(
-        parameter
-    )
+    representation = parameter_registry.create_input_representation(parameter)
 
     assert [item.name() for item in representation.parameters] == [
         "connection_url",
@@ -192,7 +191,7 @@ def test_ngw_connection_runtime_resolution_collects_split_fields(
     values = {
         "connection_url": "https://demo.nextgis.com",
         "connection_login": "demo-user",
-        "connection_password": "demo-pass",
+        "connection_password": "demo-pass",  # pragma: allowlist secret
     }
     algorithm = Mock()
     algorithm.parameterAsString.side_effect = (
@@ -210,7 +209,7 @@ def test_ngw_connection_runtime_resolution_collects_split_fields(
     assert resolved_value == {
         "url": "https://demo.nextgis.com",
         "login": "demo-user",
-        "password": "demo-pass",
+        "password": "demo-pass",  # pragma: allowlist secret
     }
 
 
@@ -228,9 +227,7 @@ def test_file_output_representation_uses_destination_parameter(
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_output_representation(
-        parameter
-    )
+    representation = parameter_registry.create_output_representation(parameter)
 
     assert representation.outputs == []
     assert [item.name() for item in representation.parameters] == ["result"]
@@ -245,9 +242,7 @@ def test_algorithm_exposes_file_output_as_destination_parameter(
     algorithm_module = importlib.import_module(
         "nextgis_toolbox.processing.toolbox_algorithm"
     )
-    models_module = importlib.import_module(
-        "nextgis_toolbox.tools.models"
-    )
+    models_module = importlib.import_module("nextgis_toolbox.tools.models")
     output_parameter = ToolOutputParameter(
         name="result",
         parameter_type=OutputParameterType.FILE,
@@ -360,9 +355,7 @@ def test_semantic_style_input_uses_qml_file_filter(qgis_app) -> None:
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_input_representation(
-        parameter
-    )
+    representation = parameter_registry.create_input_representation(parameter)
 
     assert isinstance(representation.parameters[0], QgsProcessingParameterFile)
     assert "*.qml" in representation.parameters[0].fileFilter()
@@ -391,9 +384,7 @@ def test_semantic_vector_input_uses_feature_source_parameter(
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_input_representation(
-        parameter
-    )
+    representation = parameter_registry.create_input_representation(parameter)
 
     assert isinstance(
         representation.parameters[0],
@@ -463,15 +454,12 @@ def test_semantic_field_input_uses_field_parameter(qgis_app) -> None:
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_input_representation(
-        parameter
-    )
+    representation = parameter_registry.create_input_representation(parameter)
 
-    assert isinstance(representation.parameters[0], QgsProcessingParameterField)
-    assert (
-        representation.parameters[0].parentLayerParameterName()
-        == "source"
+    assert isinstance(
+        representation.parameters[0], QgsProcessingParameterField
     )
+    assert representation.parameters[0].parentLayerParameterName() == "source"
 
 
 def test_semantic_crs_input_uses_crs_parameter(qgis_app) -> None:
@@ -488,9 +476,7 @@ def test_semantic_crs_input_uses_crs_parameter(qgis_app) -> None:
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_input_representation(
-        parameter
-    )
+    representation = parameter_registry.create_input_representation(parameter)
 
     assert isinstance(representation.parameters[0], QgsProcessingParameterCrs)
 
@@ -509,9 +495,7 @@ def test_semantic_color_input_uses_color_parameter(qgis_app) -> None:
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_input_representation(
-        parameter
-    )
+    representation = parameter_registry.create_input_representation(parameter)
 
     assert isinstance(
         representation.parameters[0],
@@ -541,9 +525,7 @@ def test_semantic_vector_output_uses_vector_destination_parameter(
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_output_representation(
-        parameter
-    )
+    representation = parameter_registry.create_output_representation(parameter)
 
     assert isinstance(
         representation.parameters[0],
@@ -572,9 +554,7 @@ def test_semantic_raster_output_uses_raster_destination_parameter(
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_output_representation(
-        parameter
-    )
+    representation = parameter_registry.create_output_representation(parameter)
 
     assert isinstance(
         representation.parameters[0],
@@ -601,9 +581,7 @@ def test_semantic_table_output_uses_file_filter(qgis_app) -> None:
     )
     parameter_registry = create_default_parameter_registry()
 
-    representation = parameter_registry.create_output_representation(
-        parameter
-    )
+    representation = parameter_registry.create_output_representation(parameter)
 
     assert isinstance(
         representation.parameters[0],

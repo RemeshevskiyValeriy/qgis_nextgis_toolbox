@@ -47,12 +47,8 @@ class ToolsRepository:
         """
         self._api = api
         if is_semantic_enrichment_enabled is None:
-            is_semantic_enrichment_enabled = (
-                NextgisToolboxSettings().is_experimental_qgis_integration_enabled
-            )
-        self._is_semantic_enrichment_enabled = (
-            is_semantic_enrichment_enabled
-        )
+            is_semantic_enrichment_enabled = NextgisToolboxSettings().is_experimental_qgis_integration_enabled
+        self._is_semantic_enrichment_enabled = is_semantic_enrichment_enabled
         self._semantics_catalog = semantics_catalog or ToolSemanticsCatalog()
 
     @property
@@ -152,9 +148,7 @@ class ToolsRepository:
             merged_tool_data = self._semantics_catalog.enrich_tool_data(
                 merged_tool_data
             )
-        return ToolboxTool.from_json(
-            merged_tool_data
-        )
+        return ToolboxTool.from_json(merged_tool_data)
 
     def _fetch_tool_details(self, tool_name: str) -> Dict[str, Any]:
         logger.debug(f"Fetching tool details: {tool_name}")

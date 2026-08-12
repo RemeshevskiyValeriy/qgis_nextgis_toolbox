@@ -1,3 +1,19 @@
+# NextGIS Toolbox
+# Copyright (C) 2026  NextGIS
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or any
+# later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, see <https://www.gnu.org/licenses/>.
+
 from typing import cast
 from unittest.mock import Mock
 
@@ -5,7 +21,6 @@ from qgis.PyQt.QtCore import QPoint, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QMenu, QToolBar, QToolButton, QWidget
 
-from nextgis_toolbox.tools.models import ToolsManagerState
 from nextgis_toolbox.nextgis_toolbox_interface import (
     NextgisToolboxInterface,
 )
@@ -13,6 +28,7 @@ from nextgis_toolbox.processing.ui.compat import ProcessingToolbox
 from nextgis_toolbox.processing.ui.panel_actions_integrator import (
     PanelActionsIntegrator,
 )
+from nextgis_toolbox.tools.models import ToolsManagerState
 
 
 class FakeProcessingToolbox(QWidget):
@@ -162,9 +178,9 @@ def test_sync_provider_actions_reuses_existing_button(
         "provideraction_nextgis_toolbox",
         "provideraction_buffer",
     ]
-    assert toolbar.findChildren(QToolButton, "provideraction_nextgis_toolbox") == [
-        first_button
-    ]
+    assert toolbar.findChildren(
+        QToolButton, "provideraction_nextgis_toolbox"
+    ) == [first_button]
     assert second_button.menu() is not None
     assert second_button.menu().actions()[2].isEnabled() is False
 

@@ -16,13 +16,14 @@
 
 from unittest.mock import Mock
 
-from nextgis_toolbox.tools.models import ToolboxTool
 from nextgis_toolbox.processing.nextgis_toolbox_favorite_sync import (
     NextgisToolboxFavoriteSync,
 )
+
 from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
 )
+from nextgis_toolbox.tools.models import ToolboxTool
 
 
 class FakeFavoriteManager:

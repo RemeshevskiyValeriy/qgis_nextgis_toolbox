@@ -1,20 +1,20 @@
 [project]
 name = "nextgis_toolbox"
-version = "1.0.0"
+version = "1.1.0"
 readme = "README.md"
 license = { file = "LICENSE" }
 
 
-[tool.qgspb.package-data]
+[tool.qgsmith.package-data]
 "nextgis_toolbox.resources" = ["components.json", "tool_semantics.json"]
 "nextgis_toolbox.resources.icons" = ["*.svg"]
 "nextgis_toolbox.resources.icons.material" = ["*.svg"]
 
-[tool.qgspb.forms]
+[tool.qgsmith.forms]
 ui-files = ["src/nextgis_toolbox/ui/*.ui"]
 compile = false
 
-# [tool.qgspb.translations]
+# [tool.qgsmith.translations]
 # ts-files = ["src/nextgis_toolbox/i18n/*.ts"]
 # no-obsolete = true
 
@@ -89,5 +89,5 @@ extend-ignore-names = [
 ]
 
 [tool.bandit]
-exclude_dirs = ["tests"]
+exclude_dirs = ["tests", "setup.py"]
 skips = ["B101", "B105", "B306", "B404", "B602", "B603", "B607"]

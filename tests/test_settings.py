@@ -15,10 +15,14 @@
 # with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from qgis.core import QgsSettings
+from qgis.PyQt.QtWidgets import QFormLayout
 
 from nextgis_toolbox.settings.nextgis_toolbox_settings import (
     AuthenticationType,
     NextgisToolboxSettings,
+)
+from nextgis_toolbox.settings.nextgis_toolbox_settings_page import (
+    NextgisToolboxSettingsPage,
 )
 
 
@@ -70,3 +74,33 @@ def test_settings_persist_experimental_qgis_integration(qgis_app) -> None:
     settings.is_experimental_qgis_integration_enabled = True
 
     assert settings.is_experimental_qgis_integration_enabled is True
+
+
+def test_settings_page_shows_api_key_documentation_link(qgis_app) -> None:
+    del qgis_app
+
+    settings_page = NextgisToolboxSettingsPage()
+
+    try:
+        documentation_label = (
+            settings_page._widget.toolbox_token_documentation_label
+        )
+        form_layout = settings_page._widget.formLayout
+
+        assert hasattr(
+            settings_page._widget, "nextgis_toolbox_token_line_edit"
+        )
+        assert (
+            form_layout.itemAt(
+                2,
+                QFormLayout.ItemRole.FieldRole,
+            ).widget()
+            is documentation_label
+        )
+        assert documentation_label.openExternalLinks() is True
+        assert (
+            "https://docs.nextgis.com/docs_ngqgis/source/toolbox.html#api-key"
+            in documentation_label.text()
+        )
+    finally:
+        settings_page.deleteLater()

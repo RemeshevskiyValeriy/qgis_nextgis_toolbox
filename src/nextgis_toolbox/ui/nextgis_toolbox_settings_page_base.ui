@@ -78,6 +78,25 @@
         </property>
        </widget>
       </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="toolbox_token_documentation_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>&lt;a href=&quot;https://docs.nextgis.com/docs_ngqgis/source/toolbox.html#api-key&quot;&gt;How to get an API key&lt;/a&gt;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

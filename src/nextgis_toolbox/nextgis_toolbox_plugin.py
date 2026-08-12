@@ -290,8 +290,16 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
         authentication_changed = self._is_authentication_changed(
             settings.authentication_type, settings.authentication_token
         )
+        semantic_integration_changed = (
+            self.tools_manager.is_semantic_enrichment_enabled
+            != settings.is_experimental_qgis_integration_enabled
+        )
 
-        if not endpoint_changed and not authentication_changed:
+        if (
+            not endpoint_changed
+            and not authentication_changed
+            and not semantic_integration_changed
+        ):
             logger.debug("Connection settings is unchanged")
             return
 
@@ -304,4 +312,13 @@ class NextgisToolboxPlugin(NextgisToolboxInterface):
             self._api_client.authentication = self._create_authentication(
                 settings.authentication_type, settings.authentication_token
             )
-        self.tools_manager.refresh(clear_cache=True)
+
+        if semantic_integration_changed:
+            logger.debug("Experimental QGIS integration setting updated")
+            self.tools_manager.set_semantic_enrichment_enabled(
+                settings.is_experimental_qgis_integration_enabled
+            )
+
+        self.tools_manager.refresh(
+            clear_cache=endpoint_changed or authentication_changed,
+        )

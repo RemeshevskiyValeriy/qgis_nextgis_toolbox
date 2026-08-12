@@ -20,6 +20,10 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 from nextgis_toolbox.core.utils import nextgis_domain
+from nextgis_toolbox.tools.semantics import (
+    ToolInputSemantic,
+    ToolOutputSemantic,
+)
 
 
 class SortBy(str, Enum):
@@ -215,6 +219,7 @@ class ToolInputParameter:
     description: Optional[str]
     required: bool
     choices: Optional[List[Dict[str, Any]]]
+    input_semantic: Optional[ToolInputSemantic] = None
 
     @property
     def label(self) -> str:
@@ -230,11 +235,16 @@ class ToolInputParameter:
             description=data.get("description"),
             required=data.get("required", False),
             choices=data.get("choices"),
+            input_semantic=(
+                ToolInputSemantic.from_json(data["input_semantic"])
+                if isinstance(data.get("input_semantic"), dict)
+                else None
+            ),
         )
 
     def to_json(self) -> Dict[str, Any]:
         """Serialize the parameter model to a JSON-compatible payload."""
-        return {
+        payload = {
             "name": self.name,
             "type": self.parameter_type,
             "alias": self.alias,
@@ -242,6 +252,10 @@ class ToolInputParameter:
             "required": self.required,
             "choices": self.choices,
         }
+        if self.input_semantic is not None:
+            payload["input_semantic"] = self.input_semantic.to_json()
+
+        return payload
 
 
 @dataclass(frozen=True)
@@ -253,6 +267,7 @@ class ToolOutputParameter:
     alias: Optional[str]
     description: Optional[str]
     required: bool
+    output_semantic: Optional[ToolOutputSemantic] = None
 
     @property
     def label(self) -> str:
@@ -267,17 +282,26 @@ class ToolOutputParameter:
             alias=data.get("alias"),
             description=data.get("description"),
             required=data.get("required", False),
+            output_semantic=(
+                ToolOutputSemantic.from_json(data["output_semantic"])
+                if isinstance(data.get("output_semantic"), dict)
+                else None
+            ),
         )
 
     def to_json(self) -> Dict[str, Any]:
         """Serialize the parameter model to a JSON-compatible payload."""
-        return {
+        payload = {
             "name": self.name,
             "type": self.parameter_type.to_json(),
             "alias": self.alias,
             "description": self.description,
             "required": self.required,
         }
+        if self.output_semantic is not None:
+            payload["output_semantic"] = self.output_semantic.to_json()
+
+        return payload
 
 
 @dataclass(frozen=True)

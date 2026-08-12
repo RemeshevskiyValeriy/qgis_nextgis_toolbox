@@ -28,17 +28,39 @@ from nextgis_toolbox.tools.models import (
     ToolboxTag,
     ToolboxTool,
 )
+from nextgis_toolbox.tools.semantics import ToolSemanticsCatalog
 
 
 class ToolsRepository:
     """Repository for Toolbox tool models."""
 
-    def __init__(self, api: ToolsApi) -> None:
+    def __init__(
+        self,
+        api: ToolsApi,
+        *,
+        is_semantic_enrichment_enabled: Optional[bool] = None,
+        semantics_catalog: Optional[ToolSemanticsCatalog] = None,
+    ) -> None:
         """Initialize repository.
 
         :param api: Tools API gateway.
         """
         self._api = api
+        if is_semantic_enrichment_enabled is None:
+            is_semantic_enrichment_enabled = (
+                NextgisToolboxSettings().is_experimental_qgis_integration_enabled
+            )
+        self._is_semantic_enrichment_enabled = (
+            is_semantic_enrichment_enabled
+        )
+        self._semantics_catalog = semantics_catalog or ToolSemanticsCatalog()
+
+    @property
+    def is_semantic_enrichment_enabled(self) -> bool:
+        return self._is_semantic_enrichment_enabled
+
+    def set_semantic_enrichment_enabled(self, value: bool) -> None:
+        self._is_semantic_enrichment_enabled = value
 
     def set_api(self, api: ToolsApi) -> None:
         """Set API gateway instance.
@@ -121,12 +143,17 @@ class ToolsRepository:
         tool_name = tool_data["name"]
         tool_details = self._fetch_tool_details(tool_name)
         tool_presets = self._fetch_tool_presets(tool_name)
-        return ToolboxTool.from_json(
-            self._merge_tool_data(
-                tool_data,
-                tool_details,
-                tool_presets,
+        merged_tool_data = self._merge_tool_data(
+            tool_data,
+            tool_details,
+            tool_presets,
+        )
+        if self._is_semantic_enrichment_enabled:
+            merged_tool_data = self._semantics_catalog.enrich_tool_data(
+                merged_tool_data
             )
+        return ToolboxTool.from_json(
+            merged_tool_data
         )
 
     def _fetch_tool_details(self, tool_name: str) -> Dict[str, Any]:

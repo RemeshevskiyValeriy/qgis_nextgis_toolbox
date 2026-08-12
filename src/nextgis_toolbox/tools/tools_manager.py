@@ -82,6 +82,10 @@ class ToolsManager(ToolsInterface):
     def error(self) -> Optional[ToolboxError]:
         return self._error
 
+    @property
+    def is_semantic_enrichment_enabled(self) -> bool:
+        return self._tools_repository.is_semantic_enrichment_enabled
+
     def set_api(self, tools_api: ToolsApi) -> None:
         """Set the API for managing tools and tags.
 
@@ -90,6 +94,9 @@ class ToolsManager(ToolsInterface):
         self._tools_api = tools_api
         self._tools_repository.set_api(tools_api)
         self._tags_repository.set_api(tools_api)
+
+    def set_semantic_enrichment_enabled(self, value: bool) -> None:
+        self._tools_repository.set_semantic_enrichment_enabled(value)
 
     @pyqtSlot()
     def load(self) -> None:

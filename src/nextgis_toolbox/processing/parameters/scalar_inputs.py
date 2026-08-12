@@ -29,10 +29,13 @@ from typing import (
 from qgis.core import (
     QgsProcessingAlgorithm,
     QgsProcessingContext,
+    QgsProcessingParameterColor,
+    QgsProcessingParameterCrs,
     QgsProcessingParameterBoolean,
     QgsProcessingParameterDateTime,
     QgsProcessingParameterDefinition,
     QgsProcessingParameterExtent,
+    QgsProcessingParameterField,
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,
 )
@@ -43,6 +46,9 @@ from nextgis_toolbox.processing.parameters.common import (
     InputParameterRepresentation,
     PresetPreparationContext,
     apply_parameter_help,
+)
+from nextgis_toolbox.processing.parameters.semantic_support import (
+    processing_field_data_type,
 )
 from nextgis_toolbox.tools.models import (
     InputParameterType,
@@ -145,6 +151,151 @@ class ScalarInputAdapter(InputParameterAdapter):
         context: QgsProcessingContext,
     ) -> Any:
         return self._resolver(algorithm, parameters, parameter.name, context)
+
+
+class SemanticStringInputAdapter(InputParameterAdapter):
+    def __init__(self, fallback: ScalarInputAdapter) -> None:
+        self._fallback = fallback
+
+    def create_representation(
+        self,
+        parameter: ToolInputParameter,
+    ) -> InputParameterRepresentation:
+        semantic = parameter.input_semantic
+        if semantic is None:
+            return self._fallback.create_representation(parameter)
+
+        if semantic.kind == "field":
+            source_parameter_name = self._field_source_parameter_name(
+                parameter
+            )
+            if source_parameter_name is not None:
+                qgis_parameter = QgsProcessingParameterField(
+                    parameter.name,
+                    parameter.label,
+                    parentLayerParameterName=source_parameter_name,
+                    type=processing_field_data_type(
+                        semantic.constraints.get("field_types", [])
+                    ),
+                    allowMultiple=False,
+                    optional=not parameter.required,
+                )
+                return InputParameterRepresentation(
+                    parameters=[
+                        apply_parameter_help(
+                            qgis_parameter,
+                            parameter.description,
+                        )
+                    ]
+                )
+
+        if semantic.kind == "crs":
+            qgis_parameter = QgsProcessingParameterCrs(
+                parameter.name,
+                parameter.label,
+                optional=not parameter.required,
+            )
+            return InputParameterRepresentation(
+                parameters=[
+                    apply_parameter_help(
+                        qgis_parameter,
+                        parameter.description,
+                    )
+                ]
+            )
+
+        if semantic.kind == "color":
+            qgis_parameter = QgsProcessingParameterColor(
+                parameter.name,
+                parameter.label,
+                optional=not parameter.required,
+            )
+            return InputParameterRepresentation(
+                parameters=[
+                    apply_parameter_help(
+                        qgis_parameter,
+                        parameter.description,
+                    )
+                ]
+            )
+
+        return self._fallback.create_representation(parameter)
+
+    def prepare_preset_values(
+        self,
+        parameter: ToolInputParameter,
+        value: Any,
+        preset_context: PresetPreparationContext,
+    ) -> Dict[str, Any]:
+        return self._fallback.prepare_preset_values(
+            parameter,
+            value,
+            preset_context,
+        )
+
+    def resolve_runtime_value(
+        self,
+        parameter: ToolInputParameter,
+        algorithm: QgsProcessingAlgorithm,
+        parameters: Dict[Optional[str], Any],
+        context: QgsProcessingContext,
+    ) -> Any:
+        semantic = parameter.input_semantic
+        if semantic is None:
+            return self._fallback.resolve_runtime_value(
+                parameter,
+                algorithm,
+                parameters,
+                context,
+            )
+
+        if semantic.kind == "field":
+            return algorithm.parameterAsString(
+                parameters,
+                parameter.name,
+                context,
+            )
+
+        if semantic.kind == "crs":
+            crs = algorithm.parameterAsCrs(
+                parameters,
+                parameter.name,
+                context,
+            )
+            if not crs.isValid():
+                return ""
+            return crs.authid()
+
+        if semantic.kind == "color":
+            color = algorithm.parameterAsColor(
+                parameters,
+                parameter.name,
+                context,
+            )
+            if not color.isValid():
+                return ""
+            return color.name()
+
+        return self._fallback.resolve_runtime_value(
+            parameter,
+            algorithm,
+            parameters,
+            context,
+        )
+
+    def _field_source_parameter_name(
+        self,
+        parameter: ToolInputParameter,
+    ) -> Optional[str]:
+        semantic = parameter.input_semantic
+        if semantic is None:
+            return None
+
+        for relation in semantic.relations:
+            if relation.relation_type == "fields":
+                return relation.source_parameter
+
+        return None
 
 
 class ScalarRuntimeValueResolver:
@@ -298,9 +449,13 @@ class ScalarInputAdapterFactory:
         self,
         definition: ScalarAdapterDefinition,
     ) -> ScalarInputAdapter:
-        return ScalarInputAdapter(
+        adapter = ScalarInputAdapter(
             definition.parameter_class,
             definition.resolver,
             preset_converter=definition.preset_converter,
             number_type=definition.number_type,
         )
+        if definition.parameter_type == InputParameterType.STRING:
+            return SemanticStringInputAdapter(adapter)
+
+        return adapter

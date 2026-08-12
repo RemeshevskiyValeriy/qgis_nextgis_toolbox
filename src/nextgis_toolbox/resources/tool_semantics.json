@@ -1,0 +1,4667 @@
+{
+  "add_regions": {
+    "inputs": {
+      "userfile": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "any"
+          ],
+          "file_count": "single"
+        }
+      },
+      "dataextract": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG",
+            "ESRI Shapefile"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "any"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      },
+      "resultcsv": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "ai2geo": {
+    "inputs": {
+      "pdf_file": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "pdf",
+            "ai"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "ascii2geotiff": {
+    "inputs": {
+      "src_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "AAIGrid",
+            "GRASSASCIIGrid",
+            "GSAG",
+            "USGSDEM",
+            "XYZ"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "dst_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "autocad_file_schema": {
+    "outputs": {
+      "output_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "autocad_version": {},
+  "cadastre2img": {
+    "inputs": {
+      "code": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^[0-9:.-]+$"
+        }
+      },
+      "color": {
+        "kind": "color"
+      },
+      "strokeColor": {
+        "kind": "color"
+      },
+      "qmsid": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "qms_basemap"
+        }
+      },
+      "fitmaxzoom": {
+        "kind": "zoom_level",
+        "constraints": {
+          "min_value": 0,
+          "max_value": 22,
+          "unit": "zoom"
+        }
+      }
+    },
+    "outputs": {
+      "png": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "png"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "centerline": {
+    "inputs": {
+      "polygons": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "centroid2attr": {
+    "inputs": {
+      "polygons": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "check_geometries": {
+    "inputs": {
+      "input_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector"
+        }
+      }
+    },
+    "outputs": {
+      "output_csv_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "output_geojson_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "clip_polys_poly": {
+    "inputs": {
+      "boundary_layer_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ],
+          "geometry_types": [
+            "polygon"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "features_layer_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ],
+          "geometry_types": [
+            "polygon"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    }
+  },
+  "convert": {
+    "inputs": {
+      "source": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector"
+        }
+      }
+    }
+  },
+  "coord_recalc": {
+    "inputs": {
+      "csv_source": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "source_crs": {
+        "kind": "crs",
+        "constraints": {
+          "crs_formats": [
+            "proj"
+          ]
+        }
+      },
+      "target_crs": {
+        "kind": "crs",
+        "constraints": {
+          "crs_formats": [
+            "proj"
+          ]
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "coords2poly": {
+    "inputs": {
+      "source": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx",
+            "xls",
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "count_tiles": {
+    "inputs": {
+      "src": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "crossing_borders": {
+    "inputs": {
+      "borders": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "objects": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile",
+            "GPKG"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "output": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "deminpoints": {
+    "inputs": {
+      "csv_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "lat_column": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "csv_file"
+          }
+        ]
+      },
+      "lon_column": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "csv_file"
+          }
+        ]
+      }
+    }
+  },
+  "dezhurcad": {
+    "inputs": {
+      "cadfile": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ]
+        }
+      },
+      "forced_custom_srs": {
+        "kind": "crs",
+        "constraints": {
+          "crs_formats": [
+            "proj",
+            "wkt",
+            "epsg"
+          ]
+        }
+      },
+      "group_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "error_log": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "txt"
+          ],
+          "file_count": "single"
+        }
+      },
+      "no_process": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "doc2pdf": {
+    "inputs": {
+      "input": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "doc",
+            "docx"
+          ],
+          "file_count": "single"
+        }
+      },
+      "input_json": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "json"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "pdf"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "download_and_prepare_l8_s2": {
+    "inputs": {
+      "vector_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "download_glad": {
+    "inputs": {
+      "tileslist": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "download_powershell_script": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "bat"
+          ],
+          "file_count": "single"
+        }
+      },
+      "download_aws_script": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "bat"
+          ],
+          "file_count": "single"
+        }
+      },
+      "url_list": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "txt"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "egrn_kvartals_cover": {
+    "inputs": {
+      "input_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "output_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "egrn_splitter": {
+    "inputs": {
+      "input_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "embedsvg": {
+    "inputs": {
+      "archive": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "empty_geoms": {
+    "inputs": {
+      "ngw_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "txt"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "eraser": {
+    "inputs": {
+      "erase_from_data": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      },
+      "erase_with_data": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "erosion_analysis": {
+    "inputs": {
+      "terrain_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "spectral_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "exif2resource": {
+    "inputs": {
+      "photos": {
+        "kind": "image",
+        "constraints": {
+          "file_count": "multiple"
+        },
+        "validators": [
+          "geotagged_image"
+        ]
+      },
+      "parent_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "webgis_connection"
+          }
+        ]
+      },
+      "layer_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ],
+          "geometry_types": [
+            "point"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "webgis_connection"
+          }
+        ]
+      }
+    }
+  },
+  "explication2poly": {
+    "inputs": {
+      "excelfile": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xls"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "field_value_changer": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "fix_geometries": {
+    "inputs": {
+      "input_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector"
+        }
+      }
+    },
+    "outputs": {
+      "output_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector"
+        }
+      }
+    }
+  },
+  "flatten": {
+    "inputs": {
+      "src_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "dst_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "flood_analysis": {
+    "inputs": {
+      "terrain_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "spectral_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "forestplots_field": {
+    "inputs": {
+      "polygon_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "feature_count": 1,
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_kmz": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "kmz"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_image": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "jpg"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_gpx": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point"
+          ],
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "gbif_download": {
+    "inputs": {
+      "country": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^[A-Z]{2}$"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "generalization": {
+    "inputs": {
+      "vector": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "geometry": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "geocodetable": {
+    "inputs": {
+      "table": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "addr_field": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "table"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "geodata2pmtiles": {
+    "inputs": {
+      "inputfile": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "any",
+          "file_count": "single"
+        }
+      },
+      "minzoom": {
+        "kind": "zoom_level",
+        "constraints": {
+          "min_value": 0,
+          "max_value": 20,
+          "unit": "zoom"
+        }
+      },
+      "maxzoom": {
+        "kind": "zoom_level",
+        "constraints": {
+          "min_value": 0,
+          "max_value": 20,
+          "unit": "zoom"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "pmtiles"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "geometry_changer": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "source_shp": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "geospatial_input_explainer": {},
+  "gpkg2etab": {
+    "inputs": {
+      "src": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "MapInfo EFAL"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "gpx2exif": {
+    "inputs": {
+      "gpx_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      },
+      "photos": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "jpg",
+            "jpeg"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "exif_photos": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "jpg",
+            "jpeg"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "gpxanimation": {
+    "inputs": {
+      "gpxfile": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "mp4"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "gpxclipbbox": {
+    "inputs": {
+      "source": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "gpxdailysplit": {
+    "inputs": {
+      "filename": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      },
+      "timedelta": {
+        "kind": "free_text",
+        "constraints": {
+          "min_length": 6,
+          "max_length": 6,
+          "pattern": "^[+-]\\d{2}:\\d{2}$"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "gpxmerge": {
+    "inputs": {
+      "source": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "gpxtracksplit": {
+    "inputs": {
+      "filename": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPX"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "grid": {
+    "inputs": {
+      "step": {
+        "kind": "other",
+        "constraints": {
+          "min_value": 1,
+          "unit": "m"
+        }
+      },
+      "src": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point",
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "grunt": {
+    "inputs": {
+      "input_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "output_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "hello": {},
+  "image_classification": {
+    "inputs": {
+      "src_file_raster": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "src_file_vector": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "class_attribute": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single",
+          "field_types": [
+            "integer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "src_file_vector"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "classified_raster": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      },
+      "report": {
+        "kind": "report",
+        "constraints": {
+          "extensions": [
+            "txt"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "image_clustering": {
+    "inputs": {
+      "src_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "clustered_raster": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "imagesearch": {
+    "inputs": {
+      "boundary": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "export_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "import_dwg": {
+    "inputs": {
+      "dwg_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "dwg"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "dxf_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "DXF"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "import_dwg_libdxfrw": {
+    "inputs": {
+      "dwg_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "dwg"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "dxf_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "DXF"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "import_egrn": {
+    "inputs": {
+      "source_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        },
+        "validators": [
+          "egrn_extract"
+        ]
+      },
+      "source_crs": {
+        "kind": "crs",
+        "constraints": {
+          "crs_formats": [
+            "proj",
+            "wkt",
+            "epsg"
+          ]
+        }
+      },
+      "target_crs": {
+        "kind": "crs",
+        "constraints": {
+          "crs_formats": [
+            "proj",
+            "wkt",
+            "epsg"
+          ]
+        }
+      }
+    },
+    "outputs": {
+      "converted": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg",
+            "geojson",
+            "shp",
+            "tab"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "report": {
+        "kind": "text"
+      }
+    }
+  },
+  "import_glr": {
+    "inputs": {
+      "src": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "improvedem": {
+    "inputs": {
+      "input_dem_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "tif",
+            "gpkg"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "inaturalist_download": {
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "infomap": {
+    "inputs": {
+      "group_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "text"
+      }
+    }
+  },
+  "intersect_layers": {
+    "inputs": {
+      "src_shape_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "single"
+        }
+      },
+      "poly_shape_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "single"
+        }
+      },
+      "field_name_for_csv": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "poly_shape_file"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "join_by_field": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "src": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "id_csv": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "src"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "kml2geodata": {
+    "inputs": {
+      "kmlfile": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "kml",
+            "kmz"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "geojson"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "kmldae2footprints": {
+    "inputs": {
+      "zip_with_kmls": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "kmz",
+            "dae"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "footprints": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "kptbatch_validator": {
+    "inputs": {
+      "zipfile": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "landsat_search": {
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "landsat_to_radiance": {
+    "inputs": {
+      "landsat_band": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "metadata_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "txt",
+            "mtl"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "landsat_to_reflectance": {
+    "inputs": {
+      "landsat_radiance_band": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "metadata_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "txt",
+            "mtl"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "landslide_analysis": {
+    "inputs": {
+      "terrain_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "spectral_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "layers2ngw": {
+    "inputs": {
+      "group_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "srcfile": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile",
+            "GeoJSON",
+            "GPKG",
+            "KML"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "qmlfile": {
+        "kind": "style",
+        "constraints": {
+          "style_type": "qml"
+        }
+      }
+    },
+    "outputs": {
+      "user_log": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "log"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "lesis2sqlite": {
+    "inputs": {
+      "areas_zip": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "single"
+        }
+      },
+      "lesis_db_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "sqlite_db": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "sqlite"
+          ],
+          "file_count": "single"
+        }
+      },
+      "error_log": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "txt"
+          ],
+          "file_count": "single"
+        }
+      },
+      "report": {
+        "kind": "text"
+      }
+    }
+  },
+  "lines2poly": {
+    "inputs": {
+      "src_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "dst_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "return_lines_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "lines2polygons": {
+    "inputs": {
+      "lines_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "points_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "year_field": {
+        "kind": "free_text",
+        "validators": [
+          "field_name"
+        ]
+      },
+      "update_field": {
+        "kind": "free_text",
+        "validators": [
+          "field_name"
+        ]
+      },
+      "select_field": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "points_id"
+          }
+        ]
+      },
+      "group_field": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "points_id"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "polygons": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "lines_merge": {
+    "inputs": {
+      "source_lines": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "file_count": "single"
+        }
+      },
+      "group_by": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "multiple"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "source_lines"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "mapinfo2qgis": {
+    "inputs": {
+      "input_zip": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "tab",
+            "wor"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg",
+            "qgs",
+            "tif",
+            "tiff",
+            "log"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "mappy": {
+    "outputs": {
+      "result": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "webp"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "maxdist": {
+    "inputs": {
+      "src_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON",
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "dst_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON",
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "mt2report": {
+    "inputs": {
+      "layer_id_border": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ],
+          "geometry_types": [
+            "polygon"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "layer_id_ships": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ],
+          "geometry_types": [
+            "point"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xls"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "ndi": {
+    "inputs": {
+      "raster_1": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "raster_2": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "ngw_attribute2description": {
+    "inputs": {
+      "layer_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer",
+            "postgis_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "attr_name": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "layer_id"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "text"
+      }
+    }
+  },
+  "ngw_contribution_activity": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer",
+            "webmap",
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "report",
+        "constraints": {
+          "extensions": [
+            "html"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "ngw_copy_layer": {
+    "inputs": {
+      "src_layer": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "src_ngw_connection"
+          }
+        ]
+      },
+      "dst_group": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "dst_ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "message": {
+        "kind": "text"
+      }
+    }
+  },
+  "ngw_feature_history": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "initial_timestamp": {
+        "kind": "datetime"
+      },
+      "final_timestamp": {
+        "kind": "datetime"
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "ngw_intersect": {
+    "inputs": {
+      "webmap_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "webmap"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "wkt": {
+        "kind": "geometry",
+        "constraints": {
+          "geometry_format": "wkt",
+          "geometry_types": [
+            "any"
+          ],
+          "crs_required": "EPSG:3857"
+        }
+      }
+    },
+    "outputs": {
+      "xlsx": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "ngw_layer_historical_state": {
+    "inputs": {
+      "layer_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "timestamp": {
+        "kind": "datetime"
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "ngw_layer_schema": {
+    "inputs": {
+      "ngw_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "new_schema": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "ngw_merge_layers": {
+    "inputs": {
+      "src_layer": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection_src"
+          }
+        ]
+      },
+      "dst_layer": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection_dst"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "message": {
+        "kind": "text"
+      }
+    }
+  },
+  "ngw_to_gpkg": {
+    "inputs": {
+      "ngw_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "report": {
+        "kind": "text"
+      }
+    }
+  },
+  "ngw_webmap2image": {
+    "inputs": {
+      "link": {
+        "kind": "url"
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "png"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "nominatim_geocode": {
+    "inputs": {
+      "query": {
+        "kind": "free_text"
+      }
+    },
+    "outputs": {
+      "result_bbox": {
+        "kind": "text"
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "ogrmerge": {
+    "inputs": {
+      "source_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "extensions": [
+            "shp",
+            "geojson",
+            "gpkg",
+            "tab",
+            "kml",
+            "kmz"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "merged": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "osm_download": {
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "any"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "osmclip_bbox": {
+    "inputs": {
+      "url": {
+        "kind": "url"
+      }
+    },
+    "outputs": {
+      "clipped_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "pbf"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "panotag": {
+    "inputs": {
+      "photos": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "jpg",
+            "jpeg"
+          ]
+        },
+        "validators": [
+          "spherical_panorama"
+        ]
+      }
+    },
+    "outputs": {
+      "photos_with_tags": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "jpg",
+            "jpeg"
+          ]
+        }
+      }
+    }
+  },
+  "planetary_search": {
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "plk_catalog": {
+    "inputs": {
+      "yl_regnum": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^\\d+:\\d+:\\d+(?::\\d+){0,2}$"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg",
+            "csv"
+          ],
+          "file_count": 2
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "plk_lesnich": {
+    "inputs": {
+      "rn": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^\\d+:\\d+(?::\\d+)?$"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "pointcloud2tileset": {
+    "inputs": {
+      "pointcloud": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "las"
+          ],
+          "file_count": "single"
+        }
+      },
+      "src_crs": {
+        "kind": "crs",
+        "constraints": {
+          "crs_formats": [
+            "epsg"
+          ]
+        }
+      }
+    },
+    "outputs": {
+      "tileset": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "points_on_tracks_stats": {
+    "inputs": {
+      "zones_layer_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "zone_name_field": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "zones_layer_id"
+          }
+        ]
+      },
+      "points_layer_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "point_category_fields": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "multiple"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "points_layer_id"
+          }
+        ]
+      },
+      "point_date_field": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single",
+          "field_types": [
+            "date",
+            "datetime"
+          ]
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "points_layer_id"
+          }
+        ]
+      },
+      "trackers_list": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^\\d+(?:,\\d+)*$"
+        }
+      }
+    },
+    "outputs": {
+      "report": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "poly2explication": {
+    "inputs": {
+      "polygon_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "line_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "file_count": "single"
+        }
+      },
+      "out_crs": {
+        "kind": "crs"
+      }
+    },
+    "outputs": {
+      "result_xlsx": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_geojson": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "polysimplifier": {
+    "inputs": {
+      "boundaries": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line",
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "percentage": {
+        "kind": "other",
+        "constraints": {
+          "min_value": 0,
+          "max_value": 100
+        }
+      }
+    },
+    "outputs": {
+      "output": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line",
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "postal": {
+    "inputs": {
+      "table": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "column": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "table"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "predict_overpass": {
+    "inputs": {
+      "aoi": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "prepare_raster": {
+    "inputs": {
+      "raster_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster"
+        }
+      },
+      "vector_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "pzz_report": {
+    "inputs": {
+      "cn": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^[^:]+:[^:]+:[^:]+:[^:]+$"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "docx"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "qgis2pdf": {
+    "inputs": {
+      "source": {
+        "kind": "qgis_project",
+        "constraints": {
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "document",
+        "constraints": {
+          "extensions": [
+            "pdf"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "qgis_check_geometries": {
+    "inputs": {
+      "input_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector"
+        }
+      }
+    },
+    "outputs": {
+      "output_csv_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "output_geojson_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      },
+      "output_msg": {
+        "kind": "text"
+      }
+    }
+  },
+  "qgis_fix_geometries": {
+    "inputs": {
+      "input_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector"
+        }
+      }
+    },
+    "outputs": {
+      "output_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector"
+        }
+      },
+      "output_msg": {
+        "kind": "text"
+      }
+    }
+  },
+  "qgis_multiparttosingleparts": {
+    "inputs": {
+      "input": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "output": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "qgis_rastertiles": {
+    "inputs": {
+      "projectarchive": {
+        "kind": "qgis_project",
+        "constraints": {
+          "file_count": "single"
+        }
+      },
+      "boundsfile": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "png",
+            "jpg"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "qgis_vectortiles": {
+    "inputs": {
+      "projectarchive": {
+        "kind": "qgis_project",
+        "constraints": {
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "output": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "pbf"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "quadro": {
+    "inputs": {
+      "point0": {
+        "kind": "geometry"
+      },
+      "point1": {
+        "kind": "geometry"
+      },
+      "base_interval": {
+        "kind": "other",
+        "constraints": {
+          "unit": "m"
+        }
+      }
+    },
+    "outputs": {
+      "geometry": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point",
+            "line",
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "r_mapcalc": {
+    "inputs": {
+      "A": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "B": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "C": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "D": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "E": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "F": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "G": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      },
+      "H": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_raster": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "raster2tiles": {
+    "inputs": {
+      "raster_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "ngrc"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "raster_calculator": {
+    "inputs": {
+      "raster_dataset": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "removecontents": {
+    "inputs": {
+      "group_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "output": {
+        "kind": "text"
+      }
+    }
+  },
+  "rosreestr2coord": {
+    "inputs": {
+      "code": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^[0-9:.-]+$"
+        }
+      }
+    },
+    "outputs": {
+      "geojson": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      },
+      "kml": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "KML"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "rosreestr_from_coord": {
+    "inputs": {
+      "coords": {
+        "kind": "geometry"
+      }
+    },
+    "outputs": {
+      "geojson": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GeoJSON"
+          ],
+          "file_count": "single"
+        }
+      },
+      "kml": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "KML"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "rsc2csv": {
+    "inputs": {
+      "source": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "rsc"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "s2_search": {
+    "outputs": {
+      "result_file": {
+        "kind": "qgis_project",
+        "constraints": {
+          "extensions": [
+            "gpkg"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "solar_hours": {
+    "outputs": {
+      "csv_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "png_file": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "png"
+          ],
+          "file_count": "single"
+        }
+      },
+      "hours": {
+        "kind": "number"
+      }
+    }
+  },
+  "spatial_join": {
+    "inputs": {
+      "layer1": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile",
+            "GeoJSON",
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      },
+      "layer2": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile",
+            "GeoJSON",
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      },
+      "attribute": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "layer2"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "spectral_indices": {
+    "inputs": {
+      "sentinel_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "result_png": {
+        "kind": "image",
+        "constraints": {
+          "extensions": [
+            "png"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "split180": {
+    "inputs": {
+      "src": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "split_to_equal": {
+    "inputs": {
+      "source_layer": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "split_to_rect": {
+    "inputs": {
+      "src_shape_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "fieldname": {
+        "kind": "free_text",
+        "validators": [
+          "field_name"
+        ]
+      }
+    },
+    "outputs": {
+      "result_shape_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "ESRI Shapefile"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "splitcomplex": {
+    "inputs": {
+      "polygons": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "spreadsheet2layer": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "group_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "table2geo": {
+    "inputs": {
+      "source": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv",
+            "xlsx",
+            "ods"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "shp",
+            "gpkg",
+            "geojson",
+            "tab",
+            "mif",
+            "sql",
+            "csv"
+          ]
+        }
+      }
+    }
+  },
+  "temporal_split": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "upper_field": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "resource_id"
+          }
+        ]
+      },
+      "lower_field": {
+        "kind": "field",
+        "constraints": {
+          "field_count": "single"
+        },
+        "relations": [
+          {
+            "type": "fields",
+            "source_parameter": "resource_id"
+          }
+        ]
+      },
+      "year1_field": {
+        "kind": "free_text",
+        "validators": [
+          "field_name"
+        ]
+      },
+      "year2_field": {
+        "kind": "free_text",
+        "validators": [
+          "field_name"
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "geojson",
+            "gpkg",
+            "csv",
+            "shp"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "terrain_analysis": {
+    "inputs": {
+      "input_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "tropomi2geotiff": {
+    "inputs": {
+      "netcdf_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "nc"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "geotiff_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "raster",
+          "drivers": [
+            "GTiff"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "update_vector_layer": {
+    "inputs": {
+      "resource_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "vector_layer"
+          ],
+          "geometry_types": [
+            "point"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      },
+      "csvfile": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_url": {
+        "kind": "text"
+      }
+    }
+  },
+  "vector2datalens": {
+    "inputs": {
+      "src_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "point",
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "dst_file_poly": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      },
+      "dst_file_point": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "csv"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "vectorclip": {
+    "inputs": {
+      "layer1": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "file_count": "single"
+        }
+      },
+      "layer2": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "clipped": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "single"
+        }
+      }
+    }
+  },
+  "water_usage": {
+    "inputs": {
+      "input_file": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      },
+      "uniq_number": {
+        "kind": "free_text",
+        "constraints": {
+          "pattern": "^\\d{23}$",
+          "min_length": 23,
+          "max_length": 23
+        }
+      }
+    },
+    "outputs": {
+      "output_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "drivers": [
+            "GPKG"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "web_gis_structure": {
+    "inputs": {
+      "group_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "webgis_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "webmap2qgis": {
+    "inputs": {
+      "webmap_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "webmap"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "webgis_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "output_file": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "qgs",
+            "gpkg",
+            "gml",
+            "xsd",
+            "mif",
+            "mid",
+            "shp",
+            "dbf",
+            "prj",
+            "shx",
+            "cpg",
+            "csv",
+            "dxf"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "wildfire_analysis": {
+    "inputs": {
+      "terrain_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "spectral_zip": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "other",
+        "constraints": {
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      },
+      "result_manifest": {
+        "kind": "text"
+      }
+    }
+  },
+  "xml_decl_to_vector": {
+    "inputs": {
+      "src": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg",
+            "geojson",
+            "shp",
+            "tab"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "xml_lpo_to_vector": {
+    "inputs": {
+      "source": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg",
+            "geojson",
+            "shp",
+            "tab"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "xml_plv_to_vector": {
+    "inputs": {
+      "source": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg",
+            "geojson",
+            "shp",
+            "tab"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "xml_tol_to_vector": {
+    "inputs": {
+      "source": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "xml"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    },
+    "outputs": {
+      "result": {
+        "kind": "other",
+        "constraints": {
+          "extensions": [
+            "gpkg",
+            "geojson",
+            "shp",
+            "tab"
+          ],
+          "file_count": "multiple"
+        }
+      },
+      "result_text": {
+        "kind": "text"
+      }
+    }
+  },
+  "zmu_data_analysis": {
+    "inputs": {
+      "zmu_data_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "ngw_connection"
+          }
+        ]
+      }
+    },
+    "outputs": {
+      "result_file": {
+        "kind": "report",
+        "constraints": {
+          "extensions": [
+            "docx",
+            "xlsx"
+          ],
+          "file_count": "multiple"
+        }
+      }
+    }
+  },
+  "zmu_deploy": {
+    "inputs": {
+      "parent_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "webgis_connection"
+          }
+        ]
+      },
+      "oopt_boundary_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "region_boundary_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "routes_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "file_count": "single"
+        }
+      },
+      "landscapes_classification_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "collectors_list": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      },
+      "species_list": {
+        "kind": "table",
+        "constraints": {
+          "extensions": [
+            "xlsx"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "output_msg": {
+        "kind": "text"
+      }
+    }
+  },
+  "zmu_update": {
+    "inputs": {
+      "exist_group_id": {
+        "kind": "ngw_resource_id",
+        "constraints": {
+          "ngw_resource_types": [
+            "resource_group"
+          ]
+        },
+        "relations": [
+          {
+            "type": "ngw_resource",
+            "source_parameter": "webgis_connection"
+          }
+        ]
+      },
+      "oopt_boundary_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "region_boundary_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      },
+      "routes_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "line"
+          ],
+          "file_count": "single"
+        }
+      },
+      "landscapes_classification_file": {
+        "kind": "layer",
+        "constraints": {
+          "layer_type": "vector",
+          "geometry_types": [
+            "polygon"
+          ],
+          "file_count": "single"
+        }
+      }
+    },
+    "outputs": {
+      "output_msg": {
+        "kind": "text"
+      }
+    }
+  }
+}

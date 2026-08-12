@@ -20,23 +20,26 @@ from unittest.mock import Mock
 from urllib.parse import parse_qs
 
 import pytest
+from qgis.PyQt.QtNetwork import QNetworkReply
 
-import nextgis_toolbox.nextgis_toolbox.sdk.client as client_module
-from nextgis_toolbox.core.exceptions import NextgisToolboxFileWriteError
-from nextgis_toolbox.nextgis_toolbox.sdk.client import ToolboxApiClient
+from nextgis_toolbox.api import client as client_module
+from nextgis_toolbox.api.authentication import (
+    ToolboxTokenAuthentication,
+)
+from nextgis_toolbox.api.client import ToolboxApiClient
+from nextgis_toolbox.core.exceptions import (
+    NextgisToolboxCacheReadError,
+    ToolboxError,
+    ToolboxFileWriteError,
+)
 
 
-def test_get_logs_request_and_parses_json_response(
-    api_server,
-    monkeypatch,
-) -> None:
+def test_get_parses_json_response(api_server) -> None:
     api_server.add_json_response(
         "GET",
         "/api/tools/",
         {"data": [{"id": 1, "name": "public-tool"}]},
     )
-    logger_mock = Mock()
-    monkeypatch.setattr(client_module, "logger", logger_mock)
     client = ToolboxApiClient(endpoint=api_server.base_url)
 
     response = client.get("tools/", query_params={"param": "value"})
@@ -46,30 +49,77 @@ def test_get_logs_request_and_parses_json_response(
     assert request.method == "GET"
     assert request.path == "/api/tools/"
     assert parse_qs(request.query) == {"param": ["value"], "lang": ["en"]}
-    assert logger_mock.debug.call_args_list[0].args == (
-        f"↓ GET {api_server.base_url}/api/tools/?lang=en&param=value",
-    )
-    assert (
-        logger_mock.debug.call_args_list[1]
-        .args[0]
-        .startswith(
-            f"✓ GET {api_server.base_url}/api/tools/?lang=en&param=value "
-            "finished with status 'success' in "
-        )
-    )
 
 
-def test_post_logs_request_and_sends_json_payload(
+def test_get_reuses_cached_json_response(
+    api_server,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    import nextgis_toolbox.api.cache_manager as cache_manager_module
+
+    monkeypatch.setattr(
+        cache_manager_module.QStandardPaths,
+        "writableLocation",
+        lambda *_args, **_kwargs: str(tmp_path),
+    )
+    api_server.add_json_response(
+        "GET",
+        "/api/tools/public-tool",
+        {"id": 1, "name": "public-tool"},
+    )
+    client = ToolboxApiClient(endpoint=api_server.base_url)
+
+    first_response = client.get(
+        "tools/public-tool",
+        cache_key="tools/public-tool",
+    )
+    second_response = client.get(
+        "tools/public-tool",
+        cache_key="tools/public-tool",
+    )
+
+    assert first_response == {"id": 1, "name": "public-tool"}
+    assert second_response == first_response
+    assert [request.path for request in api_server.requests] == [
+        "/api/tools/public-tool"
+    ]
+
+
+def test_get_falls_back_to_network_when_cache_read_fails(
     api_server,
     monkeypatch,
 ) -> None:
+    api_server.add_json_response(
+        "GET",
+        "/api/tools/public-tool",
+        {"id": 1, "name": "public-tool"},
+    )
+    client = ToolboxApiClient(endpoint=api_server.base_url)
+
+    def raise_cache_error(*args, **kwargs):
+        del args, kwargs
+        raise NextgisToolboxCacheReadError("cache broken")
+
+    monkeypatch.setattr(client._cache_manager, "get", raise_cache_error)
+
+    response = client.get(
+        "tools/public-tool",
+        cache_key="tools/public-tool",
+    )
+
+    assert response == {"id": 1, "name": "public-tool"}
+    assert [request.path for request in api_server.requests] == [
+        "/api/tools/public-tool"
+    ]
+
+
+def test_post_sends_json_payload(api_server) -> None:
     api_server.add_json_response(
         "POST",
         "/api/tasks/",
         {"task_id": "task-1"},
     )
-    logger_mock = Mock()
-    monkeypatch.setattr(client_module, "logger", logger_mock)
     client = ToolboxApiClient(endpoint=api_server.base_url)
 
     response = client.post("tasks/", {"tool": "hello"})
@@ -81,22 +131,49 @@ def test_post_logs_request_and_sends_json_payload(
     assert json.loads(request.body.decode("utf-8")) == {
         "tool": "hello",
     }
-    assert logger_mock.debug.call_args_list[0].args == (
-        f"↑ POST {api_server.base_url}/api/tasks/?lang=en",
+
+
+def test_post_retries_without_feedback_after_protocol_invalid_operation_error(
+    monkeypatch,
+) -> None:
+    client = ToolboxApiClient(endpoint="https://toolbox.nextgis.test")
+    feedback = Mock()
+    feedback.isCanceled.return_value = False
+
+    failed_response = Mock()
+    failed_response.error.return_value = (
+        QNetworkReply.NetworkError.ProtocolInvalidOperationError
     )
-    assert (
-        logger_mock.debug.call_args_list[1]
-        .args[0]
-        .startswith(
-            f"✓ POST {api_server.base_url}/api/tasks/?lang=en "
-            "finished with status 'success' in "
-        )
+
+    successful_response = Mock()
+    successful_response.error.return_value = QNetworkReply.NetworkError.NoError
+    successful_response.content.return_value.data.return_value = (
+        b'{"task_id": "task-1"}'
     )
+
+    blocking_post = Mock(side_effect=[failed_response, successful_response])
+    network_manager = Mock()
+    network_manager.blockingPost = blocking_post
+    monkeypatch.setattr(
+        client_module.QgsNetworkAccessManager,
+        "instance",
+        classmethod(lambda cls: network_manager),
+    )
+
+    response = client.post(
+        "tasks/",
+        {"tool": "hello"},
+        feedback=feedback,
+    )
+
+    assert response == {"task_id": "task-1"}
+    assert blocking_post.call_count == 2
+    assert blocking_post.call_args_list[0].kwargs == {"feedback": feedback}
+    assert blocking_post.call_args_list[1].kwargs == {}
 
 
 def test_upload_posts_binary_payload_and_parses_json_response(
     api_server,
-    monkeypatch,
     tmp_path: Path,
 ) -> None:
     source_path = tmp_path / "example.txt"
@@ -106,11 +183,9 @@ def test_upload_posts_binary_payload_and_parses_json_response(
         "/api/upload",
         {"name": "example.txt", "local": {"uuid": "uuid-1"}, "s3": None},
     )
-    logger_mock = Mock()
-    monkeypatch.setattr(client_module, "logger", logger_mock)
     client = ToolboxApiClient(endpoint=api_server.base_url)
 
-    response = client.upload(source_path)
+    response = client.upload_file(source_path)
 
     assert response == {
         "name": "example.txt",
@@ -125,24 +200,9 @@ def test_upload_posts_binary_payload_and_parses_json_response(
         "filename": ["example.txt"],
         "format": ["json"],
     }
-    assert logger_mock.debug.call_args_list[0].args == (
-        f"↑ UPLOAD {api_server.base_url}/api/upload?filename=example.txt&format=json",
-    )
-    assert (
-        logger_mock.debug.call_args_list[1]
-        .args[0]
-        .startswith(
-            f"✓ UPLOAD {api_server.base_url}/api/upload?filename=example.txt&format=json "
-            "finished with status 'success' in "
-        )
-    )
 
 
-def test_download_logs_request_and_saves_file(
-    api_server,
-    monkeypatch,
-    tmp_path: Path,
-) -> None:
+def test_download_saves_file(api_server, tmp_path: Path) -> None:
     payload = b"downloaded-result"
     api_server.add_response(
         "HEAD",
@@ -162,8 +222,6 @@ def test_download_logs_request_and_saves_file(
             "Content-Type": "text/plain",
         },
     )
-    logger_mock = Mock()
-    monkeypatch.setattr(client_module, "logger", logger_mock)
     client = ToolboxApiClient(endpoint=api_server.base_url)
     destination_path = tmp_path / "downloads"
 
@@ -177,26 +235,6 @@ def test_download_logs_request_and_saves_file(
     assert api_server.requests[0].method == "HEAD"
     assert api_server.requests[1].method == "GET"
     assert api_server.requests[1].path == "/files/result.txt"
-    assert logger_mock.debug.call_args_list[0].args == (
-        f"↓ DOWNLOAD {api_server.url('/files/result.txt')}",
-    )
-    assert logger_mock.debug.call_args_list[1].args == (
-        f"↓ HEAD {api_server.url('/files/result.txt')}",
-    )
-    assert (
-        logger_mock.debug.call_args_list[2]
-        .args[0]
-        .startswith(
-            f"✓ HEAD {api_server.url('/files/result.txt')} finished with status 'success' in "
-        )
-    )
-    assert (
-        logger_mock.debug.call_args_list[3]
-        .args[0]
-        .startswith(
-            f"✓ DOWNLOAD {api_server.url('/files/result.txt')} finished with status 'success' in "
-        )
-    )
 
 
 def test_download_wraps_directory_creation_errors(
@@ -226,10 +264,94 @@ def test_download_wraps_directory_creation_errors(
 
     monkeypatch.setattr(Path, "mkdir", raise_os_error)
 
-    with pytest.raises(NextgisToolboxFileWriteError) as error:
+    with pytest.raises(ToolboxFileWriteError) as error:
         client.download(
             api_server.url("/files/result.txt"),
             tmp_path / "downloads" / "result.txt",
         )
 
-    assert error.value.detail == "permission denied"
+    assert error.value.detail is None
+    assert any(
+        note == "Technical details: permission denied"
+        for note in getattr(error.value, "__notes__", [])
+    )
+
+
+def test_upload_file_wraps_read_errors(
+    api_server,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "example.txt"
+    source_path.write_text("payload", encoding="utf-8")
+    client = ToolboxApiClient(endpoint=api_server.base_url)
+
+    def raise_os_error(self) -> bytes:
+        del self
+        raise OSError("permission denied")
+
+    monkeypatch.setattr(Path, "read_bytes", raise_os_error)
+
+    with pytest.raises(ToolboxError) as error:
+        client.upload_file(source_path)
+
+    assert error.value.detail is None
+    assert any(
+        note == "Technical details: permission denied"
+        for note in getattr(error.value, "__notes__", [])
+    )
+
+
+def test_cache_scope_changes_when_authentication_changes() -> None:
+    client = ToolboxApiClient(endpoint="https://toolbox.nextgis.test")
+    first_scope_path = client._cache_manager._metadata_path
+
+    client.authentication = ToolboxTokenAuthentication(
+        "11111111-1111-1111-1111-111111111111"
+    )
+    second_scope_path = client._cache_manager._metadata_path
+
+    client.authentication = ToolboxTokenAuthentication(
+        "22222222-2222-2222-2222-222222222222"
+    )
+    third_scope_path = client._cache_manager._metadata_path
+
+    assert first_scope_path != second_scope_path
+    assert second_scope_path != third_scope_path
+
+
+def test_get_bytes_reuses_cached_binary_response(
+    api_server,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    import nextgis_toolbox.api.cache_manager as cache_manager_module
+
+    payload = b"help-image"
+    monkeypatch.setattr(
+        cache_manager_module.QStandardPaths,
+        "writableLocation",
+        lambda *_args, **_kwargs: str(tmp_path),
+    )
+    api_server.add_response(
+        "GET",
+        "/files/help.png",
+        payload,
+        headers={"Content-Type": "image/png"},
+    )
+    client = ToolboxApiClient(endpoint=api_server.base_url)
+
+    first_response = client.get_bytes(
+        api_server.url("/files/help.png"),
+        cache_key="help-images/https://example.com/help.png",
+    )
+    second_response = client.get_bytes(
+        api_server.url("/files/help.png"),
+        cache_key="help-images/https://example.com/help.png",
+    )
+
+    assert first_response == payload
+    assert second_response == payload
+    assert [request.path for request in api_server.requests] == [
+        "/files/help.png"
+    ]

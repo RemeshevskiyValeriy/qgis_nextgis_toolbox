@@ -38,13 +38,26 @@ from qgis.core import (
 )
 from qgis.gui import QgisInterface, QgsLayerTreeView, QgsMapCanvas
 from qgis.PyQt.QtCore import QSize, Qt
-from qgis.PyQt.QtWidgets import QMainWindow
+from qgis.PyQt.QtWidgets import QMainWindow, QMenu, QToolBar
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = WORKSPACE_ROOT / "src"
+PROCESSING_PLUGIN_ROOT = (
+    Path(QgsApplication.pkgDataPath()) / "python" / "plugins"
+)
 
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
+
+if PROCESSING_PLUGIN_ROOT.exists() and (
+    str(PROCESSING_PLUGIN_ROOT) not in sys.path
+):
+    sys.path.insert(0, str(PROCESSING_PLUGIN_ROOT))
+
+if PROCESSING_PLUGIN_ROOT.exists() and (
+    str(PROCESSING_PLUGIN_ROOT) not in qgis.utils.plugin_paths
+):
+    qgis.utils.plugin_paths.append(str(PROCESSING_PLUGIN_ROOT))
 
 
 @dataclass(frozen=True)
@@ -284,6 +297,26 @@ def init_interface() -> QgisInterface:
         layer_tree_view,
     )
     layer_tree_view.setModel(layer_tree_model)
+
+    vector_menu = iface.vectorMenu.return_value
+    if not isinstance(vector_menu, QMenu):
+        vector_menu = QMenu("Vector", main_window)
+        iface.vectorMenu.return_value = vector_menu
+
+    raster_menu = iface.rasterMenu.return_value
+    if not isinstance(raster_menu, QMenu):
+        raster_menu = QMenu("Raster", main_window)
+        iface.rasterMenu.return_value = raster_menu
+
+    web_menu = iface.webMenu.return_value
+    if not isinstance(web_menu, QMenu):
+        web_menu = QMenu("web", main_window)
+        iface.webMenu.return_value = web_menu
+
+    selection_toolbar = iface.selectionToolBar.return_value
+    if not isinstance(selection_toolbar, QToolBar):
+        selection_toolbar = QToolBar(main_window)
+        iface.selectionToolBar.return_value = selection_toolbar
 
     user_profile_manager = iface.userProfileManager.return_value
     if not isinstance(user_profile_manager, MagicMock):

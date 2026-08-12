@@ -17,12 +17,13 @@
 from pathlib import Path
 from unittest.mock import Mock
 
-from nextgis_toolbox.nextgis_toolbox.tasks.models import (
+from nextgis_toolbox.tasks.models import (
+    ManagerState,
     TaskStatus,
     ToolboxResult,
     ToolboxTask,
 )
-from nextgis_toolbox.nextgis_toolbox.tasks.tasks_manager import TasksManager
+from nextgis_toolbox.tasks.tasks_manager import TasksManager
 
 
 def test_tasks_manager_submits_task_and_emits_signal(qgis_app) -> None:
@@ -85,3 +86,23 @@ def test_tasks_manager_delegates_read_operations(qgis_app) -> None:
         [result],
         Path("/tmp"),
     )
+
+
+def test_tasks_manager_tracks_catalog_runtime_state(qgis_app) -> None:
+    del qgis_app
+
+    manager = TasksManager(Mock())
+    observed_states = []
+    manager.state_changed.connect(observed_states.append)
+
+    manager.on_tools_catalog_loading_finished(False, "broken")
+    manager.on_tools_catalog_loading_finished(True, "")
+    manager.unload()
+
+    assert manager.state == ManagerState.LOADING
+    assert manager.error_message == ""
+    assert observed_states == [
+        ManagerState.ERROR,
+        ManagerState.LOADED,
+        ManagerState.LOADING,
+    ]

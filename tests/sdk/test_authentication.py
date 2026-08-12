@@ -17,7 +17,7 @@
 from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtNetwork import QNetworkRequest
 
-from nextgis_toolbox.nextgis_toolbox.sdk.authentication import (
+from nextgis_toolbox.api.authentication import (
     ToolboxTokenAuthentication,
 )
 

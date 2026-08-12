@@ -6,7 +6,7 @@ license = { file = "LICENSE" }
 
 
 [tool.qgspb.package-data]
-"nextgis_toolbox.resources" = ["components.json"]
+"nextgis_toolbox.resources" = ["components.json", "tool_semantics.json"]
 "nextgis_toolbox.resources.icons" = ["*.svg"]
 "nextgis_toolbox.resources.icons.material" = ["*.svg"]
 

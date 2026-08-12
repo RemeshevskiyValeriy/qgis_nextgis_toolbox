@@ -94,6 +94,13 @@
         </property>
        </widget>
       </item>
+        <item>
+         <widget class="QCheckBox" name="experimental_qgis_integration_checkbox">
+          <property name="text">
+           <string>Enable experimental QGIS integration</string>
+          </property>
+         </widget>
+        </item>
      </layout>
     </widget>
    </item>

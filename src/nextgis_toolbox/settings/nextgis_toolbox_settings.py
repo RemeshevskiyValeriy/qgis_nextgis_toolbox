@@ -48,6 +48,10 @@ class NextgisToolboxSettings:
     KEY_IS_DEBUG_LOGS_ENABLED = (
         f"{PLUGIN_SETTINGS_GROUP}/other/debugLogsEnabled"
     )
+    KEY_IS_EXPERIMENTAL_QGIS_INTEGRATION_ENABLED = (
+        f"{PLUGIN_SETTINGS_GROUP}/other/"
+        "isExperimentalQgisIntegrationEnabled"
+    )
     KEY_IS_DEVELOPER_MODE = f"{PLUGIN_SETTINGS_GROUP}/other/isDeveloperMode"
     KEY_DID_LAST_LAUNCH_FAIL = (
         f"{PLUGIN_SETTINGS_GROUP}/other/didLastLaunchFail"
@@ -96,10 +100,20 @@ class NextgisToolboxSettings:
             )
 
         authentication_type = None
-        if raw_authentication_type in AuthenticationType.__members__:
+        valid_values = {item.value for item in AuthenticationType}
+        if raw_authentication_type in valid_values:
             authentication_type = AuthenticationType(raw_authentication_type)
 
-        return authentication_type or self.DEFAULT_AUTHENTICATION_TYPE
+        effective_authentication_type = (
+            authentication_type or self.DEFAULT_AUTHENTICATION_TYPE
+        )
+        if (
+            effective_authentication_type == AuthenticationType.NONE
+            and self.authentication_token
+        ):
+            return AuthenticationType.TOKEN
+
+        return effective_authentication_type
 
     @authentication_type.setter
     def authentication_type(self, value: AuthenticationType) -> None:
@@ -159,6 +173,22 @@ class NextgisToolboxSettings:
     @is_debug_logs_enabled.setter
     def is_debug_logs_enabled(self, value: bool) -> None:
         self._settings.setValue(self.KEY_IS_DEBUG_LOGS_ENABLED, value)
+
+    @property
+    def is_experimental_qgis_integration_enabled(self) -> bool:
+        """Check if experimental semantic-driven QGIS integration is enabled."""
+        return self._settings.value(
+            self.KEY_IS_EXPERIMENTAL_QGIS_INTEGRATION_ENABLED,
+            defaultValue=False,
+            type=bool,
+        )
+
+    @is_experimental_qgis_integration_enabled.setter
+    def is_experimental_qgis_integration_enabled(self, value: bool) -> None:
+        self._settings.setValue(
+            self.KEY_IS_EXPERIMENTAL_QGIS_INTEGRATION_ENABLED,
+            value,
+        )
 
     @property
     def is_developer_mode(self) -> bool:

@@ -50,6 +50,12 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
         """Return the current error of the tools manager."""
         ...
 
+    @property
+    @abstractmethod
+    def is_semantic_enrichment_enabled(self) -> bool:
+        """Return whether experimental semantic enrichment is enabled."""
+        ...
+
     def api(self) -> "ToolsApi":
         """Return the API for managing tools and tags.
 
@@ -62,6 +68,11 @@ class ToolsInterface(QObject, metaclass=QObjectMetaClass):
 
         :param tools_api: API for managing tools and tags.
         """
+
+    @abstractmethod
+    def set_semantic_enrichment_enabled(self, value: bool) -> None:
+        """Enable or disable experimental semantic enrichment."""
+        ...
 
     @pyqtSlot()
     @abstractmethod

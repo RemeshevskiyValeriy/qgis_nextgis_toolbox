@@ -79,6 +79,10 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
             update_logging_level()
             logger.warning(f"Debug messages were {debug_state}")
 
+        settings.is_experimental_qgis_integration_enabled = (
+            self._widget.experimental_qgis_integration_checkbox.isChecked()
+        )
+
         plugin = NextgisToolboxInterface.instance()
         plugin.settings_changed.emit()
 
@@ -94,6 +98,12 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         )
         self._widget.endpoint_line_edit.setToolTip(
             self.tr("Set the base endpoint for NextGIS Toolbox API.")
+        )
+        self._widget.experimental_qgis_integration_checkbox.setToolTip(
+            self.tr(
+                "Enable experimental semantic-driven QGIS integration for "
+                "Toolbox parameters and outputs."
+            )
         )
 
         layout = QHBoxLayout()
@@ -146,6 +156,9 @@ class NextgisToolboxSettingsPage(QgsOptionsPageWidget):
         )
 
         self._widget.debug_checkbox.setChecked(settings.is_debug_logs_enabled)
+        self._widget.experimental_qgis_integration_checkbox.setChecked(
+            settings.is_experimental_qgis_integration_enabled
+        )
 
 
 class NextgisToolboxSettingsErrorPage(QgsOptionsPageWidget):

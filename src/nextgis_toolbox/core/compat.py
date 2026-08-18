@@ -166,6 +166,15 @@ else:
     ProcessingFieldParameterDataType = QgsProcessingParameterField.DataType
 
 
+if not hasattr(ProcessingFieldParameterDataType, "Binary"):
+    ProcessingFieldParameterDataType.Binary = (
+        ProcessingFieldParameterDataType.String
+    )  # type: ignore
+if not hasattr(ProcessingFieldParameterDataType, "Boolean"):
+    ProcessingFieldParameterDataType.Boolean = (
+        ProcessingFieldParameterDataType.Numeric
+    )  # type: ignore
+
 if Qgis.versionInt() >= QGIS_3_38 or TYPE_CHECKING:
     FieldType = QMetaType.Type
 else:
